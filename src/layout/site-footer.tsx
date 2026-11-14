@@ -1,7 +1,7 @@
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line">
-      <p className="type-body-sm px-6 py-6 text-ink-muted lg:px-16">
+    <footer className="relative z-10 border-t border-line bg-black">
+      <p className="type-body-sm px-6 py-6 text-center text-ink-muted lg:px-16">
         Focos de calor:{" "}
         <a
           href="https://earthdata.nasa.gov/firms"

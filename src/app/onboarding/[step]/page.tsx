@@ -37,7 +37,7 @@ export default async function OnboardingPage({
       )}
       <section
         aria-labelledby="step-title"
-        className={`relative z-[5] flex flex-1 flex-col justify-center gap-10 px-6 pt-8 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:px-16 lg:pt-0 lg:pb-28 ${step.globeFrameClassName ? "pb-72" : "pb-28"}`}
+        className={`relative z-[5] flex flex-1 flex-col justify-center gap-10 px-6 pt-8 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:px-16 lg:pt-12 lg:pb-28 ${step.globeFrameClassName ? "pb-72" : "pb-28"}`}
       >
         <StepReveal
           order={0}

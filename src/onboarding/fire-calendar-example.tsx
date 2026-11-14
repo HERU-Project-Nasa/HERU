@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { type CalendarBar, startCalendarBars } from "./calendar-bars-scene";
 import {
   ILLUSTRATIVE_CALENDAR,
   ILLUSTRATIVE_OUT_OF_PATTERN,
@@ -21,23 +25,56 @@ const MONTHS = [
 
 const HEAT_SCALE = [
   { limit: 1, label: "0", className: "border border-line bg-heat-0" },
-  { limit: 1_000, label: "< 1 mil", className: "bg-heat-1" },
-  { limit: 3_000, label: "1-3 mil", className: "bg-heat-2" },
-  { limit: 10_000, label: "3-10 mil", className: "bg-heat-3" },
-  { limit: 30_000, label: "10-30 mil", className: "bg-heat-4" },
-  { limit: 100_000, label: "30-100 mil", className: "bg-heat-5" },
-  { limit: Infinity, label: "≥ 100 mil", className: "bg-heat-6" },
+  { limit: 1_000, label: "< 1 mil", className: "bg-heat-6" },
+  { limit: 3_000, label: "1-3 mil", className: "bg-heat-5" },
+  { limit: 10_000, label: "3-10 mil", className: "bg-heat-4" },
+  { limit: 30_000, label: "10-30 mil", className: "bg-heat-3" },
+  { limit: 100_000, label: "30-100 mil", className: "bg-heat-2" },
+  { limit: Infinity, label: "≥ 100 mil", className: "bg-heat-1" },
 ];
 
-const ROW_CLASS_NAME =
-  "grid grid-cols-[36px_repeat(12,minmax(0,1fr))] items-center gap-0.5 sm:grid-cols-[44px_repeat(12,minmax(0,1fr))] sm:gap-1";
 const OUT_OF_PATTERN_RING =
   "shadow-[inset_0_0_0_1.5px_var(--color-ink),0_0_0_1px_var(--color-surface-ground)]";
 const IN_PROGRESS_STRIPES =
   "bg-[repeating-linear-gradient(135deg,rgba(10,10,11,0)_0_4px,rgba(10,10,11,0.55)_4px_6px)]";
 const COUNT_FORMAT = new Intl.NumberFormat("pt-BR");
 
+const BARS: CalendarBar[] = ILLUSTRATIVE_CALENDAR.flatMap(
+  ({ year, monthlyCounts }, row) =>
+    monthlyCounts.map((count, month) => {
+      const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+      const outOfPattern = ILLUSTRATIVE_OUT_OF_PATTERN.includes(monthKey);
+      const inProgress = monthKey === ILLUSTRATIVE_PARTIAL_MONTH;
+      return {
+        row,
+        month,
+        count,
+        heat:
+          count === null
+            ? 0
+            : HEAT_SCALE.findIndex((step) => count < step.limit),
+        outOfPattern,
+        inProgress,
+        label: cellLabel(year, month, count, outOfPattern, inProgress),
+      };
+    }),
+);
+
 export function FireCalendarExample() {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tooltipRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(
+    () =>
+      startCalendarBars(stageRef.current!, canvasRef.current!, BARS, {
+        months: MONTHS.map(([, abbreviation]) => abbreviation),
+        years: ILLUSTRATIVE_CALENDAR.map(({ year }) => String(year)),
+        tooltip: tooltipRef.current!,
+      }),
+    [],
+  );
+
   return (
     <figure className="rounded-xl border border-line bg-surface px-5 py-6 sm:px-10 sm:py-8">
       <figcaption>
@@ -47,36 +84,42 @@ export function FireCalendarExample() {
         </p>
       </figcaption>
       <div
+        ref={stageRef}
+        aria-hidden="true"
+        className="relative mt-4 aspect-[4/3] touch-none overflow-hidden select-none"
+      >
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 size-full cursor-grab"
+        />
+        <span
+          ref={tooltipRef}
+          className="type-body-sm pointer-events-none absolute top-0 left-0 rounded-sm border border-line bg-surface-ground/90 px-2.5 py-1.5 whitespace-nowrap text-ink opacity-0 backdrop-blur-sm transition-opacity duration-150"
+        />
+        <span className="type-caption pointer-events-none absolute right-0 bottom-0 text-ink-disabled normal-case tracking-normal">
+          arraste para girar
+        </span>
+      </div>
+      <div
         role="table"
         aria-label="Calendário de fogo, focos por mês"
-        className="mt-5 flex flex-col gap-0.5 sm:gap-1"
+        className="sr-only"
       >
-        <div role="row" className={`${ROW_CLASS_NAME} mb-1 sm:mb-2`}>
-          <span role="columnheader">
-            <span className="sr-only">Ano</span>
-          </span>
-          {MONTHS.map(([name, abbreviation]) => (
-            <span
-              key={name}
-              role="columnheader"
-              aria-label={name}
-              className="type-caption text-center text-ink-muted"
-            >
-              <span className="sm:hidden">{abbreviation[0]}</span>
-              <span className="max-sm:hidden">{abbreviation}</span>
+        <div role="row">
+          <span role="columnheader">Ano</span>
+          {MONTHS.map(([name]) => (
+            <span key={name} role="columnheader">
+              {name}
             </span>
           ))}
         </div>
-        {ILLUSTRATIVE_CALENDAR.map(({ year, monthlyCounts }) => (
-          <div key={year} role="row" className={ROW_CLASS_NAME}>
-            <span
-              role="rowheader"
-              className="type-caption tracking-[0.06em] text-ink-muted tabular-nums"
-            >
-              {year}
-            </span>
-            {monthlyCounts.map((count, month) => (
-              <MonthCell key={month} year={year} month={month} count={count} />
+        {ILLUSTRATIVE_CALENDAR.map(({ year }, row) => (
+          <div key={year} role="row">
+            <span role="rowheader">{year}</span>
+            {BARS.filter((bar) => bar.row === row).map((bar) => (
+              <span key={bar.month} role="cell">
+                {bar.label}
+              </span>
             ))}
           </div>
         ))}
@@ -102,7 +145,7 @@ export function FireCalendarExample() {
           <li className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className={`relative h-4 w-7 rounded-xs bg-heat-6 ${OUT_OF_PATTERN_RING}`}
+              className={`relative h-4 w-7 rounded-xs bg-heat-1 ${OUT_OF_PATTERN_RING}`}
             >
               <OutOfPatternDot />
             </span>
@@ -128,39 +171,18 @@ export function FireCalendarExample() {
   );
 }
 
-function MonthCell({
-  year,
-  month,
-  count,
-}: {
-  year: number;
-  month: number;
-  count: number | null;
-}) {
+function cellLabel(
+  year: number,
+  month: number,
+  count: number | null,
+  outOfPattern: boolean,
+  inProgress: boolean,
+): string {
   const monthName = `${MONTHS[month][0]} de ${year}`;
   if (count === null) {
-    return (
-      <span
-        role="cell"
-        aria-label={`${monthName}: sem dados ainda`}
-        className="h-4 rounded-xs border border-dashed border-line sm:h-[22px]"
-      />
-    );
+    return `${monthName}: sem dados ainda`;
   }
-  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
-  const outOfPattern = ILLUSTRATIVE_OUT_OF_PATTERN.includes(monthKey);
-  const inProgress = monthKey === ILLUSTRATIVE_PARTIAL_MONTH;
-  const heat = HEAT_SCALE.find((step) => count < step.limit)!;
-  const label = `${monthName}: ${COUNT_FORMAT.format(count)} focos${outOfPattern ? ", fora do padrão" : ""}${inProgress ? ", parcial" : ""}`;
-  return (
-    <span
-      role="cell"
-      aria-label={label}
-      className={`relative h-4 rounded-xs sm:h-[22px] ${heat.className} ${outOfPattern ? OUT_OF_PATTERN_RING : ""} ${inProgress ? IN_PROGRESS_STRIPES : ""}`}
-    >
-      {outOfPattern && <OutOfPatternDot />}
-    </span>
-  );
+  return `${monthName}: ${COUNT_FORMAT.format(count)} focos${outOfPattern ? ", fora do padrão" : ""}${inProgress ? ", parcial" : ""}`;
 }
 
 function OutOfPatternDot() {
