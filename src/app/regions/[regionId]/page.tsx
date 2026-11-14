@@ -14,7 +14,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/regions/[regionId]">): Promise<Metadata> {
   const { regionId } = await params;
-  return { title: `${findRegion(regionId)?.name} | Fire Calendar` };
+  return { title: `${findRegion(regionId)?.name} | HERU` };
 }
 
 export default async function RegionPage({

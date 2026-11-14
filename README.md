@@ -12,6 +12,7 @@ Built for the NASA Space Apps Challenge 2026 challenge "Harmonization of MODIS a
 - Pantanal boundary: IBGE biome boundaries at 1:250,000.
 - Punjab boundary: geoBoundaries, India ADM1, from DataMeet India (CC BY 2.5 IN).
 - Base map: OpenFreeMap, with data from OpenStreetMap contributors.
+- Home globe imagery in `public/globe`, resized from NASA Earth Observatory: Blue Marble: Next Generation, November 2004 with topography (Reto Stöckli), Black Marble 2016 (Joshua Stevens, with Suomi NPP VIIRS data from Miguel Román, NASA Goddard Space Flight Center), and an ocean mask taken from the GEBCO_08 bathymetry distributed with Blue Marble.
 
 We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Land, Atmosphere Near real-time Capability for Earth observations (LANCE) (https://earthdata.nasa.gov/lance) and NASA's Earth Science Data and Information System (ESDIS).
 

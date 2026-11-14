@@ -1,1 +1,213 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-ui: var(--font-barlow), "Arial Narrow", system-ui, sans-serif;
+  --font-text: var(--font-outfit), system-ui, sans-serif;
+}
+
+@theme {
+  --color-surface-ground: #0a0a0b;
+  --color-surface: #121215;
+  --color-surface-hover: #1b1b1f;
+  --color-surface-raised: #252525;
+  --color-ink: #f2f2f2;
+  --color-ink-muted: #a8a8ae;
+  --color-ink-disabled: #5e5e66;
+  --color-ink-inverse: #252525;
+  --color-line: #34343a;
+  --color-line-strong: #7c7c84;
+  --color-selected: #f2f2f2;
+  --color-selected-hover: #d4d4d8;
+  --color-focus-ring: #6ea8ff;
+  --color-link: #6ea8ff;
+  --color-data-burned: #f03d3d;
+  --color-region-fill: #15345e;
+  --color-region-line: #6ea8ff;
+  --color-globe-land: #26272d;
+  --color-modis: #7c7c84;
+  --color-viirs: #1b69d2;
+  --color-viirs-adjusted: #6ea8ff;
+  --color-status-live: #0bb07b;
+  --color-status-stale: #ffce52;
+  --color-alert: #f03d3d;
+  --color-delta-above: #ff7b7b;
+  --color-confidence-high: #5fd3a8;
+  --color-heat-0: #1f1f24;
+  --color-heat-1: #5c1c1f;
+  --color-heat-2: #962326;
+  --color-heat-3: #f03d3d;
+  --color-heat-4: #ff8a3d;
+  --color-heat-5: #ffce52;
+  --color-heat-6: #fff1c7;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --animate-satellite-swing: satellite-swing 2.4s infinite;
+  --animate-star-twinkle: star-twinkle 4s ease-in-out infinite;
+  --animate-step-rise: step-rise 360ms cubic-bezier(0.2, 0, 0, 1) both;
+
+  @keyframes step-rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes satellite-swing {
+    0% {
+      transform: rotate(0deg);
+      animation-timing-function: ease-out;
+    }
+    25% {
+      transform: rotate(-45deg);
+      animation-timing-function: ease-in-out;
+    }
+    75% {
+      transform: rotate(45deg);
+      animation-timing-function: ease-in;
+    }
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  @keyframes star-twinkle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.2;
+    }
+  }
+}
+
+@utility type-display-hero {
+  font-family: var(--font-ui);
+  line-height: 0.85;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@utility type-heading-xl {
+  font-family: var(--font-text);
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 600;
+}
+
+@utility type-heading-lg {
+  font-family: var(--font-text);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+}
+
+@utility type-heading-md {
+  font-family: var(--font-text);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+@utility type-heading-sm {
+  font-family: var(--font-text);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+@utility type-body-lg {
+  font-family: var(--font-text);
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 300;
+}
+
+@utility type-body {
+  font-family: var(--font-text);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 300;
+}
+
+@utility type-data {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility type-body-sm {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+@utility type-nav {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@utility type-button {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@utility type-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@utility type-caption {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    background-color: var(--color-surface-ground);
+    color: var(--color-ink);
+    font-family: var(--font-text);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+}
