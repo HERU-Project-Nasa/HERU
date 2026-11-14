@@ -7,6 +7,8 @@ const VARIANT_CLASS_NAMES = {
 
 const SIZE_CLASS_NAMES = {
   lg: "h-12 px-6",
+  md: "h-10 px-4",
+  sm: "h-8 px-3",
   icon: "size-11",
 };
 

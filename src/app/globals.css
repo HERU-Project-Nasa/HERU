@@ -7,7 +7,7 @@
   --font-text: var(--font-outfit), system-ui, sans-serif;
 }
 
-@theme {
+@theme static {
   --color-surface-ground: #0a0a0b;
   --color-surface: #121215;
   --color-surface-hover: #1b1b1f;
@@ -33,6 +33,16 @@
   --color-status-stale: #ffce52;
   --color-alert: #f03d3d;
   --color-delta-above: #ff7b7b;
+  --color-delta-below: #6ea8ff;
+  --color-data-active: #ffce52;
+  --color-globe-ocean: #0c1118;
+  --color-globe-border: #3e3f47;
+  --color-season-summer: #ffce52;
+  --color-season-autumn: #b0710b;
+  --color-season-winter: #1b69d2;
+  --color-season-spring: #0bb07b;
+  --color-tint-alert: rgba(240, 61, 61, 0.14);
+  --color-tint-info: rgba(110, 168, 255, 0.14);
   --color-confidence-high: #5fd3a8;
   --color-heat-0: #1f1f24;
   --color-heat-1: #5c1c1f;
@@ -41,6 +51,8 @@
   --color-heat-4: #ff8a3d;
   --color-heat-5: #ffce52;
   --color-heat-6: #fff1c7;
+
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.56);
 
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
@@ -94,6 +106,33 @@
   line-height: 0.85;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+@utility type-section-title {
+  font-family: var(--font-ui);
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+@utility type-stat-xl {
+  font-family: var(--font-text);
+  font-size: 48px;
+  line-height: 52px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility type-chip {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
 }
 
 @utility type-heading-xl {
