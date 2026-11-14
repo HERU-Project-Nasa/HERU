@@ -2,7 +2,6 @@
 /.next/
 /out/
 /coverage
-/data/raw/
 .env*
 .vercel
 *.tsbuildinfo
