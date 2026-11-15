@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import Image from "next/image";
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-import Image from "next/image";
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { Suspense } from "react";
 import { BeforeAfterChart } from "@/methodology/before-after-chart";
 import {
@@ -18,16 +11,8 @@ import {
 import { MethodologySection } from "@/methodology/methodology-sections";
 import { SectionContents } from "@/methodology/section-contents";
 import { SensorTimeline } from "@/methodology/sensor-timeline";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { ValidationChart } from "@/methodology/validation-chart";
 import { HERU_TEAM } from "@/team/heru-team";
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-import { ValidationChart } from "@/methodology/validation-chart";
-import { HERU_TEAM } from "@/team/heru-team";
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 
 export const metadata: Metadata = {
   title: "Metodologia | HERU",
@@ -196,10 +181,6 @@ export default function MethodologyPage() {
               tempo real para os dias recentes.
             </p>
             <p className={PARAGRAPH}>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               A pipeline busca dados novos no FIRMS a cada hora e publica um
               lote quando algo muda; o site confere a cada minuto se saiu lote
               novo e só baixa o que mudou. As janelas de 24 e 48 horas do mapa
@@ -207,15 +188,6 @@ export default function MethodologyPage() {
               real chegam em cerca de 3 horas e são trocados pelos científicos
               de 2 a 4 meses depois. Enquanto isso, os meses que ainda têm algum
               dia de quase tempo real aparecem no calendário como{" "}
-<<<<<<< HEAD
-=======
-              Os dados de quase tempo real chegam em cerca de 3 horas e são
-              trocados pelos científicos de 2 a 4 meses depois. Enquanto isso,
-              os meses que ainda têm algum dia de quase tempo real aparecem no
-              calendário como{" "}
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               <strong className="font-semibold">preliminares</strong>, e os
               números podem mudar.
             </p>
@@ -290,10 +262,6 @@ export default function MethodologyPage() {
                 nenhum país.
               </li>
               <li>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                 No mapa de períodos longos, cada quadrado de 0,25° (cerca de 28
                 km) soma os focos que caíram nele. Mostramos todo quadrado que
                 toca o país, mesmo que o centro dele caia no mar ou no vizinho,
@@ -303,11 +271,6 @@ export default function MethodologyPage() {
                 não muda, porque é contado foco a foco.
               </li>
               <li>
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                 A série harmonizada começa em julho de 2002, quando o Aqua
                 começou a observar. Antes, só o Terra observava e a contagem cai
                 pela metade sem que o fogo mude. O calendário começa em 2003, o
@@ -403,10 +366,6 @@ export default function MethodologyPage() {
             <p className={PARAGRAPH}>
               Os números da região escolhida estão no painel do topo. Num país,
               eles são um diagnóstico: a série do país usa o k de cada bloco
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               onde o foco caiu. O gráfico abaixo mostra a comparação mês a mês:
               quanto mais as duas linhas andam juntas, melhor o MODIS × k
               reconstrói o que o S-NPP viu.
@@ -414,14 +373,6 @@ export default function MethodologyPage() {
             <Suspense>
               <ValidationChart />
             </Suspense>
-<<<<<<< HEAD
-=======
-              onde o foco caiu. O gráfico mês a mês da reconstrução entra quando
-              essa série for publicada.
-            </p>
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           </MethodologySection>
 
           <MethodologySection id="limites">
@@ -447,33 +398,17 @@ export default function MethodologyPage() {
                 Dados: NASA FIRMS (MODIS C6.1 e VIIRS 375 m), com dados de quase
                 tempo real do LANCE.
               </li>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               <li>Fronteiras do mapa: Natural Earth 1:50m, domínio público.</li>
               <li>
                 Área dos países: área de terra do Banco Mundial; para os
                 territórios que ele não cobre, a área das fronteiras do CGAZ,
                 que inclui lagos e rios.
-<<<<<<< HEAD
-=======
-              <li>
-                Fronteiras: Natural Earth 1:50m, domínio público. A área dos
-                países é aproximada, calculada dessas fronteiras.
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               </li>
               <li>Mapa: MapLibre GL, sem mapas de terceiros.</li>
               <li>
                 Globo: Three.js, com as imagens Blue Marble e Black Marble do
                 NASA Earth Observatory.
               </li>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
             </ul>
             <div className="flex flex-col gap-4 pt-4">
               <h3 className="type-heading-sm text-ink">Equipe</h3>
@@ -511,13 +446,6 @@ export default function MethodologyPage() {
                 ))}
               </ul>
             </div>
-<<<<<<< HEAD
-=======
-              <li>Equipe HERU, NASA Space Apps 2026.</li>
-            </ul>
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           </MethodologySection>
         </div>
       </div>

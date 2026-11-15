@@ -195,16 +195,8 @@ export function CalendarGrid({
   lastDataDate,
   mode,
   focusRequest,
-<<<<<<< HEAD
-<<<<<<< HEAD
   selectedKey = null,
   onSelect,
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  selectedKey = null,
-  onSelect,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 }: {
   areaName: string;
   years: CalendarYear[];
@@ -215,16 +207,8 @@ export function CalendarGrid({
   lastDataDate: string;
   mode: CalendarMode;
   focusRequest: string | null;
-<<<<<<< HEAD
-<<<<<<< HEAD
   selectedKey?: string | null;
   onSelect?: (cell: CalendarCell) => void;
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  selectedKey?: string | null;
-  onSelect?: (cell: CalendarCell) => void;
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipPlace | null>(null);
@@ -398,10 +382,6 @@ export function CalendarGrid({
                     showTooltip(cell, event.currentTarget);
                   }}
                   onBlur={() => setTooltip(null)}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                   onClick={() => open && onSelect?.(cell)}
                   onKeyDown={(event) => {
                     if (
@@ -419,13 +399,6 @@ export function CalendarGrid({
                     onSelect && open ? cell.key === selectedKey : undefined
                   }
                   className={`rounded-xs outline-offset-1 ${enabledMonths[index] ? "" : "opacity-20"} ${open ? (onSelect ? "cursor-pointer" : "cursor-default") : ""} ${cell.key === selectedKey ? "ring-2 ring-ink ring-offset-2 ring-offset-surface" : ""}`}
-<<<<<<< HEAD
-=======
-                  onKeyDown={(event) => moveFocus(event, cell)}
-                  className={`rounded-xs outline-offset-1 ${enabledMonths[index] ? "" : "opacity-20"} ${open ? "cursor-default" : ""}`}
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                 >
                   <CellFace
                     cell={cell}

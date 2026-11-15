@@ -3,10 +3,6 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { useEffect, useMemo, useState } from "react";
 import {
   areaFiltersHref,
@@ -24,18 +20,6 @@ import {
 import { useCountryOutlines } from "@/country-outlines/country-outlines";
 import {
   monthTitle,
-<<<<<<< HEAD
-=======
-import { useMemo, useState } from "react";
-import { areaFiltersHref, areaMapHref } from "@/area-filters/area-links";
-import { findContinent } from "@/area-filters/continents";
-import { buttonClassName } from "@/button/button-class-name";
-import { useCountryOutlines } from "@/country-outlines/country-outlines";
-import {
-  capitalized,
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   SOURCE_SHORT_UNITS,
 } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
@@ -48,10 +32,6 @@ import {
   CalendarSection,
   DataFootnote,
 } from "@/fire-calendar/calendar-section";
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { useAreaCalendar } from "@/fire-calendar/use-area-calendar";
 import {
   type MapPeriod,
@@ -59,22 +39,6 @@ import {
   yearPeriodEnd,
 } from "@/fire-map/map-period";
 import { periodReport as buildPeriodReport } from "@/fire-map/period-report";
-<<<<<<< HEAD
-=======
-import { periodComparison } from "@/fire-calendar/month-comparison";
-import { useAreaCalendar } from "@/fire-calendar/use-area-calendar";
-import {
-  dateRangeLabel,
-  type MapPeriod,
-  partialDaysLabel,
-  periodLabel,
-  periodName,
-  presetPeriod,
-  yearPeriodEnd,
-} from "@/fire-map/map-period";
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import { FadeUp } from "@/motion/fade-up";
 import { WORLD_AREA } from "@/pipeline/series-row";
@@ -111,10 +75,6 @@ export function CalendarExplorer() {
       : requestedYear >= CALENDAR_FIRST_YEAR && requestedYear <= dataYear
         ? requestedYear
         : dataYear;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const selection = useCalendarSelection();
   const selectedMonth = selection.area === area ? selection.month : null;
   useEffect(() => {
@@ -122,19 +82,10 @@ export function CalendarExplorer() {
       rememberSelection({ area, year: selectedYear });
     }
   }, [area, selectedYear]);
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const periodEnd =
     lastDataDate && selectedYear
       ? yearPeriodEnd(selectedYear, lastDataDate)
       : null;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const period = useMemo(() => {
     if (!periodEnd) {
       return null;
@@ -168,54 +119,6 @@ export function CalendarExplorer() {
         : null,
     [period, dailyRows, completeDate, ready, years, analysis, source, passes],
   );
-<<<<<<< HEAD
-=======
-  const defaultPeriod = useMemo(
-    () => (periodEnd ? presetPeriod("7d", periodEnd) : null),
-    [periodEnd],
-  );
-  const period = chosenPeriod ?? defaultPeriod;
-  const completeDate = coverage?.completeDate ?? null;
-  const { dailyRows, analysis, source, passes, ready } = calendar;
-  const periodReport = useMemo<PeriodReport | null>(() => {
-    if (!period || !dailyRows || !completeDate || !ready) {
-      return null;
-    }
-    const comparison = periodComparison(
-      dailyRows,
-      years,
-      analysis,
-      source,
-      passes,
-      period,
-      completeDate,
-    );
-    if (!comparison) {
-      return null;
-    }
-    const partial = partialDaysLabel(period, completeDate);
-    return {
-      comparison,
-      eyebrow: periodName(period),
-      title: periodLabel({
-        ...period,
-        start: comparison.start,
-        end: comparison.end,
-        hours: null,
-      }),
-      dates: dateRangeLabel(comparison.start, comparison.end),
-      note:
-        [
-          partial && `${capitalized(partial)}, fora da comparação.`,
-          period.hours && "Contamos dias UTC inteiros.",
-        ]
-          .filter(Boolean)
-          .join(" ") || null,
-    };
-  }, [period, dailyRows, completeDate, ready, years, analysis, source, passes]);
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const appliedChips: { icon: SymbolName; text: string }[] = [
     ...(selectedYear
       ? [{ icon: "calendar_month" as const, text: String(selectedYear) }]
@@ -282,10 +185,6 @@ export function CalendarExplorer() {
             period={period}
             onPeriodChange={setChosenPeriod}
           />
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href={compareDatesHref(area, selectedYear)}
@@ -302,11 +201,6 @@ export function CalendarExplorer() {
               Comparar regiões
             </Link>
           </div>
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
         </FadeUp>
       )}
 
@@ -348,10 +242,6 @@ export function CalendarExplorer() {
           description="Cada linha é um ano e cada coluna, um mês. Os mesmos limites de cor valem para o calendário inteiro."
           initialMode="count"
           focusRequest={focusRequest}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           selectedMonth={selectedMonth}
           onSelectMonth={(key) =>
             rememberSelection({
@@ -397,11 +287,6 @@ export function CalendarExplorer() {
               </p>
             )
           }
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
         />
       </FadeUp>
 

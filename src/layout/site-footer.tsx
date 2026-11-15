@@ -4,10 +4,6 @@ import { HERU_TEAM } from "@/team/heru-team";
 export function SiteFooter() {
   return (
     <footer className="relative z-10 border-t border-line bg-black">
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
       <div className="flex flex-col items-center gap-5 px-6 py-8 lg:px-16">
         <div className="flex flex-col items-center gap-3">
           <p className="type-caption text-ink-muted">
@@ -48,22 +44,6 @@ export function SiteFooter() {
           (Blue Marble e Black Marble).
         </p>
       </div>
-<<<<<<< HEAD
-=======
-      <p className="type-body-sm px-6 py-6 text-center text-ink-muted lg:px-16">
-        Focos de calor:{" "}
-        <a
-          href="https://earthdata.nasa.gov/firms"
-          className="text-link underline underline-offset-2"
-        >
-          NASA FIRMS
-        </a>
-        , parte do LANCE e do ESDIS. Imagens da Terra: NASA Earth Observatory
-        (Blue Marble e Black Marble).
-      </p>
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     </footer>
   );
 }

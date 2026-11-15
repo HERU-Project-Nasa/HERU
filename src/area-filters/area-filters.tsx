@@ -5,17 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { buttonClassName } from "@/button/button-class-name";
 import {
-<<<<<<< HEAD
-<<<<<<< HEAD
   AREA_SOURCES,
   formatArea,
-=======
-  approximateArea,
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  AREA_SOURCES,
-  formatArea,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   type CountryOutline,
   useCountryOutlines,
 } from "@/country-outlines/country-outlines";
@@ -203,10 +194,6 @@ function CountryCard({
           }}
         />
       </span>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
       {country.area_km2 ? (
         <span
           title={
@@ -214,13 +201,6 @@ function CountryCard({
           }
           className="flex items-center justify-between gap-2 border-t border-current/15 pt-2"
         >
-<<<<<<< HEAD
-=======
-      {outline && (
-        <span className="flex items-center justify-between gap-2 border-t border-current/15 pt-2">
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           <span
             className={`type-body-sm flex items-center gap-1 ${selected ? "" : "text-ink-muted"}`}
           >
@@ -228,24 +208,11 @@ function CountryCard({
             Território
           </span>
           <span className="type-body-sm tabular-nums">
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
             {formatArea(country.area_km2)}
             {country.area_source === "cgaz" && "*"}
           </span>
         </span>
       ) : null}
-<<<<<<< HEAD
-=======
-            {approximateArea(outline.areaKm2)}
-          </span>
-        </span>
-      )}
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     </button>
   );
 }
@@ -290,10 +257,6 @@ export function AreaFilters() {
   const continentId = chosenContinent ?? area?.continent ?? null;
   const continent = findContinent(continentId ?? undefined);
   const { column, totals, pending } = useCountryYearTotals(countries, year);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const boundaryAreas = useMemo(
     () =>
       (countries ?? [])
@@ -302,11 +265,6 @@ export function AreaFilters() {
         .sort((a, b) => a.localeCompare(b, "pt-BR")),
     [countries],
   );
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const unit = column ? TOTAL_UNITS[column] : "focos";
 
   const choices = useMemo<CountryChoice[]>(
@@ -506,23 +464,11 @@ export function AreaFilters() {
                 </button>
               )}
               <p className="type-body-sm text-ink-muted">
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                 Território: área de terra do Banco Mundial.
                 {boundaryAreas.length > 0 &&
                   ` * ${boundaryAreas.join(", ")}: o Banco Mundial não tem a área, então ela vem das fronteiras (CGAZ) e inclui lagos e rios.`}{" "}
                 Os focos são os números da pipeline, sem arredondamento além do
                 número inteiro.
-<<<<<<< HEAD
-=======
-                Território: área aproximada, calculada da fronteira do Natural
-                Earth 1:50m. Os focos são os números da pipeline, sem
-                arredondamento além do número inteiro.
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               </p>
             </>
           )}

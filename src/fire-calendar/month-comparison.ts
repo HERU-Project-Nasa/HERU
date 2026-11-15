@@ -46,10 +46,6 @@ export function closedMonthComparison(
   const cells = years.flatMap((year) => year.cells);
   const partialIndex = cells.findIndex((cell) => cell.partial);
   const cell = cells[partialIndex - 1];
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   return cell ? monthComparisonFor(cell, years, analysis) : null;
 }
 
@@ -58,14 +54,6 @@ export function monthComparisonFor(
   years: CalendarYear[],
   analysis: CalendarAnalysis,
 ): MonthComparison {
-<<<<<<< HEAD
-=======
-  if (!cell) {
-    return null;
-  }
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const baseline = analysis.baselines[cell.month - 1];
   const compared = comparedYears(years, analysis, cell.year);
   return {
@@ -165,29 +153,13 @@ function isLeapYear(year: number): boolean {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 export function shiftYears(date: string, years: number): string | null {
-=======
-function shiftYears(date: string, years: number): string | null {
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-export function shiftYears(date: string, years: number): string | null {
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const year = Number(date.slice(0, 4)) + years;
   const rest = date.slice(4);
   return rest === "-02-29" && !isLeapYear(year) ? null : `${year}${rest}`;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 export function datesBetween(start: string, end: string): string[] {
-=======
-function datesBetween(start: string, end: string): string[] {
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-export function datesBetween(start: string, end: string): string[] {
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const dates: string[] = [];
   const day = new Date(`${start}T00:00:00Z`);
   for (let date = start; date <= end;) {
@@ -198,10 +170,6 @@ export function datesBetween(start: string, end: string): string[] {
   return dates;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 export function dayValues(
   dailyRows: SeriesDayRow[],
   years: CalendarYear[],
@@ -224,11 +192,6 @@ export function dayValues(
   });
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 export function periodComparison(
   dailyRows: SeriesDayRow[],
   years: CalendarYear[],

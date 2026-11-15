@@ -4,40 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type KeyboardEvent, useRef, useState } from "react";
 import { HeruLogo } from "@/brand/heru-logo";
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import {
   anomaliesHref,
   useCalendarSelection,
 } from "@/calendar-selection/calendar-selection";
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { buttonClassName } from "@/button/button-class-name";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { BackgroundMusic } from "@/sound/background-music";
 import { DataStatus } from "./data-status";
 
 const NAVIGATION = [
-<<<<<<< HEAD
-<<<<<<< HEAD
   { path: "/calendar", label: "Calendário" },
   { path: "/anomalies", label: "Anomalias" },
   { path: "/methodology", label: "Metodologia" },
-=======
-  { href: "/calendar", label: "Calendário" },
-  { href: "/anomalies", label: "Anomalias" },
-  { href: "/methodology", label: "Metodologia" },
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  { path: "/calendar", label: "Calendário" },
-  { path: "/anomalies", label: "Anomalias" },
-  { path: "/methodology", label: "Metodologia" },
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 ];
 
 const NAVIGATION_LINK_CLASS_NAME =
@@ -47,10 +26,6 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const selection = useCalendarSelection();
   const linkTo = (path: string) => {
     if (!selection.area) {
@@ -65,11 +40,6 @@ export function SiteHeader() {
     }
     return `${path}?${params}`;
   };
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const currentPage = (href: string) =>
     pathname.startsWith(href) ? "page" : undefined;
 
@@ -96,21 +66,9 @@ export function SiteHeader() {
         >
           {NAVIGATION.map((item) => (
             <Link
-<<<<<<< HEAD
-<<<<<<< HEAD
               key={item.path}
               href={linkTo(item.path)}
               aria-current={currentPage(item.path)}
-=======
-              key={item.href}
-              href={item.href}
-              aria-current={currentPage(item.href)}
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-              key={item.path}
-              href={linkTo(item.path)}
-              aria-current={currentPage(item.path)}
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               className={`${NAVIGATION_LINK_CLASS_NAME} py-2.5`}
             >
               {item.label}
@@ -147,21 +105,9 @@ export function SiteHeader() {
         >
           {NAVIGATION.map((item) => (
             <Link
-<<<<<<< HEAD
-<<<<<<< HEAD
               key={item.path}
               href={linkTo(item.path)}
               aria-current={currentPage(item.path)}
-=======
-              key={item.href}
-              href={item.href}
-              aria-current={currentPage(item.href)}
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-              key={item.path}
-              href={linkTo(item.path)}
-              aria-current={currentPage(item.path)}
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               onClick={() => setMenuOpen(false)}
               className={`${NAVIGATION_LINK_CLASS_NAME} flex min-h-11 items-center`}
             >

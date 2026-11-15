@@ -5,16 +5,8 @@ export type CountryRow = {
   first_date: string;
   last_date: string;
   rows: number;
-<<<<<<< HEAD
-<<<<<<< HEAD
   area_km2?: number | null;
   area_source?: string;
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  area_km2?: number | null;
-  area_source?: string;
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 };
 
 const ALPHA2_BY_ALPHA3: Record<string, string> = {

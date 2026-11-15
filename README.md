@@ -7,17 +7,8 @@ Built for the NASA Space Apps Challenge 2026 challenge "Harmonization of MODIS a
 ## Data
 
 - Active fire detections: NASA FIRMS, MODIS Collection 6.1 (Terra and Aqua) and VIIRS 375 m (Suomi NPP, NOAA-20), standard and near real-time products.
-<<<<<<< HEAD
-<<<<<<< HEAD
 - Country boundaries in `public/geo`: Natural Earth 1:50m Admin 0 countries, version 5.1.2 (public domain), reduced to the country code and outline, with coordinates rounded to 0.01 degree.
 - Country areas: World Bank land area, published by the pipeline in `meta/countries.csv`; the few territories the World Bank does not cover use the CGAZ boundary area, which includes lakes and rivers.
-=======
-- Country boundaries in `public/geo`: Natural Earth 1:50m Admin 0 countries, version 5.1.2 (public domain), reduced to the country code and outline, with coordinates rounded to 0.01 degree. The country areas shown on the filter page are computed from these outlines and are approximate.
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-- Country boundaries in `public/geo`: Natural Earth 1:50m Admin 0 countries, version 5.1.2 (public domain), reduced to the country code and outline, with coordinates rounded to 0.01 degree.
-- Country areas: World Bank land area, published by the pipeline in `meta/countries.csv`; the few territories the World Bank does not cover use the CGAZ boundary area, which includes lakes and rivers.
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 - Home globe imagery in `public/globe`, resized from NASA Earth Observatory: Blue Marble: Next Generation, November 2004 with topography (Reto Stöckli), Black Marble 2016 (Joshua Stevens, with Suomi NPP VIIRS data from Miguel Román, NASA Goddard Space Flight Center), and an ocean mask taken from the GEBCO_08 bathymetry distributed with Blue Marble.
 
 We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Land, Atmosphere Near real-time Capability for Earth observations (LANCE) (https://earthdata.nasa.gov/lance) and NASA's Earth Science Data and Information System (ESDIS).
@@ -41,10 +32,6 @@ python -m http.server 8000 --bind 127.0.0.1 --directory path/to/pipeline-output
 
 ## Deploy
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 The site is static: `npm run build` writes it to `out/`. It runs on the same VPS as the pipeline, behind one nginx and one domain, with the site at `/` and the pipeline's `saida/v1/` at `/v1/`. `NEXT_PUBLIC_HERU_BASE` stays empty, so there is no CORS and no environment variable to set.
 
 | Path on the VPS                            | What it is                                  |
@@ -158,45 +145,6 @@ The pipeline publishes small CSV files that the site reads as they are. The cale
 | `meta/validation.csv`                     | k, k20, error, correlation and confidence shown on the methodology page                                             |
 | `meta/validation_monthly.csv`             | Observed S-NPP against MODIS × k, month by month from 2020 to 2024, for the validation chart                        |
 | `series/.../yearly.csv`                   | The before and after chart on the methodology page                                                                  |
-<<<<<<< HEAD
-=======
-`npm run build` writes a static site to `out/`. The site and the pipeline output live on the same server and domain: nginx serves `out/` at `/` and the pipeline's `saida/v1/` at `/v1/`, so `NEXT_PUBLIC_HERU_BASE` stays empty and no CORS is needed.
-
-```nginx
-server {
-    root /path/to/HERU/out;
-    location / {
-        try_files $uri $uri/ =404;
-    }
-    location /v1/ {
-        alias /path/to/saida/v1/;
-        add_header Cache-Control "no-cache";
-    }
-}
-```
-
-## Pipeline files
-
-The pipeline publishes small CSV files that the site reads as they are. The calendar uses:
-
-| File                                     | Use                                                                                                                 |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `meta/latest.csv`                        | Number of the last batch, read first and checked every minute                                                       |
-| `meta/batches/{batch}.csv`               | Files changed by a batch, so only those are read again                                                              |
-| `meta/coverage.csv`                      | First and last day of each layer, which separates "not loaded" from 0, and `complete_date`, the last closed UTC day |
-| `meta/countries.csv`                     | Countries in the region filter                                                                                      |
-| `series/countries/{ISO3}/monthly.csv`    | The calendar of a country                                                                                           |
-| `series/countries/{ISO3}/daily.csv`      | The current month against the same days of earlier years                                                            |
-| `series/global/monthly.csv`, `daily.csv` | The same for the whole world                                                                                        |
-| `series/countries/{ISO3}/yearly.csv`     | Hotspots of the chosen year on the filter page                                                                      |
-| `points/{layer}/{year}/{date}.csv.gz`    | Hotspots of each day on the map, for periods up to 7 days                                                           |
-| `grid/monthly/{year}/{month}.csv`        | Hotspots per 0.25 degree cell on the map, for longer periods                                                        |
-| `meta/static_sources.csv`                | Static heat sources, removed from the near real-time points as in the series                                        |
-| `meta/validation.csv`                    | k, k20, error, correlation and confidence shown on the methodology page                                             |
-| `series/.../yearly.csv`                  | The before and after chart on the methodology page                                                                  |
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 
 Every page checks `meta/latest.csv` once a minute, one check at a time. When the batch number grows, the site reads the lists in `meta/batches/` and reloads only the listed files that are on screen; the others leave the cache. It starts over, reading `meta/latest.csv` first and then every file on screen, when a list is missing, when more than 500 batches were skipped or when the number goes down. The status in the header turns into "Dados até" with the time of the last batch when it is more than 2 hours old.
 
@@ -213,19 +161,9 @@ How `harmonized` is built:
 
 - `/calendar` picks the year, the continent and the country (`src/area-filters`).
 - `/calendar/map?area={ISO3}&year={year}` shows the map, the reports and the fire calendar of that country; `area=world` shows the whole world. Each report opens its evidence (`src/report-evidence`): the chart behind the number, a CSV and a link to the month in the calendar.
-<<<<<<< HEAD
-<<<<<<< HEAD
 - `/calendar/compare-dates?area={ISO3}&year={year}` compares two periods of the same length in one area: two maps on the same color scale that move together (a switch lets each one move alone), the totals against the typical for those dates, week by week and month by month (`src/compare-dates`).
 - `/calendar/compare-regions?areas={ISO3},{ISO3}&year={year}` compares up to four countries in the same period, as total hotspots or per 1,000 km² of land, with the month by month calendar on one scale (`src/compare-regions`).
 - `/anomalies?area={ISO3}&year={year}&month={yyyy-mm}` follows the country, year and month chosen in any calendar (`src/calendar-selection` keeps them for the session, so the header links carry them). It compares that month with the typical one, or the last full month when none was chosen. Below it comes the period of the map's date filter (`from`, `to` and `preset` in the address, the last 7 days when none was chosen), then the months that stand out, with the chosen year highlighted, and the calendar in anomaly mode (`src/anomalies`).
-=======
-- `/anomalies?area={ISO3}` compares the last month with the typical one, lists the months that stand out and opens the calendar in anomaly mode (`src/anomalies`).
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-- `/calendar/compare-dates?area={ISO3}&year={year}` compares two periods of the same length in one area: two maps on the same color scale that move together (a switch lets each one move alone), the totals against the typical for those dates, week by week and month by month (`src/compare-dates`).
-- `/calendar/compare-regions?areas={ISO3},{ISO3}&year={year}` compares up to four countries in the same period, as total hotspots or per 1,000 km² of land, with the month by month calendar on one scale (`src/compare-regions`).
-- `/anomalies?area={ISO3}&year={year}&month={yyyy-mm}` follows the country, year and month chosen in any calendar (`src/calendar-selection` keeps them for the session, so the header links carry them). It compares that month with the typical one, or the last full month when none was chosen. Below it comes the period of the map's date filter (`from`, `to` and `preset` in the address, the last 7 days when none was chosen), then the months that stand out, with the chosen year highlighted, and the calendar in anomaly mode (`src/anomalies`).
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 - `/methodology?area={ISO3}` explains the method, with the figures of `meta/validation.csv` for the chosen region (`src/methodology`). The confidence is high with 10,000 MODIS hotspots or more in the calibration years, medium from 1,000 to 9,999 and low below 1,000.
 
 ## Map
@@ -234,19 +172,9 @@ The code is in `src/fire-map`. The globe is drawn with MapLibre from the boundar
 
 - Periods up to 7 days show the hotspots of each day. Science points keep type 0 only, and near real-time points, which have no type, drop the ones whose position, cut to 0.01 degree, is in `meta/static_sources.csv`. This is the rule of the series, so the points of a day match `daily.csv`. Hotspots from the last 24 hours of the period are drawn as active fire.
 - The count in the legend is the sum of the days of the period in `daily.csv`. Only the 24 and 48 hour windows, which do not fit whole days, count the points.
-<<<<<<< HEAD
-<<<<<<< HEAD
 - Longer periods and the seasons show the monthly grid of the months they touch. A cell is kept when it touches the country, even if its center falls in the sea or in a neighbour, so no hotspot of the country is left out (on a small island such as Saint Lucia no cell center falls on land). At a land border a cell may also hold hotspots of the neighbour; the total in the legend does not change, because it is counted hotspot by hotspot in `daily.csv`.
 - Long periods read one grid file per month. The months are added up first and each cell is tested against the country once, in small steps, so the page keeps responding.
 - The latest 24 and 48 hour windows read `recent/`, and fall back to the daily points when it is missing.
-=======
-- Longer periods and the seasons show the monthly grid of the months they touch, keeping the cells whose center is inside the country.
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-- Longer periods and the seasons show the monthly grid of the months they touch. A cell is kept when it touches the country, even if its center falls in the sea or in a neighbour, so no hotspot of the country is left out (on a small island such as Saint Lucia no cell center falls on land). At a land border a cell may also hold hotspots of the neighbour; the total in the legend does not change, because it is counted hotspot by hotspot in `daily.csv`.
-- Long periods read one grid file per month. The months are added up first and each cell is tested against the country once, in small steps, so the page keeps responding.
-- The latest 24 and 48 hour windows read `recent/`, and fall back to the daily points when it is missing.
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 - Each date uses the layer of the calendar: MODIS before 2012, then VIIRS S-NPP, then VIIRS NOAA-20.
 - Seasons use whole months (December to February, March to May, June to August, September to November), named for the hemisphere of the country.
 

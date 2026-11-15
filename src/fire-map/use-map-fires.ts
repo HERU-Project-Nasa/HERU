@@ -14,25 +14,13 @@ import {
   type FireCell,
   type FirePoint,
   loadDayPoints,
-<<<<<<< HEAD
-<<<<<<< HEAD
   loadRecentPoints,
   type RecentWindow,
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  loadRecentPoints,
-  type RecentWindow,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   loadMonthCells,
 } from "./period-fires";
 
 export type MappedPoint = FirePoint & { active: boolean };
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 const CELLS_PER_TASK = 4000;
 
 function nextTask(): Promise<void> {
@@ -46,11 +34,6 @@ function nextTask(): Promise<void> {
   });
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 export type MapFires =
   | { status: "loading" }
   | { status: "error" }
@@ -79,10 +62,6 @@ async function readPoints(
   period: MapPeriod,
   area: string | null,
   pointLayers: SeriesLayer[],
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   recentWindow: RecentWindow | null,
 ): Promise<MapFires> {
   const dates = periodDates(period);
@@ -96,16 +75,6 @@ async function readPoints(
           loadDayPoints(pointLayers[index], date, area),
         ),
       );
-<<<<<<< HEAD
-=======
-): Promise<MapFires> {
-  const dates = periodDates(period);
-  const days = await Promise.all(
-    dates.map((date, index) => loadDayPoints(pointLayers[index], date, area)),
-  );
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const loaded = days.flatMap((day) => day ?? []);
   const latest = Math.max(
     0,
@@ -123,15 +92,7 @@ async function readPoints(
     mode: "points",
     points,
     activeCount: points.filter((point) => point.active).length,
-<<<<<<< HEAD
-<<<<<<< HEAD
     missingDays: recent ? 0 : days.filter((day) => day === null).length,
-=======
-    missingDays: days.filter((day) => day === null).length,
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-    missingDays: recent ? 0 : days.filter((day) => day === null).length,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     totalDays: dates.length,
   };
 }
@@ -156,10 +117,6 @@ async function readCells(
       loadMonthCells(month, cellColumns[index], box),
     ),
   ]);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const totals = new Map<string, FireCell>();
   for (const cells of monthly) {
     await nextTask();
@@ -189,42 +146,11 @@ async function readCells(
     ) {
       cells.push(cell);
     }
-<<<<<<< HEAD
-=======
-  const country = shape && shapeCells(shape, CELL_SIZE);
-  const totals = new Map<string, FireCell>();
-  for (const cell of monthly.flatMap((cells) => cells ?? [])) {
-    if (
-      country &&
-      !cellTouchesShape(cell.latitude, cell.longitude, CELL_SIZE, country)
-    ) {
-      continue;
-    }
-    const key = `${cell.latitude}:${cell.longitude}`;
-    const total = totals.get(key);
-    const count = cellWeight
-      ? cell.count * cellWeight(cell.latitude, cell.longitude)
-      : cell.count;
-    totals.set(key, {
-      ...cell,
-      count: (total?.count ?? 0) + count,
-    });
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   }
   return {
     status: "ready",
     mode: "cells",
-<<<<<<< HEAD
-<<<<<<< HEAD
     cells,
-=======
-    cells: [...totals.values()],
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-    cells,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     months,
     missingMonths: monthly.filter((cells) => cells === null).length,
   };
@@ -241,14 +167,7 @@ export function useMapFires(
   cellColumns: CellColumn[],
   cellWeight: ((latitude: number, longitude: number) => number) | null,
   weightKey: string,
-<<<<<<< HEAD
-<<<<<<< HEAD
   recentWindow: RecentWindow | null,
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  recentWindow: RecentWindow | null,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 ): MapFires {
   const revision = usePipelineRevision();
   const dataKey =
@@ -262,15 +181,7 @@ export function useMapFires(
           points,
           coverage.lastDataDate,
           points ? pointLayers.join(",") : cellColumns.join(","),
-<<<<<<< HEAD
-<<<<<<< HEAD
           points ? (recentWindow ?? "") : weightKey,
-=======
-          points ? "" : weightKey,
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-          points ? (recentWindow ?? "") : weightKey,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
         ].join("|")
       : null;
   const requestKey = dataKey && `${dataKey}|${revision}|${attempt}`;
@@ -286,15 +197,7 @@ export function useMapFires(
     }
     let current = true;
     const request = points
-<<<<<<< HEAD
-<<<<<<< HEAD
       ? readPoints(period, area, pointLayers, recentWindow)
-=======
-      ? readPoints(period, area, pointLayers)
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-      ? readPoints(period, area, pointLayers, recentWindow)
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
       : readCells(period, area, bounds, cellColumns, cellWeight);
     request.then(
       (fires) => current && setLoaded({ requestKey, dataKey, fires }),
@@ -316,14 +219,7 @@ export function useMapFires(
     pointLayers,
     cellColumns,
     cellWeight,
-<<<<<<< HEAD
-<<<<<<< HEAD
     recentWindow,
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-    recentWindow,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   ]);
 
   const fresh =

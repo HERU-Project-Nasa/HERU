@@ -14,14 +14,7 @@ import { COUNTRY_BOUNDARIES_URL } from "@/country-outlines/country-outlines";
 import { HEAT_TOKENS } from "@/fire-calendar/calendar-cell-style";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import type { MapCamera, MapLink } from "./map-link";
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-import type { MapCamera, MapLink } from "./map-link";
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import type { MappedPoint } from "./use-map-fires";
 import type { AreaBounds, FireCell } from "./period-fires";
 
@@ -222,65 +215,30 @@ function ControlButton({
 export function FireMap({
   label,
   area,
-<<<<<<< HEAD
-<<<<<<< HEAD
   areas,
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  areas,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   bounds,
   points,
   cells,
   cellBreaks,
   renderTooltip,
-<<<<<<< HEAD
-<<<<<<< HEAD
   link = null,
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  link = null,
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   children,
 }: {
   label: string;
   area: string | null;
-<<<<<<< HEAD
-<<<<<<< HEAD
   areas?: string[];
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  areas?: string[];
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   bounds: AreaBounds | null;
   points: MappedPoint[];
   cells: FireCell[];
   cellBreaks: number[];
   renderTooltip: (tooltip: MapTooltip, pinned: boolean) => ReactNode;
-<<<<<<< HEAD
-<<<<<<< HEAD
   link?: MapLink | null;
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  link?: MapLink | null;
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   children: ReactNode;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
-<<<<<<< HEAD
-<<<<<<< HEAD
   const areaKey = (areas ?? (area ? [area] : [])).join(",");
-=======
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-  const areaKey = (areas ?? (area ? [area] : [])).join(",");
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const [globe, setGlobe] = useState(true);
   const [look, setLook] = useState<MapLook>("sketch");
   const [fullscreen, setFullscreen] = useState(false);
@@ -577,21 +535,9 @@ export function FireMap({
       return;
     }
     const filter = [
-<<<<<<< HEAD
-<<<<<<< HEAD
       "in",
       ["get", "code"],
       ["literal", areaKey ? areaKey.split(",") : []],
-=======
-      "==",
-      ["get", "code"],
-      area ?? "",
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
-      "in",
-      ["get", "code"],
-      ["literal", areaKey ? areaKey.split(",") : []],
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     ] as ExpressionSpecification;
     map.setFilter("area-fill", filter);
     map.setFilter("area-line", filter);
@@ -600,10 +546,6 @@ export function FireMap({
       ? 0
       : 1200;
     showArea(map, bounds, duration);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   }, [map, areaKey, bounds]);
 
   useEffect(() => {
@@ -642,12 +584,6 @@ export function FireMap({
       stopFollowing();
     };
   }, [map, link]);
-<<<<<<< HEAD
-=======
-  }, [map, area, bounds]);
->>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
-=======
->>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 
   useEffect(() => {
     map?.getSource<GeoJSONSource>("points")?.setData(pointCollection(points));
