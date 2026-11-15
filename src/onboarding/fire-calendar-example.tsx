@@ -1,16 +1,29 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
+import { useEffect, useMemo, useRef } from "react";
 import {
   type CalendarBar,
   startCalendarBars,
 } from "@/calendar-3d/calendar-bars-scene";
+import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
+import { formatCount, heatRangeLabel } from "@/fire-calendar/calendar-labels";
 import {
-  ILLUSTRATIVE_CALENDAR,
-  ILLUSTRATIVE_OUT_OF_PATTERN,
-  ILLUSTRATIVE_PARTIAL_MONTH,
-} from "./illustrative-calendar";
+  buildCalendarYears,
+  type CalendarCell,
+  type CalendarYear,
+} from "@/fire-calendar/calendar-matrix";
+import {
+  analyzeCalendar,
+  heatLevel,
+  isMeasured,
+} from "@/fire-calendar/calendar-statistics";
+import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
+import { usePipelineFile } from "@/pipeline/pipeline-files";
+import { type SeriesMonthRow, seriesPath } from "@/pipeline/series-row";
+
+const EXAMPLE_AREA = "USA";
+const EXAMPLE_YEARS = 12;
+const ALL_MONTHS = Array(12).fill(true);
 
 const MONTHS = [
   ["janeiro", "jan"],
@@ -27,62 +40,109 @@ const MONTHS = [
   ["dezembro", "dez"],
 ];
 
-const HEAT_SCALE = [
-  { limit: 1, label: "0", className: "border border-line bg-heat-0" },
-  { limit: 1_000, label: "< 1 mil", className: HEAT_BACKGROUNDS[0] },
-  { limit: 3_000, label: "1-3 mil", className: HEAT_BACKGROUNDS[1] },
-  { limit: 10_000, label: "3-10 mil", className: HEAT_BACKGROUNDS[2] },
-  { limit: 30_000, label: "10-30 mil", className: HEAT_BACKGROUNDS[3] },
-  { limit: 100_000, label: "30-100 mil", className: HEAT_BACKGROUNDS[4] },
-  { limit: Infinity, label: "≥ 100 mil", className: HEAT_BACKGROUNDS[5] },
-];
+type CalendarExample = {
+  years: CalendarYear[];
+  bars: CalendarBar[];
+  scale: { label: string; className: string }[];
+};
+
+function buildExample(
+  coverageRows: CoverageRow[] | null,
+  monthlyRows: SeriesMonthRow[] | null,
+): CalendarExample | null {
+  if (!coverageRows || !monthlyRows) {
+    return null;
+  }
+  const allYears = buildCalendarYears(
+    monthlyRows,
+    readCoverage(coverageRows),
+    "harmonized",
+    "all",
+  );
+  if (allYears.length === 0) {
+    return null;
+  }
+  const analysis = analyzeCalendar(allYears, allYears, ALL_MONTHS);
+  const outliers = new Set(analysis.outliers.map((cell) => cell.key));
+  const years = allYears.slice(-EXAMPLE_YEARS);
+  const bars = years.flatMap((year, row) =>
+    year.cells.map((cell): CalendarBar => {
+      const measured = isMeasured(cell);
+      const outOfPattern = outliers.has(cell.key);
+      return {
+        row,
+        month: cell.month - 1,
+        count: measured ? (cell.value ?? 0) : null,
+        heat:
+          cell.state === "value" && cell.value
+            ? heatLevel(cell.value, analysis.breaks)
+            : 0,
+        outOfPattern,
+        inProgress: cell.partial && measured,
+        label: cellLabel(cell, outOfPattern),
+      };
+    }),
+  );
+  const limits = analysis.breaks;
+  const scale = [
+    { label: "0", className: "border border-line bg-heat-0" },
+    ...HEAT_BACKGROUNDS.map((className, index) => ({
+      className,
+      label:
+        limits.length === 0
+          ? "> 0"
+          : heatRangeLabel(
+              index === 0 ? null : limits[index - 1],
+              index === HEAT_BACKGROUNDS.length - 1 ? null : limits[index],
+            ),
+    })),
+  ];
+  return { years, bars, scale };
+}
 
 const OUT_OF_PATTERN_RING =
   "shadow-[inset_0_0_0_1.5px_var(--color-ink),0_0_0_1px_var(--color-surface-ground)]";
 const IN_PROGRESS_STRIPES =
   "bg-[repeating-linear-gradient(135deg,rgba(10,10,11,0)_0_4px,rgba(10,10,11,0.55)_4px_6px)]";
-const COUNT_FORMAT = new Intl.NumberFormat("pt-BR");
-
-const BARS: CalendarBar[] = ILLUSTRATIVE_CALENDAR.flatMap(
-  ({ year, monthlyCounts }, row) =>
-    monthlyCounts.map((count, month) => {
-      const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
-      const outOfPattern = ILLUSTRATIVE_OUT_OF_PATTERN.includes(monthKey);
-      const inProgress = monthKey === ILLUSTRATIVE_PARTIAL_MONTH;
-      return {
-        row,
-        month,
-        count,
-        heat:
-          count === null
-            ? 0
-            : HEAT_SCALE.findIndex((step) => count < step.limit),
-        outOfPattern,
-        inProgress,
-        label: cellLabel(year, month, count, outOfPattern, inProgress),
-      };
-    }),
-);
-
 export function FireCalendarExample() {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(
-    () =>
-      startCalendarBars(stageRef.current!, canvasRef.current!, BARS, {
-        months: MONTHS.map(([, abbreviation]) => abbreviation),
-        years: ILLUSTRATIVE_CALENDAR.map(({ year }) => String(year)),
-        tooltip: tooltipRef.current!,
-      }),
-    [],
+  const coverageRows = usePipelineFile<CoverageRow>("meta/coverage.csv").rows;
+  const monthlyRows = usePipelineFile<SeriesMonthRow>(
+    seriesPath("monthly", EXAMPLE_AREA),
+  ).rows;
+  const example = useMemo(
+    () => buildExample(coverageRows, monthlyRows),
+    [coverageRows, monthlyRows],
   );
+
+  useEffect(() => {
+    if (!example) {
+      return;
+    }
+    return startCalendarBars(
+      stageRef.current!,
+      canvasRef.current!,
+      example.bars,
+      {
+        months: MONTHS.map(([, abbreviation]) => abbreviation),
+        years: example.years.map(({ year }) => String(year)),
+        tooltip: tooltipRef.current!,
+      },
+    );
+  }, [example]);
+
+  const firstYear = example?.years[0]?.year;
+  const lastYear = example?.years.at(-1)?.year;
 
   return (
     <figure className="rounded-xl border border-line bg-surface px-5 py-6 sm:px-10 sm:py-8">
       <figcaption>
-        <p className="type-heading-sm text-ink">Brasil, 2015-2026</p>
+        <p className="type-heading-sm min-h-6 text-ink">
+          Estados Unidos
+          {firstYear && lastYear ? `, ${firstYear}-${lastYear}` : ""}
+        </p>
         <p className="type-caption mt-1 text-ink-muted">
           Focos por mês · equivalente VIIRS
         </p>
@@ -117,14 +177,16 @@ export function FireCalendarExample() {
             </span>
           ))}
         </div>
-        {ILLUSTRATIVE_CALENDAR.map(({ year }, row) => (
+        {example?.years.map(({ year }, row) => (
           <div key={year} role="row">
             <span role="rowheader">{year}</span>
-            {BARS.filter((bar) => bar.row === row).map((bar) => (
-              <span key={bar.month} role="cell">
-                {bar.label}
-              </span>
-            ))}
+            {example.bars
+              .filter((bar) => bar.row === row)
+              .map((bar) => (
+                <span key={bar.month} role="cell">
+                  {bar.label}
+                </span>
+              ))}
           </div>
         ))}
       </div>
@@ -132,7 +194,7 @@ export function FireCalendarExample() {
         <div className="flex flex-col gap-2">
           <span className="type-caption text-ink-muted">Focos por mês</span>
           <ul className="grid grid-cols-4 gap-1 sm:grid-cols-7">
-            {HEAT_SCALE.map((step) => (
+            {(example?.scale ?? []).map((step) => (
               <li key={step.label} className="flex min-w-0 flex-col gap-1.5">
                 <span
                   aria-hidden="true"
@@ -175,18 +237,12 @@ export function FireCalendarExample() {
   );
 }
 
-function cellLabel(
-  year: number,
-  month: number,
-  count: number | null,
-  outOfPattern: boolean,
-  inProgress: boolean,
-): string {
-  const monthName = `${MONTHS[month][0]} de ${year}`;
-  if (count === null) {
+function cellLabel(cell: CalendarCell, outOfPattern: boolean): string {
+  const monthName = `${MONTHS[cell.month - 1][0]} de ${cell.year}`;
+  if (!isMeasured(cell)) {
     return `${monthName}: sem dados ainda`;
   }
-  return `${monthName}: ${COUNT_FORMAT.format(count)} focos${outOfPattern ? ", fora do padrão" : ""}${inProgress ? ", parcial" : ""}`;
+  return `${monthName}: ${formatCount(cell.value ?? 0)} focos${outOfPattern ? ", fora do padrão" : ""}${cell.partial ? ", parcial" : ""}${cell.provisional ? ", preliminar" : ""}`;
 }
 
 function OutOfPatternDot() {

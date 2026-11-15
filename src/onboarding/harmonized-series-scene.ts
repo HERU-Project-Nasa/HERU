@@ -21,14 +21,23 @@ export const SERIES_X = [
   8, 49.8, 91.7, 133.5, 175.4, 217.2, 259.1, 300.9, 342.8, 384.6, 426.5, 468.3,
   510.2, 552,
 ];
-export const RAW_Y = [
-  228, 222.7, 220, 230.7, 217.3, 234.7, 238.7, 214.7, 236, 128, 174.7, 154.7,
-  141.3, 148,
+const RAW_COUNTS = [
+  108533, 153152, 163611, 122117, 136415, 115728, 112781, 94179, 120126, 440226,
+  313673, 295422, 491570, 342203,
 ];
-export const HARMONIZED_Y = [
-  108, 86.7, 76, 118.7, 65.3, 134.7, 150.7, 54.7, 140, 128, 174.7, 154.7, 141.3,
-  148,
+const HARMONIZED_COUNTS = [
+  364801.63, 514577.13, 545817.82, 408218.68, 465438.07, 387835.91, 374444.27,
+  299886.84, 431805.54, 440226, 313673, 295422, 491570, 342203,
 ];
+const SERIES_TOP_Y = 54;
+const SERIES_PEAK = Math.max(...RAW_COUNTS, ...HARMONIZED_COUNTS);
+
+function countToY(count: number): number {
+  return BASELINE - (count / SERIES_PEAK) * (BASELINE - SERIES_TOP_Y);
+}
+
+export const RAW_Y = RAW_COUNTS.map(countToY);
+export const HARMONIZED_Y = HARMONIZED_COUNTS.map(countToY);
 
 const LOOP_SECONDS = 11;
 const RAW_DRAW = [0.3, 2.1] as const;

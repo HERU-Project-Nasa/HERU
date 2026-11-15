@@ -1,4 +1,9 @@
+import type { MultiPolygon } from "geojson";
 import { describe, expect, it } from "vitest";
+import {
+  cellTouchesShape,
+  shapeCells,
+} from "@/country-outlines/country-outlines";
 import { buildCalendarYears } from "@/fire-calendar/calendar-matrix";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesMonthRow } from "@/pipeline/series-row";
@@ -8,6 +13,7 @@ import {
   presetPeriod,
   usesPoints,
 } from "./map-period";
+import { sensorCovers, sensorFactor } from "./sensor-picker";
 import {
   blockId,
   countedInSeries,
@@ -219,5 +225,56 @@ describe("harmonized weight of a point", () => {
         factors,
       ),
     ).toBe(0.991);
+  });
+});
+
+describe("sensor picker", () => {
+  it("offers a sensor only inside its coverage", () => {
+    const week = presetPeriod("7d", "2026-11-14");
+    expect(sensorCovers(coverage.spans.get("viirs_snpp"), week)).toBe(false);
+    expect(sensorCovers(coverage.spans.get("viirs_noaa20"), week)).toBe(true);
+    expect(
+      sensorCovers(
+        coverage.spans.get("viirs_noaa20"),
+        presetPeriod("7d", "2014-12-31"),
+      ),
+    ).toBe(false);
+  });
+
+  it("harmonizes only the sensors with a factor", () => {
+    expect(sensorFactor("modis")).toBe("k");
+    expect(sensorFactor("viirs_noaa20")).toBe("k20");
+    expect(sensorFactor("viirs_snpp")).toBe("one");
+    expect(sensorFactor("viirs_noaa21")).toBeNull();
+    expect(sensorFactor("landsat")).toBeNull();
+  });
+});
+
+describe("grid cells of a small island", () => {
+  const island: MultiPolygon = {
+    type: "MultiPolygon",
+    coordinates: [
+      [
+        [
+          [-61.07, 13.8],
+          [-60.95, 13.72],
+          [-60.89, 13.9],
+          [-60.93, 14.09],
+          [-61.03, 14.0],
+          [-61.07, 13.8],
+        ],
+      ],
+    ],
+  };
+  const cells = shapeCells(island, 0.25);
+
+  it("keeps the cells that touch the island even with the center at sea", () => {
+    expect(cellTouchesShape(13.875, -60.875, 0.25, cells)).toBe(true);
+    expect(cellTouchesShape(13.875, -61.125, 0.25, cells)).toBe(true);
+  });
+
+  it("leaves out the cells of the neighbour islands", () => {
+    expect(cellTouchesShape(13.125, -61.125, 0.25, cells)).toBe(false);
+    expect(cellTouchesShape(14.625, -60.875, 0.25, cells)).toBe(false);
   });
 });

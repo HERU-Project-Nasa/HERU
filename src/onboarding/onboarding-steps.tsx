@@ -42,16 +42,17 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
   },
   {
     eyebrow: "Um susto nos dados",
-    title: "Em 2012, os focos de calor na Bolívia quase quintuplicaram.",
+    title:
+      "Em 2012, os focos de calor nos Estados Unidos quase quadruplicaram.",
     body: (
       <>
         <p className="type-body-lg text-ink">
           Pelo menos é o que aparece quando juntamos tudo o que os satélites
-          registraram.
+          registraram: o ano de 2012 tem quase quatro vezes os focos de 2011.
         </p>
         <p className="type-body-lg text-ink">
-          Parece uma tragédia. Mas, naquele ano, nada fora do comum aconteceu
-          nas matas bolivianas.
+          Parece um ano trágico. Mas será que o fogo mudou tanto assim de um ano
+          para o outro?
         </p>
       </>
     ),
@@ -92,8 +93,9 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
           uma escala só: o equivalente VIIRS.
         </p>
         <p className="type-body-lg text-ink">
-          Assim, um salto no gráfico passa a significar mais fogo, e não um
-          sensor novo.
+          Nos Estados Unidos, o salto de 2012 some: na mesma régua, 2012 fica
+          quase igual a 2011. Um salto no gráfico passa a significar mais fogo,
+          e não um sensor novo.
         </p>
       </>
     ),

@@ -61,6 +61,57 @@ export function insideShape(
   );
 }
 
+export type ShapeCells = { shape: MultiPolygon; edgeCells: Set<string> };
+
+function cellKey(latitude: number, longitude: number, size: number): string {
+  return `${Math.floor(latitude / size)}:${Math.floor(longitude / size)}`;
+}
+
+export function shapeCells(shape: MultiPolygon, size: number): ShapeCells {
+  const edgeCells = new Set<string>();
+  const step = size / 5;
+  for (const polygon of shape.coordinates) {
+    for (const ring of polygon) {
+      for (let index = 1; index < ring.length; index++) {
+        const [fromLongitude, fromLatitude] = ring[index - 1];
+        const [toLongitude, toLatitude] = ring[index];
+        const samples = Math.max(
+          1,
+          Math.ceil(
+            Math.max(
+              Math.abs(toLongitude - fromLongitude),
+              Math.abs(toLatitude - fromLatitude),
+            ) / step,
+          ),
+        );
+        for (let sample = 0; sample <= samples; sample++) {
+          const share = sample / samples;
+          edgeCells.add(
+            cellKey(
+              fromLatitude + (toLatitude - fromLatitude) * share,
+              fromLongitude + (toLongitude - fromLongitude) * share,
+              size,
+            ),
+          );
+        }
+      }
+    }
+  }
+  return { shape, edgeCells };
+}
+
+export function cellTouchesShape(
+  latitude: number,
+  longitude: number,
+  size: number,
+  { shape, edgeCells }: ShapeCells,
+): boolean {
+  return (
+    edgeCells.has(cellKey(latitude, longitude, size)) ||
+    insideShape(longitude, latitude, shape)
+  );
+}
+
 function loadCountryOutlines(): Promise<CountryOutlines> {
   outlinesRequest ??= fetch(COUNTRY_OUTLINES_URL).then((response) => {
     if (!response.ok) {

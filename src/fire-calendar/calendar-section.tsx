@@ -66,6 +66,15 @@ export function downloadCsv(fileName: string, lines: string[]) {
   URL.revokeObjectURL(url);
 }
 
+type YearSpan = "recent" | "all" | "custom";
+
+const RECENT_YEARS = 10;
+
+const YEAR_SPANS: { value: YearSpan; label: string }[] = [
+  { value: "recent", label: "Últimos 10 anos" },
+  { value: "all", label: "Todos os anos" },
+];
+
 export function CalendarSection({
   calendar,
   onAreaChange,
@@ -82,6 +91,16 @@ export function CalendarSection({
   focusRequest: string | null;
 }) {
   const [mode, setMode] = useState(initialMode);
+  const latestYear = calendar.years.at(-1)?.year ?? null;
+  const yearSpan: YearSpan =
+    latestYear !== null &&
+    calendar.yearRange.first === latestYear - RECENT_YEARS + 1 &&
+    calendar.yearRange.last === latestYear
+      ? "recent"
+      : calendar.yearRange.first === calendar.years[0]?.year &&
+          calendar.yearRange.last === latestYear
+        ? "all"
+        : "custom";
   const [view, setView] = useState<CalendarView>("3d");
   const [handledFocus, setHandledFocus] = useState(focusRequest);
   if (focusRequest !== handledFocus) {
@@ -143,12 +162,33 @@ export function CalendarSection({
           </h2>
           <p className="type-body-sm text-ink-muted">{description}</p>
         </div>
-        <SegmentedChoice
-          label="Modo do calendário"
-          options={CALENDAR_MODES}
-          value={mode}
-          onChange={setMode}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <SegmentedChoice
+            label="Modo do calendário"
+            options={CALENDAR_MODES}
+            value={mode}
+            onChange={setMode}
+          />
+          {latestYear !== null && (
+            <div className="md:hidden">
+              <SegmentedChoice
+                label="Anos exibidos"
+                options={YEAR_SPANS}
+                value={yearSpan}
+                onChange={(span) =>
+                  calendar.setYearRange(
+                    span === "recent"
+                      ? {
+                          first: latestYear - RECENT_YEARS + 1,
+                          last: latestYear,
+                        }
+                      : null,
+                  )
+                }
+              />
+            </div>
+          )}
+        </div>
       </div>
       <CalendarFilters
         areaOptions={calendar.areaOptions}

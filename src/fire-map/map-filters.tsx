@@ -1,3 +1,4 @@
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
 import { formatCompact, formatHotspots } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
@@ -104,6 +105,83 @@ function SeasonCard({
 
 export type MapCount = "harmonized" | "raw";
 
+function CountInfo() {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const panelId = useId();
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const closeOutside = (event: PointerEvent) => {
+      if (!boxRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div ref={boxRef} className="inline-flex">
+      <button
+        type="button"
+        aria-label="Os pontos do mapa são harmonizados?"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen(!open)}
+        className={`flex size-6 cursor-pointer items-center justify-center rounded-full transition-colors duration-120 ease-standard ${open ? "bg-ink text-ink-inverse" : "text-ink-muted hover:bg-surface-hover hover:text-ink"}`}
+      >
+        <MaterialSymbol name="info" className="size-[18px]" />
+      </button>
+      {open && (
+        <div
+          id={panelId}
+          role="dialog"
+          aria-label="Os pontos do mapa são harmonizados?"
+          className="absolute top-8 left-0 z-40 flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-3 rounded-md border border-line-strong bg-surface-raised p-4 text-left tracking-normal normal-case shadow-overlay"
+        >
+          <p className="type-heading-sm text-ink">
+            Os pontos do mapa são harmonizados?
+          </p>
+          <p className="type-body-sm text-ink">
+            Não. Cada ponto é uma detecção real, do jeito que o satélite viu: um
+            pixel mais quente que o entorno.
+          </p>
+          <p className="type-body-sm text-ink">
+            O que é harmonizado é a{" "}
+            <strong className="font-semibold">contagem</strong>. O MODIS tem
+            pixel de 1 km e enxerga menos focos que o VIIRS, de 375 m. Para
+            comparar anos diferentes, cada ponto entra na soma com um peso: o
+            fator k do bloco de 5° onde ele caiu.
+          </p>
+          <p className="type-body-sm text-ink-muted">
+            Por isso, na contagem Harmonizada o total pode ser diferente do
+            número de pontos desenhados. Na Bruta, cada ponto vale 1.
+          </p>
+          <a
+            href="/methodology#harmonizacao"
+            className="type-button inline-flex items-center gap-1.5 self-start text-ink hover:underline"
+          >
+            Como harmonizamos
+            <MaterialSymbol name="arrow_forward" className="size-[18px]" />
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const COUNT_OPTIONS: { value: MapCount; label: string }[] = [
   { value: "harmonized", label: "Harmonizada" },
   { value: "raw", label: "Bruta" },
@@ -121,6 +199,8 @@ export function MapFilters({
   onShiftSeasons,
   count,
   onCountChange,
+  countLocked,
+  sensorPicker,
 }: {
   period: MapPeriod;
   lastDataDate: string;
@@ -133,6 +213,8 @@ export function MapFilters({
   onShiftSeasons: (step: number) => void;
   count: MapCount;
   onCountChange: (count: MapCount) => void;
+  countLocked: string | null;
+  sensorPicker: ReactNode;
 }) {
   const largest = Math.max(
     1,
@@ -146,7 +228,7 @@ export function MapFilters({
   return (
     <section
       aria-labelledby="map-filters-title"
-      className="mt-12 flex flex-col gap-8"
+      className="flex flex-col gap-8 md:mt-12"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 id="map-filters-title" className="type-section-title text-ink">
@@ -210,21 +292,34 @@ export function MapFilters({
             </label>
           </div>
           <div className="flex flex-col gap-1.5">
-            <span className="type-caption text-ink-muted">Contagem</span>
-            <SegmentedChoice
-              label="Contagem do mapa"
-              options={COUNT_OPTIONS}
-              value={count}
-              onChange={onCountChange}
-            />
+            <span className="type-caption relative flex items-center gap-1 text-ink-muted">
+              Contagem
+              <CountInfo />
+            </span>
+            {countLocked ? (
+              <span className="type-chip inline-flex h-10 items-center rounded-sm border border-line px-4 text-ink">
+                Bruta
+              </span>
+            ) : (
+              <SegmentedChoice
+                label="Contagem do mapa"
+                options={COUNT_OPTIONS}
+                value={count}
+                onChange={onCountChange}
+              />
+            )}
           </div>
         </div>
         <p className="type-body-sm max-w-3xl text-ink-muted">
-          {count === "harmonized"
-            ? "Harmonizada: os números estão em focos equivalentes VIIRS, a régua do calendário. Cada ponto é uma detecção real e vale o fator k do bloco de 5° onde caiu."
-            : "Bruta: os números contam as detecções do sensor desenhado, sem conversão. Antes de 2012 o MODIS conta menos focos que o VIIRS, porque o pixel dele é maior."}
+          {countLocked
+            ? `Bruta: ${countLocked}`
+            : count === "harmonized"
+              ? "Harmonizada: os números estão em focos equivalentes VIIRS, a régua do calendário. Cada ponto é uma detecção real e vale o fator k do bloco de 5° onde caiu."
+              : "Bruta: os números contam as detecções do sensor desenhado, sem conversão. Antes de 2012 o MODIS conta menos focos que o VIIRS, porque o pixel dele é maior."}
         </p>
       </div>
+
+      {sensorPicker}
 
       {seasonYears && (
         <div className="flex flex-col gap-4">

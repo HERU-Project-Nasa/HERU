@@ -58,7 +58,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-1 justify-self-end">
-          <div className="hidden lg:mr-2 lg:flex">
+          <div className="mr-1 flex lg:mr-2">
             <DataStatus />
           </div>
           <BackgroundMusic />

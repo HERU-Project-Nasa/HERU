@@ -8,6 +8,7 @@ import {
   Map as MapLibreMap,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { m } from "motion/react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { COUNTRY_BOUNDARIES_URL } from "@/country-outlines/country-outlines";
 import { HEAT_TOKENS } from "@/fire-calendar/calendar-cell-style";
@@ -19,9 +20,17 @@ import type { AreaBounds, FireCell } from "./period-fires";
 export type MapTooltip =
   { kind: "point"; point: MappedPoint } | { kind: "cell"; cell: FireCell };
 
-type HoverPlace = { tooltip: MapTooltip; x: number; y: number };
+type HoverPlace = {
+  tooltip: MapTooltip;
+  x: number;
+  y: number;
+  anchorX: number;
+  anchorY: number;
+  pinned: boolean;
+};
 
-const TOOLTIP_WIDTH = 264;
+const TOOLTIP_WIDTH = 296;
+const HINT_KEY = "heru:map-hint";
 const FIT_PADDING = 120;
 const FIT_MAX_ZOOM = 6;
 const WORLD_VIEW = { center: [0, 15] as [number, number], zoom: 1.6 };
@@ -218,7 +227,7 @@ export function FireMap({
   points: MappedPoint[];
   cells: FireCell[];
   cellBreaks: number[];
-  renderTooltip: (tooltip: MapTooltip) => ReactNode;
+  renderTooltip: (tooltip: MapTooltip, pinned: boolean) => ReactNode;
   children: ReactNode;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -228,6 +237,14 @@ export function FireMap({
   const [look, setLook] = useState<MapLook>("sketch");
   const [fullscreen, setFullscreen] = useState(false);
   const [hover, setHover] = useState<HoverPlace | null>(null);
+  const [hintSeen, setHintSeen] = useState(() => {
+    try {
+      return window.localStorage.getItem(HINT_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const hoverRef = useRef<HoverPlace | null>(null);
   const pointsRef = useRef(points);
   const cellsRef = useRef(cells);
 
@@ -235,6 +252,10 @@ export function FireMap({
     pointsRef.current = points;
     cellsRef.current = cells;
   }, [points, cells]);
+
+  useEffect(() => {
+    hoverRef.current = hover;
+  }, [hover]);
 
   useEffect(() => {
     const heat = (level: number) => themeColor(HEAT_TOKENS[level - 1]);
@@ -416,38 +437,82 @@ export function FireMap({
       attributionControl: false,
       renderWorldCopies: false,
     });
-    const place = (event: MapLayerMouseEvent) => ({
-      x: Math.max(
-        8,
-        Math.min(
-          event.point.x + 16,
-          (stageRef.current?.clientWidth ?? 0) - TOOLTIP_WIDTH - 8,
-        ),
-      ),
-      y: Math.max(8, event.point.y - 24),
-    });
-    const showPoint = (event: MapLayerMouseEvent) => {
-      const index = event.features?.[0]?.properties?.index;
+    const place = (
+      longitude: number,
+      latitude: number,
+      tooltip: MapTooltip,
+      pinned: boolean,
+    ): HoverPlace => {
+      const anchor = instance.project([longitude, latitude]);
+      const width = stageRef.current?.clientWidth ?? 0;
+      const right = anchor.x + 20 + TOOLTIP_WIDTH <= width - 8;
+      return {
+        tooltip,
+        pinned,
+        anchorX: anchor.x,
+        anchorY: anchor.y,
+        x: Math.max(8, right ? anchor.x + 20 : anchor.x - 20 - TOOLTIP_WIDTH),
+        y: Math.max(8, anchor.y - 28),
+      };
+    };
+    const show = (event: MapLayerMouseEvent, pinned: boolean) => {
+      if (!pinned && hoverRef.current?.pinned) {
+        return;
+      }
+      setHintSeen(true);
+      try {
+        window.localStorage.setItem(HINT_KEY, "1");
+      } catch {
+        setHintSeen(true);
+      }
+      const feature = event.features?.[0];
+      const index = feature?.properties?.index;
+      if (feature?.layer.id === "cells") {
+        const cell = cellsRef.current[index];
+        if (cell) {
+          setHover(
+            place(
+              cell.longitude,
+              cell.latitude,
+              { kind: "cell", cell },
+              pinned,
+            ),
+          );
+        }
+        return;
+      }
       const point = pointsRef.current[index];
       if (point) {
-        setHover({ tooltip: { kind: "point", point }, ...place(event) });
+        setHover(
+          place(
+            point.longitude,
+            point.latitude,
+            { kind: "point", point },
+            pinned,
+          ),
+        );
       }
     };
-    const showCell = (event: MapLayerMouseEvent) => {
-      const index = event.features?.[0]?.properties?.index;
-      const cell = cellsRef.current[index];
-      if (cell) {
-        setHover({ tooltip: { kind: "cell", cell }, ...place(event) });
+    const hoverFeature = (event: MapLayerMouseEvent) => show(event, false);
+    const pinFeature = (event: MapLayerMouseEvent) => show(event, true);
+    const leave = () => {
+      if (!hoverRef.current?.pinned) {
+        setHover(null);
       }
     };
     const hide = () => setHover(null);
-    const pointLayers = ["points", "active-points", "active-halo"];
-    instance.on("mousemove", pointLayers, showPoint);
-    instance.on("click", pointLayers, showPoint);
-    instance.on("mouseleave", pointLayers, hide);
-    instance.on("mousemove", "cells", showCell);
-    instance.on("click", "cells", showCell);
-    instance.on("mouseleave", "cells", hide);
+    const featureLayers = ["active-points", "active-halo", "points", "cells"];
+    instance.on("mousemove", featureLayers, hoverFeature);
+    instance.on("click", featureLayers, pinFeature);
+    instance.on("mouseleave", featureLayers, leave);
+    instance.on("click", (event) => {
+      const touched = instance.queryRenderedFeatures(event.point, {
+        layers: featureLayers.filter((layer) => instance.getLayer(layer)),
+      });
+      if (touched.length === 0) {
+        hide();
+      }
+    });
     instance.on("movestart", hide);
     instance.on("load", () => setMap(instance));
     const leaveFullscreen = () =>
@@ -513,9 +578,16 @@ export function FireMap({
     }
   };
 
+  const showHint = !hintSeen && (points.length > 0 || cells.length > 0);
+
   return (
     <div
       ref={stageRef}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          setHover(null);
+        }
+      }}
       className="relative h-[520px] overflow-hidden rounded-lg border border-line bg-surface-ground sm:h-[600px]"
     >
       <div className="absolute inset-0">
@@ -555,13 +627,46 @@ export function FireMap({
         />
       </div>
       <MapLookToggle look={look} onChange={changeLook} />
+      {showHint && (
+        <p className="type-body-sm pointer-events-none absolute bottom-4 left-1/2 z-20 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-line-strong bg-surface/90 px-4 py-2 whitespace-nowrap text-ink shadow-overlay sm:flex">
+          <MaterialSymbol name="info" className="size-4 shrink-0" />
+          Passe o mouse num ponto ou toque nele para saber o que é
+        </p>
+      )}
       {hover && (
-        <div
-          className="pointer-events-none absolute z-30"
-          style={{ left: hover.x, top: hover.y }}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute z-20 size-5 -translate-x-1/2 -translate-y-1/2"
+          style={{ left: hover.anchorX, top: hover.anchorY }}
         >
-          {renderTooltip(hover.tooltip)}
-        </div>
+          <span className="absolute inset-0 rounded-full border-2 border-ink/80 motion-safe:animate-ping" />
+          <span className="absolute inset-1 rounded-full border-2 border-ink shadow-[0_0_0_2px_var(--color-surface-ground)]" />
+        </span>
+      )}
+      {hover && (
+        <m.div
+          key={hover.pinned ? "pinned" : "hover"}
+          role={hover.pinned ? "dialog" : undefined}
+          aria-label={hover.pinned ? "Detalhes do foco" : undefined}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: [0.2, 0, 0, 1] }}
+          className={`absolute z-30 ${hover.pinned ? "pointer-events-auto" : "pointer-events-none"}`}
+          style={{ left: hover.x, top: hover.y, width: TOOLTIP_WIDTH }}
+        >
+          {renderTooltip(hover.tooltip, hover.pinned)}
+          {hover.pinned && (
+            <button
+              type="button"
+              aria-label="Fechar detalhes"
+              autoFocus
+              onClick={() => setHover(null)}
+              className="absolute top-1.5 right-1.5 flex size-8 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-surface-hover"
+            >
+              <MaterialSymbol name="close" className="size-[18px]" />
+            </button>
+          )}
+        </m.div>
       )}
     </div>
   );

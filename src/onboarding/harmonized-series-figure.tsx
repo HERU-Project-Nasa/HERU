@@ -66,9 +66,11 @@ export function HarmonizedSeriesFigure() {
   return (
     <figure className="rounded-xl border border-line bg-surface px-6 py-8 sm:px-10">
       <figcaption>
-        <p className="type-heading-sm text-ink">Focos de calor na Bolívia</p>
+        <p className="type-heading-sm text-ink">
+          Focos de calor nos Estados Unidos
+        </p>
         <p className="type-caption mt-1 text-ink-muted">
-          2003-2016 · forma da série
+          Focos por ano, 2003-2016 · série do HERU
         </p>
       </figcaption>
       <ul className="type-body-sm my-5 flex flex-wrap gap-x-6 gap-y-2 text-ink">
@@ -77,7 +79,7 @@ export function HarmonizedSeriesFigure() {
             aria-hidden="true"
             className="w-7 border-t-2 border-dashed border-ink-muted"
           />
-          Contagem bruta: MODIS + VIIRS
+          Contagem bruta: MODIS até 2011, VIIRS depois
         </li>
         <li className="flex items-center gap-2.5">
           <span

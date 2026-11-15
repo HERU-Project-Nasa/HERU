@@ -14,6 +14,11 @@ const SHORT_DATE_TIME = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
 });
 
+const SHORT_DAY = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+});
+
 const STATUS_DOTS = {
   live: "bg-status-live",
   stale: "bg-status-stale",
@@ -47,6 +52,12 @@ export function DataStatus() {
       : status === "stale"
         ? `Dados até ${SHORT_DATE_TIME.format(new Date(updatedAt!))}`
         : "Dados atualizados";
+  const shortText =
+    status === "error"
+      ? "Fora do ar"
+      : status === "stale"
+        ? `Até ${SHORT_DAY.format(new Date(updatedAt!))}`
+        : "Atualizado";
   return (
     <div
       role="status"
@@ -55,13 +66,14 @@ export function DataStatus() {
           ? `Último lote publicado em ${formatUpdatedAt(updatedAt)}`
           : "Não foi possível falar com a fonte dos dados"
       }
-      className="type-caption inline-flex h-8 items-center gap-2 rounded-sm bg-surface-raised px-3 whitespace-nowrap text-ink"
+      className="type-caption inline-flex h-8 items-center gap-2 rounded-sm bg-surface-raised px-2.5 whitespace-nowrap text-ink lg:px-3"
     >
       <span
         aria-hidden="true"
         className={`size-2 shrink-0 rounded-full ${STATUS_DOTS[status]}`}
       />
-      {text}
+      <span className="lg:hidden">{shortText}</span>
+      <span className="hidden lg:inline">{text}</span>
     </div>
   );
 }

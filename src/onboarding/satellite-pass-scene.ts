@@ -21,7 +21,7 @@ const VIIRS_HALF_WIDTH = 1500 / EARTH_RADIUS_KM;
 const MODIS_HALF_WIDTH = 1165 / EARTH_RADIUS_KM;
 const MODIS_TRACK_OFFSET = 520 / EARTH_RADIUS_KM;
 const SATELLITE_ALTITUDE = 1 + 824 / EARTH_RADIUS_KM;
-const BOLIVIA = { latitude: -16.5, longitude: -64.5 };
+const PASS_AREA = { latitude: 32.5, longitude: -83.5 };
 const TRACK_HEADING_DEGREES = -12;
 const RING_RADIUS = 380 / EARTH_RADIUS_KM;
 const FIRE_COUNT = 90;
@@ -209,7 +209,7 @@ export function startSatellitePass(
   renderer.setPixelRatio(pixelRatio);
   renderer.setClearColor(0x000000, 0);
 
-  const center = surfacePoint(BOLIVIA.latitude, BOLIVIA.longitude);
+  const center = surfacePoint(PASS_AREA.latitude, PASS_AREA.longitude);
   const north = new Vector3(0, 1, 0)
     .addScaledVector(center, -center.y)
     .normalize();
@@ -526,11 +526,11 @@ function firePositions(): number[] {
   };
   const positions: number[] = [];
   while (positions.length < FIRE_COUNT * 3) {
-    const latitude = BOLIVIA.latitude + (random() - 0.5) * 6;
-    const longitude = BOLIVIA.longitude + (random() - 0.5) * 6;
+    const latitude = PASS_AREA.latitude + (random() - 0.5) * 6;
+    const longitude = PASS_AREA.longitude + (random() - 0.5) * 6;
     const inside =
-      ((latitude - BOLIVIA.latitude) / 2.9) ** 2 +
-        ((longitude - BOLIVIA.longitude) / 3.1) ** 2 <
+      ((latitude - PASS_AREA.latitude) / 2.6) ** 2 +
+        ((longitude - PASS_AREA.longitude) / 2.6) ** 2 <
       1;
     if (inside) {
       const point = surfacePoint(latitude, longitude).multiplyScalar(1.002);

@@ -30,7 +30,7 @@ export function SatellitePassFigure() {
       <div
         ref={containerRef}
         role="img"
-        aria-label="Vista oblíqua da América do Sul. Um satélite passa de sul a norte e duas faixas varrem o solo: a do VIIRS, com 3.000 km, e a do MODIS, com 2.330 km. Um anel marca a Bolívia, onde focos de calor em vermelho aparecem conforme a faixa passa."
+        aria-label="Ilustração em vista oblíqua da América do Norte. Um satélite passa de sul a norte e duas faixas varrem o solo: a do VIIRS, com 3.000 km, e a do MODIS, com 2.330 km. Um anel marca o sudeste dos Estados Unidos, onde focos de calor em vermelho aparecem conforme a faixa passa."
         className="relative aspect-[6/5]"
       >
         <m.canvas
@@ -57,14 +57,14 @@ export function SatellitePassFigure() {
         </span>
       </div>
       <figcaption className="type-caption absolute top-5 left-5 text-ink">
-        Uma passagem sobre a Bolívia
+        Ilustração: uma passagem sobre o sudeste dos EUA
       </figcaption>
       <ul className="type-body-sm absolute bottom-5 left-5 flex flex-col gap-2.5 rounded-md border border-line bg-surface/90 p-4 text-ink backdrop-blur-sm">
         <li className="flex items-center gap-2.5">
           <span aria-hidden="true" className="flex w-4 justify-center">
             <span className="size-3.5 rounded-full border-[1.5px] border-ink" />
           </span>
-          Bolívia
+          Sudeste dos EUA
         </li>
         <li className="flex items-center gap-2.5">
           <span aria-hidden="true" className="flex w-4 justify-center">
