@@ -95,8 +95,8 @@ export function CalendarFilters({
   onDownload: (() => void) | null;
   unitLine: string;
   notice: string | null;
-  view: CalendarView;
-  onViewChange: (view: CalendarView) => void;
+  view?: CalendarView;
+  onViewChange?: (view: CalendarView) => void;
 }) {
   return (
     <section
@@ -109,12 +109,14 @@ export function CalendarFilters({
           Ajustes do calendário
         </p>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <SegmentedChoice
-            label="Visualização"
-            options={VIEW_OPTIONS}
-            value={view}
-            onChange={onViewChange}
-          />
+          {view && onViewChange && (
+            <SegmentedChoice
+              label="Visualização"
+              options={VIEW_OPTIONS}
+              value={view}
+              onChange={onViewChange}
+            />
+          )}
           <button
             type="button"
             onClick={onClear}

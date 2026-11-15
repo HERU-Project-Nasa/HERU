@@ -29,23 +29,42 @@ The pages read the pipeline files from `/v1/`, or from the address in `NEXT_PUBL
 python -m http.server 8000 --bind 127.0.0.1 --directory path/to/pipeline-output
 ```
 
+## Deploy
+
+`npm run build` writes a static site to `out/`. The site and the pipeline output live on the same server and domain: nginx serves `out/` at `/` and the pipeline's `saida/v1/` at `/v1/`, so `NEXT_PUBLIC_HERU_BASE` stays empty and no CORS is needed.
+
+```nginx
+server {
+    root /path/to/HERU/out;
+    location / {
+        try_files $uri $uri/ =404;
+    }
+    location /v1/ {
+        alias /path/to/saida/v1/;
+        add_header Cache-Control "no-cache";
+    }
+}
+```
+
 ## Pipeline files
 
 The pipeline publishes small CSV files that the site reads as they are. The calendar uses:
 
-| File                                     | Use                                                                   |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `meta/latest.csv`                        | Number of the last batch, checked every 5 minutes                     |
-| `meta/batches/{batch}.csv`               | Files changed by a batch, so only those are read again                |
-| `meta/coverage.csv`                      | First and last day of each layer, which separates "not loaded" from 0 |
-| `meta/countries.csv`                     | Countries in the region filter                                        |
-| `series/countries/{ISO3}/monthly.csv`    | The calendar of a country                                             |
-| `series/countries/{ISO3}/daily.csv`      | The current month against the same days of earlier years              |
-| `series/global/monthly.csv`, `daily.csv` | The same for the whole world                                          |
-| `series/countries/{ISO3}/yearly.csv`     | Hotspots of the chosen year on the filter page                        |
-| `points/{layer}/{year}/{date}.csv.gz`    | Hotspots of each day on the map, for periods up to 7 days             |
-| `grid/monthly/{year}/{month}.csv`        | Hotspots per 0.25 degree cell on the map, for longer periods          |
-| `meta/static_sources.csv`                | Static heat sources, removed from the VIIRS points as in the series   |
+| File                                     | Use                                                                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `meta/latest.csv`                        | Number of the last batch, checked every 5 minutes                                                                   |
+| `meta/batches/{batch}.csv`               | Files changed by a batch, so only those are read again                                                              |
+| `meta/coverage.csv`                      | First and last day of each layer, which separates "not loaded" from 0, and `complete_date`, the last closed UTC day |
+| `meta/countries.csv`                     | Countries in the region filter                                                                                      |
+| `series/countries/{ISO3}/monthly.csv`    | The calendar of a country                                                                                           |
+| `series/countries/{ISO3}/daily.csv`      | The current month against the same days of earlier years                                                            |
+| `series/global/monthly.csv`, `daily.csv` | The same for the whole world                                                                                        |
+| `series/countries/{ISO3}/yearly.csv`     | Hotspots of the chosen year on the filter page                                                                      |
+| `points/{layer}/{year}/{date}.csv.gz`    | Hotspots of each day on the map, for periods up to 7 days                                                           |
+| `grid/monthly/{year}/{month}.csv`        | Hotspots per 0.25 degree cell on the map, for longer periods                                                        |
+| `meta/static_sources.csv`                | Static heat sources, removed from the VIIRS points as in the series                                                 |
+| `meta/validation.csv`                    | k, k20, error and correlation shown on the methodology page                                                         |
+| `series/.../yearly.csv`                  | The before and after chart on the methodology page                                                                  |
 
 Each series has one column per layer (`modis`, `viirs_snpp`, `viirs_noaa20`) and a `harmonized` column, all with `_d` and `_n` versions for daytime and nighttime passes. Months and days are in UTC.
 
@@ -60,6 +79,8 @@ How `harmonized` is built:
 
 - `/calendar` picks the year, the continent and the country (`src/area-filters`).
 - `/calendar/map?area={ISO3}&year={year}` shows the map, the reports and the fire calendar of that country; `area=world` shows the whole world.
+- `/anomalies?area={ISO3}` compares the last month with the typical one, lists the months that stand out and opens the calendar in anomaly mode (`src/anomalies`).
+- `/methodology?area={ISO3}` explains the method, with the figures of `meta/validation.csv` for the chosen region (`src/methodology`).
 
 ## Map
 
@@ -79,4 +100,6 @@ The code is in `src/fire-calendar`, and the file reading in `src/pipeline`.
 - The typical month is the median of the same month from 2003 to the last full year. Colors use 6 classes on a log scale, with limits rounded to 1 or 3 times a power of 10.
 - A month stands out when it is above the 90th percentile of the same month, at least twice the median and at least 20 hotspots.
 - The fire season is the shortest run of consecutive months whose medians add up to 75% of a typical year.
-- The current month is compared with the sum of the same days in earlier years.
+- The current month is compared with the sum of the same days in earlier years, from day 1 to `complete_date`. While the pipeline does not publish `complete_date`, the day before the last day with data is used.
+- In anomaly mode, each month is divided by the median of the same month: below 0.5, 0.5 to 0.8, typical from 0.8 to 1.25, 1.25 to 2, 2 to 3 and above 3.
+- Days after `complete_date` are marked as partial on the map and stay out of the comparisons.

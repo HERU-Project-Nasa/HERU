@@ -70,13 +70,13 @@ export function currentMonthComparison(
   analysis: CalendarAnalysis,
   source: CalendarSource,
   passes: CalendarPasses,
-  lastDataDate: string,
+  completeDate: string,
 ): MonthComparison | null {
   const cell = years.at(-1)?.cells.find((candidate) => candidate.partial);
-  const throughDay = Number(lastDataDate.slice(8, 10)) - 1;
-  if (!cell || throughDay < 1) {
+  if (!cell || completeDate.slice(0, 7) !== cell.key) {
     return null;
   }
+  const throughDay = Number(completeDate.slice(8, 10));
   const rowsByDate = new Map(dailyRows.map((row) => [row.date, row]));
   const sumFor = (other: CalendarCell) => {
     const column =

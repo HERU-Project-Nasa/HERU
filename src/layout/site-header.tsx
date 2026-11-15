@@ -7,6 +7,7 @@ import { HeruLogo } from "@/brand/heru-logo";
 import { buttonClassName } from "@/button/button-class-name";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { BackgroundMusic } from "@/sound/background-music";
+import { DataStatus } from "./data-status";
 
 const NAVIGATION = [
   { href: "/calendar", label: "Calendário" },
@@ -57,6 +58,9 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-1 justify-self-end">
+          <div className="hidden lg:mr-2 lg:flex">
+            <DataStatus />
+          </div>
           <BackgroundMusic />
           <button
             ref={menuButtonRef}

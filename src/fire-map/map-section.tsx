@@ -21,6 +21,7 @@ import {
   periodDates,
   periodLabel,
   periodMonths,
+  partialDaysLabel,
   presetPeriod,
   seasonPeriod,
   seasonsOf,
@@ -211,6 +212,7 @@ export function MapSection({
   const bounds = outline?.bounds ?? null;
   const southern = bounds ? (bounds[1] + bounds[3]) / 2 < 0 : false;
   const points = usesPoints(period, area === null);
+  const partialDays = partialDaysLabel(period, coverage.completeDate);
   const fires = useMapFires(period, area, bounds, coverage, points);
   const [seasonShift, setSeasonShift] = useState(0);
   const lastYear = Number(lastDataDate.slice(0, 4));
@@ -329,6 +331,7 @@ export function MapSection({
             </h2>
             <p className="type-caption text-ink-muted">
               {periodLabel(period)}
+              {partialDays && ` · ${partialDays}`}
               {ready?.mode === "cells" && ` · mapa por mês (${cellMonths})`}
             </p>
             {status && (

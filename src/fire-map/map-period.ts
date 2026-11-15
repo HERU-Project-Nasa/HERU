@@ -131,6 +131,20 @@ export function periodLabel(period: MapPeriod): string {
   return `${range} ${period.end.slice(0, 4)} · ${days} ${days === 1 ? "dia" : "dias"}`;
 }
 
+export function partialDaysLabel(
+  period: MapPeriod,
+  completeDate: string | null,
+): string | null {
+  if (!completeDate || period.end <= completeDate) {
+    return null;
+  }
+  const first =
+    period.start > completeDate ? period.start : addDays(completeDate, 1);
+  return first === period.end
+    ? `${dayLabel(first)} ainda parcial`
+    : `${dayLabel(first)}-${dayLabel(period.end)} ainda parciais`;
+}
+
 export function monthsLabel(months: string[]): string {
   const names = months.map(
     (month) =>

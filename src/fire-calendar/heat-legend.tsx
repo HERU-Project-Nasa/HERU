@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { MaterialSymbol } from "@/icons/material-symbols";
+import { ANOMALY_LEVELS, type CalendarMode } from "./calendar-anomaly";
 import {
   HATCH,
   HEAT_BACKGROUNDS,
@@ -35,12 +36,47 @@ function Mark({
   );
 }
 
+function AnomalyScale() {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="type-caption text-ink-muted">
+        Mês contra a mediana do mesmo mês
+      </span>
+      <div className="grid grid-cols-3 gap-x-1 gap-y-3 sm:min-w-[420px] sm:grid-cols-6">
+        {ANOMALY_LEVELS.map((level) => (
+          <span key={level.label} className="flex min-w-0 flex-col gap-1.5">
+            <span
+              aria-hidden="true"
+              className={`block h-3 w-full rounded-xs ${level.className}`}
+            />
+            <span className="text-xs leading-4 whitespace-nowrap text-ink-muted tabular-nums">
+              {level.label}
+            </span>
+          </span>
+        ))}
+      </div>
+      <span className="flex justify-between text-xs leading-4 sm:min-w-[420px]">
+        <span className="flex items-center gap-0.5 text-delta-below">
+          <MaterialSymbol name="arrow_downward" className="size-3.5" />
+          abaixo
+        </span>
+        <span className="flex items-center gap-0.5 text-delta-above">
+          acima
+          <MaterialSymbol name="arrow_upward" className="size-3.5" />
+        </span>
+      </span>
+    </div>
+  );
+}
+
 export function HeatLegend({
   breaks,
   states,
+  mode,
 }: {
   breaks: number[];
   states: Set<CellState>;
+  mode: CalendarMode;
 }) {
   const levels =
     breaks.length === 0
@@ -57,22 +93,26 @@ export function HeatLegend({
 
   return (
     <div className="mt-6 flex flex-wrap items-end justify-between gap-6 border-t border-line pt-6">
-      <div className="flex flex-col gap-2">
-        <span className="type-caption text-ink-muted">Focos por mês</span>
-        <div className="grid grid-cols-4 gap-x-1 gap-y-3 sm:min-w-[420px] sm:grid-cols-7">
-          {[{ level: 0, label: "0" }, ...levels].map(({ level, label }) => (
-            <span key={level} className="flex min-w-0 flex-col gap-1.5">
-              <span
-                aria-hidden="true"
-                className={`block h-3 w-full rounded-xs ${level === 0 ? "border border-line bg-heat-0" : HEAT_BACKGROUNDS[level - 1]}`}
-              />
-              <span className="text-xs leading-4 whitespace-nowrap text-ink-muted tabular-nums">
-                {label}
+      {mode === "anomaly" ? (
+        <AnomalyScale />
+      ) : (
+        <div className="flex flex-col gap-2">
+          <span className="type-caption text-ink-muted">Focos por mês</span>
+          <div className="grid grid-cols-4 gap-x-1 gap-y-3 sm:min-w-[420px] sm:grid-cols-7">
+            {[{ level: 0, label: "0" }, ...levels].map(({ level, label }) => (
+              <span key={level} className="flex min-w-0 flex-col gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className={`block h-3 w-full rounded-xs ${level === 0 ? "border border-line bg-heat-0" : HEAT_BACKGROUNDS[level - 1]}`}
+                />
+                <span className="text-xs leading-4 whitespace-nowrap text-ink-muted tabular-nums">
+                  {label}
+                </span>
               </span>
-            </span>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       <ul className="flex flex-wrap gap-x-6 gap-y-2.5">
         <Mark
           label="Fora do padrão"

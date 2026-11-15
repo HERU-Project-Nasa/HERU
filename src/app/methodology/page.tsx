@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { MaterialSymbol } from "@/icons/material-symbols";
-import { ConfidenceBadge } from "@/methodology/confidence-badge";
-import { HarmonizationChart } from "@/methodology/harmonization-chart";
+import { Suspense } from "react";
+import { BeforeAfterChart } from "@/methodology/before-after-chart";
+import {
+  MethodologyDates,
+  MethodologyFigures,
+  MethodologyFiles,
+} from "@/methodology/methodology-figures";
 import { MethodologySection } from "@/methodology/methodology-sections";
 import { SectionContents } from "@/methodology/section-contents";
 import { SensorTimeline } from "@/methodology/sensor-timeline";
-import { ValidationChart } from "@/methodology/validation-chart";
 
 export const metadata: Metadata = {
   title: "Metodologia | HERU",
@@ -13,68 +16,63 @@ export const metadata: Metadata = {
     "De onde vêm os números do HERU, como foram ajustados e até onde dá para confiar neles.",
 };
 
-const PASSES = [
-  { label: "Todas", available: true },
-  { label: "Dia", available: false },
-  { label: "Noite", available: false },
-];
-
-const CONFIDENCE_FIGURES = [
-  { value: "3,7", description: "focos VIIRS por foco MODIS aqui (k)" },
-  { value: "2012-2019", description: "anos de calibração, sensores estáveis" },
-  { value: "9%", description: "erro mediano mensal, testado em 2020-2024" },
-];
-
 const SENSORS = [
   {
     instrument: "MODIS",
     satellite: "Terra",
     since: "nov 2000",
     pixel: "~1 km",
-    use: "2003-2011, multiplicado por k",
+    use: "2003 a 2011, multiplicado por k",
   },
   {
     instrument: "MODIS",
     satellite: "Aqua",
     since: "jul 2002",
     pixel: "~1 km",
-    use: "2003-2011, multiplicado por k",
+    use: "2003 a 2011, multiplicado por k",
   },
   {
     instrument: "VIIRS",
     satellite: "Suomi NPP",
     since: "20/01/2012",
     pixel: "375 m",
-    use: "jan 2012 a out 2026, como observado",
+    use: "20/01/2012 a 02/11/2026, como observado",
   },
   {
     instrument: "VIIRS",
     satellite: "NOAA-20",
     since: "01/04/2018",
     pixel: "375 m",
-    use: "nov 2026 em diante, multiplicado por k₂",
+    use: "A partir de 03/11/2026, multiplicado por k20",
   },
   {
     instrument: "VIIRS",
     satellite: "NOAA-21",
     since: "17/01/2024",
     pixel: "375 m",
-    use: "Fora do MVP",
+    use: "Fica fora da série harmonizada",
+  },
+  {
+    instrument: "OLI",
+    satellite: "Landsat 8 e 9",
+    since: "-",
+    pixel: "30 m",
+    use: "Só EUA e Canadá; fica fora do calendário",
   },
 ];
 
 const SERIES_STEPS = [
   {
     period: "2003 a 2011",
-    text: "Só existe MODIS. Cada foco MODIS vira k focos equivalentes VIIRS.",
+    text: "Só existe MODIS. Cada foco MODIS vira k focos equivalentes VIIRS, com o k do bloco de 5° onde caiu.",
   },
   {
-    period: "Janeiro de 2012 a outubro de 2026",
+    period: "20 de janeiro de 2012 a 2 de novembro de 2026",
     text: "Usamos o VIIRS do Suomi NPP como ele foi observado. Nada é ajustado.",
   },
   {
-    period: "Novembro de 2026 em diante",
-    text: "O S-NPP para de produzir focos. Entra o NOAA-20, multiplicado por k₂ = S-NPP ÷ NOAA-20, de 2019 a 2025.",
+    period: "3 de novembro de 2026 em diante",
+    text: "O S-NPP parou de observar. Entra o NOAA-20, multiplicado por k20 = focos S-NPP ÷ focos NOAA-20, em anos inteiros de 2019 a 2025.",
   },
 ];
 
@@ -84,31 +82,16 @@ const HARMONIZATION_REASONS = [
     text: "O MODIS está no fim da vida útil. Com o VIIRS como referência, todo dado novo entra sem conversão, e só o passado é ajustado.",
   },
   {
-    title: "Por que um k por área",
-    text: "Na nossa pesquisa, a razão foi 3,81 na Bolívia e 2,76 em Portugal. Um fator único para o mundo erraria em quase toda parte.",
+    title: "Por que um k por bloco de 5°",
+    text: "A razão entre os sensores muda de uma região para outra. Um fator único para o mundo erraria em quase toda parte, então cada foco MODIS usa o k do seu bloco.",
   },
   {
-    title: "Por que um k por passagem",
-    text: "À noite, o VIIRS encontra muito mais focos que o MODIS do que de dia. Um k único distorceria o filtro de dia e noite.",
+    title: "Por que somar foco a foco",
+    text: "O total de um país soma cada foco já convertido. Um bloco ou uma célula na fronteira pode ter focos de dois países, por isso o total não é a soma das células.",
   },
   {
     title: "Por que calibrar em 2012-2019",
     text: "A partir de 2020, a deriva das órbitas do MODIS muda a contagem. Como a série só usa o MODIS até 2011, a deriva não entra no resultado.",
-  },
-];
-
-const CONFIDENCE_RULES = [
-  {
-    level: "high" as const,
-    text: "Muitos focos MODIS nos anos de calibração.",
-  },
-  {
-    level: "medium" as const,
-    text: "Volume intermediário: leia as diferenças pequenas com cautela.",
-  },
-  {
-    level: "low" as const,
-    text: "Poucos focos para calibrar a área sozinha. Usamos o fator da Bolívia.",
   },
 ];
 
@@ -123,23 +106,9 @@ export default function MethodologyPage() {
       <div className="flex flex-col gap-12 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-16">
         <aside className="order-last flex flex-col gap-6 lg:sticky lg:top-8 lg:order-none">
           <SectionContents />
-          <div className="flex flex-col items-start gap-2 border-t border-line pt-6">
-            <span className="type-caption text-ink-muted">Arquivos</span>
-            {["validation.json", "Série mensal (CSV)"].map((file) => (
-              <button
-                key={file}
-                type="button"
-                disabled
-                className="type-button inline-flex h-8 cursor-not-allowed items-center gap-2 rounded-sm border border-dashed border-line px-3 text-ink-disabled"
-              >
-                <MaterialSymbol name="download" className="size-[18px]" />
-                {file}
-              </button>
-            ))}
-            <p className="type-body-sm text-ink-muted">
-              Disponíveis quando o pipeline gerar os dados.
-            </p>
-          </div>
+          <Suspense>
+            <MethodologyFiles />
+          </Suspense>
         </aside>
         <div className="flex max-w-[880px] min-w-0 flex-col gap-10">
           <header className="flex flex-col gap-3">
@@ -151,80 +120,12 @@ export default function MethodologyPage() {
               De onde vêm os números, como foram ajustados e até onde dá para
               confiar neles. Leva cerca de dois minutos.
             </p>
-            <p className="type-caption text-ink-muted tabular-nums">
-              Atualizado em 14/11/2026 · dados até 13/11/2026
-            </p>
+            <MethodologyDates />
           </header>
 
-          <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[auto_minmax(0,1fr)] sm:items-end">
-            <div className="flex flex-col items-start gap-1.5">
-              <span className="type-caption text-ink-muted">Região</span>
-              <span className="inline-flex h-7 items-center gap-1.5 rounded-sm bg-surface-raised px-2.5 font-ui text-[13px] tracking-[0.06em] text-ink">
-                <MaterialSymbol name="location_on" className="size-4" />
-                Bolívia
-              </span>
-            </div>
-            <p className="type-body-sm text-ink-muted">
-              Os números abaixo mudam com a região e a passagem.
-            </p>
-          </div>
-
-          <section
-            aria-labelledby="confidence-title"
-            className={`${PANEL} flex flex-col gap-5 p-6`}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 id="confidence-title" className="type-heading-sm text-ink">
-                Quanto dá para confiar?
-              </h2>
-              <ConfidenceBadge level="high" />
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span id="passes-label" className="type-caption text-ink-muted">
-                Passagens
-              </span>
-              <div
-                role="radiogroup"
-                aria-labelledby="passes-label"
-                className="inline-flex h-8 items-center gap-0.5 rounded-sm border border-line-strong bg-surface p-px"
-              >
-                {PASSES.map((pass) => (
-                  <button
-                    key={pass.label}
-                    type="button"
-                    role="radio"
-                    aria-checked={pass.label === "Todas"}
-                    disabled={!pass.available}
-                    className={`h-7 rounded-[3px] px-3 font-ui text-sm tracking-[0.06em] whitespace-nowrap ${pass.available ? "bg-selected font-semibold text-ink-inverse" : "cursor-not-allowed text-ink-disabled"}`}
-                  >
-                    {pass.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <dl className="grid gap-4 sm:grid-cols-3">
-              {CONFIDENCE_FIGURES.map((figure) => (
-                <div
-                  key={figure.value}
-                  className="flex min-w-0 flex-col-reverse justify-end gap-0.5"
-                >
-                  <dt className="type-body-sm text-ink-muted">
-                    {figure.description}
-                  </dt>
-                  <dd className="font-text text-2xl leading-8 font-semibold whitespace-nowrap text-ink tabular-nums">
-                    {figure.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <a
-              href="#harmonizacao"
-              className="type-button inline-flex items-center gap-1.5 self-start text-ink"
-            >
-              Como harmonizamos
-              <MaterialSymbol name="arrow_forward" className="size-[18px]" />
-            </a>
-          </section>
+          <Suspense>
+            <MethodologyFigures />
+          </Suspense>
 
           <MethodologySection id="foco">
             <p className={PARAGRAPH}>
@@ -268,14 +169,23 @@ export default function MethodologyPage() {
           <MethodologySection id="fontes">
             <p className={PARAGRAPH}>
               Tudo vem do NASA FIRMS (Fire Information for Resource Management
-              System): o arquivo anual por país, o Archive Download e a Area API
-              para os dias mais recentes.
+              System): os produtos científicos para o histórico e os de quase
+              tempo real para os dias recentes.
             </p>
             <p className={PARAGRAPH}>
-              Os dados de quase tempo real chegam em até 3 horas e são trocados
-              pelos científicos cerca de cinco meses depois. Por isso, os meses
-              a partir de julho de 2025 aparecem como{" "}
-              <strong className="font-semibold">preliminares</strong>.
+              Os dados de quase tempo real chegam em cerca de 3 horas e são
+              trocados pelos científicos de 2 a 4 meses depois. Enquanto isso,
+              os meses que ainda têm algum dia de quase tempo real aparecem no
+              calendário como{" "}
+              <strong className="font-semibold">preliminares</strong>, e os
+              números podem mudar.
+            </p>
+            <p className={PARAGRAPH}>
+              Os dias seguem o horário UTC. Um dia só fecha depois da última
+              passagem, perto da meia-noite UTC, mais o atraso do quase tempo
+              real. Até lá ele aparece como{" "}
+              <strong className="font-semibold">parcial</strong> e fica fora das
+              comparações.
             </p>
             <SensorTimeline />
             <div className="overflow-x-auto">
@@ -321,16 +231,21 @@ export default function MethodologyPage() {
           <MethodologySection id="filtragem">
             <ul className={BULLET_LIST}>
               <li>
-                Só focos do tipo vegetação (type = 0). Vulcões, fontes fixas,
-                como a queima de gás, e detecções no mar ficam de fora.
+                MODIS: só focos do tipo vegetação (type = 0). Vulcões, fontes
+                fixas e detecções no mar ficam de fora.
               </li>
               <li>
-                Todos os níveis de confiança, porque o VIIRS nunca marca
+                VIIRS: saem os focos que caem sobre fontes fixas de calor já
+                conhecidas, como queima de gás e indústrias.
+              </li>
+              <li>
+                Todos os níveis de confiança entram, porque o VIIRS nunca marca
                 confiança baixa à noite.
               </li>
               <li>
-                Contamos os focos por célula de 0,25°, mês, sensor e passagem
-                (dia ou noite).
+                Contamos foco a foco por país e para o mundo, por dia, mês e
+                ano, separando dia e noite. Para o mapa, também por célula de
+                0,25° e mês.
               </li>
               <li>
                 A série começa em 2003. O Aqua só entrou em julho de 2002, e
@@ -343,15 +258,14 @@ export default function MethodologyPage() {
             <p className={PARAGRAPH}>
               Os dois sensores enxergam o mesmo fogo de jeitos diferentes. Para
               comparar 2005 com 2025, convertemos o passado para a régua do
-              VIIRS.
+              VIIRS S-NPP.
             </p>
             <div className="flex flex-col gap-2.5 rounded-md bg-surface-hover px-6 py-5">
               <p className="font-ui text-lg leading-6 font-semibold text-ink tabular-nums">
                 k = focos S-NPP ÷ focos MODIS, de 2012 a 2019
               </p>
               <p className="type-body-sm text-ink-muted">
-                Calculado na área escolhida e para cada passagem: todas, dia e
-                noite.
+                Calculado em cada bloco de 5° de latitude e longitude.
               </p>
             </div>
             <ol className="flex flex-col gap-4">
@@ -374,7 +288,9 @@ export default function MethodologyPage() {
                 </li>
               ))}
             </ol>
-            <HarmonizationChart />
+            <Suspense>
+              <BeforeAfterChart />
+            </Suspense>
             <div className="grid gap-4 sm:grid-cols-2">
               {HARMONIZATION_REASONS.map((reason) => (
                 <article
@@ -394,22 +310,22 @@ export default function MethodologyPage() {
               partir do MODIS × k e comparamos com o que o VIIRS de fato viu.
               Esses anos não entram na calibração.
             </p>
-            <ValidationChart />
-            <p className={PARAGRAPH}>
-              O selo de confiança depende do volume de focos MODIS nos anos de
-              calibração:
-            </p>
-            <ul className="flex flex-col gap-3">
-              {CONFIDENCE_RULES.map((rule) => (
-                <li
-                  key={rule.level}
-                  className="flex flex-wrap items-center gap-3"
-                >
-                  <ConfidenceBadge level={rule.level} />
-                  <span className="type-body text-ink-muted">{rule.text}</span>
-                </li>
-              ))}
+            <ul className={BULLET_LIST}>
+              <li>
+                <strong className="font-semibold">Erro mediano mensal:</strong>{" "}
+                metade dos meses erra menos que esse valor.
+              </li>
+              <li>
+                <strong className="font-semibold">Correlação r:</strong> quanto
+                a reconstrução acompanha o VIIRS observado, em escala log; 1 é o
+                acompanhamento perfeito.
+              </li>
             </ul>
+            <p className={PARAGRAPH}>
+              Os dois números da região escolhida estão no painel do topo. O
+              gráfico mês a mês da reconstrução entra quando essa série for
+              publicada.
+            </p>
           </MethodologySection>
 
           <MethodologySection id="limites">
@@ -423,8 +339,8 @@ export default function MethodologyPage() {
                 detectados por satélite.
               </li>
               <li>
-                O mundo inteiro. O globo mostra a Terra, mas os dados cobrem
-                Bolívia, Pantanal e Portugal.
+                Áreas menores que um país, como estados e biomas. Por enquanto,
+                só países e o mundo.
               </li>
             </ul>
           </MethodologySection>
@@ -435,7 +351,11 @@ export default function MethodologyPage() {
                 Dados: NASA FIRMS (MODIS C6.1 e VIIRS 375 m), com dados de quase
                 tempo real do LANCE.
               </li>
-              <li>Fronteiras: Natural Earth, domínio público.</li>
+              <li>
+                Fronteiras: Natural Earth 1:50m, domínio público. A área dos
+                países é aproximada, calculada dessas fronteiras.
+              </li>
+              <li>Mapa: MapLibre GL, sem mapas de terceiros.</li>
               <li>
                 Globo: Three.js, com as imagens Blue Marble e Black Marble do
                 NASA Earth Observatory.
