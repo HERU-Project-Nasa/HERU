@@ -27,7 +27,7 @@ const CALIBRATION_LAST_YEAR = 2019;
 
 type Point = { year: number; value: number | null };
 
-function niceStep(maximum: number): number {
+export function niceStep(maximum: number): number {
   const rough = maximum / 4;
   const power = 10 ** Math.floor(Math.log10(rough));
   const fraction = rough / power;

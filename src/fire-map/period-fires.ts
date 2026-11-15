@@ -162,12 +162,31 @@ function missingIsNull<T>(error: unknown): T | null {
   throw error;
 }
 
+export type RecentWindow = "24h" | "48h";
+
 export function loadDayPoints(
   layer: SeriesLayer,
   date: string,
   area: string | null,
 ): Promise<FirePoint[] | null> {
-  const path = `points/${layer}/${date.slice(0, 4)}/${date}.csv.gz`;
+  return loadPointsFile(
+    `points/${layer}/${date.slice(0, 4)}/${date}.csv.gz`,
+    area,
+  );
+}
+
+export function loadRecentPoints(
+  layer: SeriesLayer,
+  window: RecentWindow,
+  area: string | null,
+): Promise<FirePoint[] | null> {
+  return loadPointsFile(`recent/${layer}/${window}.csv.gz`, area);
+}
+
+function loadPointsFile(
+  path: string,
+  area: string | null,
+): Promise<FirePoint[] | null> {
   const key = `${path}|${area ?? ""}`;
   let request = dayPoints.get(key);
   if (!request) {

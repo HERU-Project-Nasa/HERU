@@ -4,15 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type KeyboardEvent, useRef, useState } from "react";
 import { HeruLogo } from "@/brand/heru-logo";
+import {
+  anomaliesHref,
+  useCalendarSelection,
+} from "@/calendar-selection/calendar-selection";
 import { buttonClassName } from "@/button/button-class-name";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { BackgroundMusic } from "@/sound/background-music";
 import { DataStatus } from "./data-status";
 
 const NAVIGATION = [
-  { href: "/calendar", label: "Calendário" },
-  { href: "/anomalies", label: "Anomalias" },
-  { href: "/methodology", label: "Metodologia" },
+  { path: "/calendar", label: "Calendário" },
+  { path: "/anomalies", label: "Anomalias" },
+  { path: "/methodology", label: "Metodologia" },
 ];
 
 const NAVIGATION_LINK_CLASS_NAME =
@@ -22,6 +26,20 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const selection = useCalendarSelection();
+  const linkTo = (path: string) => {
+    if (!selection.area) {
+      return path;
+    }
+    if (path === "/anomalies") {
+      return anomaliesHref(selection);
+    }
+    const params = new URLSearchParams({ area: selection.area });
+    if (path === "/calendar" && selection.year) {
+      params.set("year", String(selection.year));
+    }
+    return `${path}?${params}`;
+  };
   const currentPage = (href: string) =>
     pathname.startsWith(href) ? "page" : undefined;
 
@@ -48,9 +66,9 @@ export function SiteHeader() {
         >
           {NAVIGATION.map((item) => (
             <Link
-              key={item.href}
-              href={item.href}
-              aria-current={currentPage(item.href)}
+              key={item.path}
+              href={linkTo(item.path)}
+              aria-current={currentPage(item.path)}
               className={`${NAVIGATION_LINK_CLASS_NAME} py-2.5`}
             >
               {item.label}
@@ -87,9 +105,9 @@ export function SiteHeader() {
         >
           {NAVIGATION.map((item) => (
             <Link
-              key={item.href}
-              href={item.href}
-              aria-current={currentPage(item.href)}
+              key={item.path}
+              href={linkTo(item.path)}
+              aria-current={currentPage(item.path)}
               onClick={() => setMenuOpen(false)}
               className={`${NAVIGATION_LINK_CLASS_NAME} flex min-h-11 items-center`}
             >

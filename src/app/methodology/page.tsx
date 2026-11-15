@@ -10,6 +10,7 @@ import {
 import { MethodologySection } from "@/methodology/methodology-sections";
 import { SectionContents } from "@/methodology/section-contents";
 import { SensorTimeline } from "@/methodology/sensor-timeline";
+import { ValidationChart } from "@/methodology/validation-chart";
 
 export const metadata: Metadata = {
   title: "Metodologia | HERU",
@@ -178,10 +179,13 @@ export default function MethodologyPage() {
               tempo real para os dias recentes.
             </p>
             <p className={PARAGRAPH}>
-              Os dados de quase tempo real chegam em cerca de 3 horas e são
-              trocados pelos científicos de 2 a 4 meses depois. Enquanto isso,
-              os meses que ainda têm algum dia de quase tempo real aparecem no
-              calendário como{" "}
+              A pipeline busca dados novos no FIRMS a cada hora e publica um
+              lote quando algo muda; o site confere a cada minuto se saiu lote
+              novo e só baixa o que mudou. As janelas de 24 e 48 horas do mapa
+              vêm de arquivos com as últimas detecções. Os dados de quase tempo
+              real chegam em cerca de 3 horas e são trocados pelos científicos
+              de 2 a 4 meses depois. Enquanto isso, os meses que ainda têm algum
+              dia de quase tempo real aparecem no calendário como{" "}
               <strong className="font-semibold">preliminares</strong>, e os
               números podem mudar.
             </p>
@@ -254,6 +258,15 @@ export default function MethodologyPage() {
                 ano, separando dia e noite. Para o mapa, também por célula de
                 0,25° e mês. Focos no mar entram no total do mundo, mas em
                 nenhum país.
+              </li>
+              <li>
+                No mapa de períodos longos, cada quadrado de 0,25° (cerca de 28
+                km) soma os focos que caíram nele. Mostramos todo quadrado que
+                toca o país, mesmo que o centro dele caia no mar ou no vizinho,
+                para que nenhum foco do país fique de fora; numa ilha pequena,
+                como Santa Lúcia, nenhum centro cai em terra. Na fronteira, o
+                quadrado pode trazer focos do vizinho, mas o total do período
+                não muda, porque é contado foco a foco.
               </li>
               <li>
                 A série harmonizada começa em julho de 2002, quando o Aqua
@@ -351,9 +364,13 @@ export default function MethodologyPage() {
             <p className={PARAGRAPH}>
               Os números da região escolhida estão no painel do topo. Num país,
               eles são um diagnóstico: a série do país usa o k de cada bloco
-              onde o foco caiu. O gráfico mês a mês da reconstrução entra quando
-              essa série for publicada.
+              onde o foco caiu. O gráfico abaixo mostra a comparação mês a mês:
+              quanto mais as duas linhas andam juntas, melhor o MODIS × k
+              reconstrói o que o S-NPP viu.
             </p>
+            <Suspense>
+              <ValidationChart />
+            </Suspense>
           </MethodologySection>
 
           <MethodologySection id="limites">
@@ -379,9 +396,11 @@ export default function MethodologyPage() {
                 Dados: NASA FIRMS (MODIS C6.1 e VIIRS 375 m), com dados de quase
                 tempo real do LANCE.
               </li>
+              <li>Fronteiras do mapa: Natural Earth 1:50m, domínio público.</li>
               <li>
-                Fronteiras: Natural Earth 1:50m, domínio público. A área dos
-                países é aproximada, calculada dessas fronteiras.
+                Área dos países: área de terra do Banco Mundial; para os
+                territórios que ele não cobre, a área das fronteiras do CGAZ,
+                que inclui lagos e rios.
               </li>
               <li>Mapa: MapLibre GL, sem mapas de terceiros.</li>
               <li>

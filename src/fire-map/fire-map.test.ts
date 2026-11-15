@@ -8,8 +8,12 @@ import { buildCalendarYears } from "@/fire-calendar/calendar-matrix";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesMonthRow } from "@/pipeline/series-row";
 import {
+  addPeriodToSearch,
+  anchoredPeriod,
+  dateRangeLabel,
   layerForMonth,
   partialDaysLabel,
+  periodFromSearch,
   presetPeriod,
   usesPoints,
 } from "./map-period";
@@ -276,5 +280,41 @@ describe("grid cells of a small island", () => {
   it("leaves out the cells of the neighbour islands", () => {
     expect(cellTouchesShape(13.125, -61.125, 0.25, cells)).toBe(false);
     expect(cellTouchesShape(14.625, -60.875, 0.25, cells)).toBe(false);
+  });
+});
+
+describe("period chosen on the map", () => {
+  it("names both years when the range crosses a year", () => {
+    expect(dateRangeLabel("2025-01-01", "2026-05-20")).toBe(
+      "1 jan 2025-20 mai 2026",
+    );
+    expect(dateRangeLabel("2026-10-16", "2026-11-14")).toBe(
+      "16 out-14 nov 2026",
+    );
+  });
+
+  it("goes through the address and comes back the same", () => {
+    const params = new URLSearchParams({ area: "USA" });
+    addPeriodToSearch(params, presetPeriod("30d", "2014-12-31"));
+    expect(periodFromSearch(params)).toEqual(presetPeriod("30d", "2014-12-31"));
+    const range = new URLSearchParams("from=2025-01-01&to=2026-05-20");
+    expect(periodFromSearch(range)).toMatchObject({
+      start: "2025-01-01",
+      end: "2026-05-20",
+      preset: null,
+    });
+    expect(
+      periodFromSearch(new URLSearchParams("from=2026-05-20&to=2025-01-01")),
+    ).toBeNull();
+  });
+
+  it("keeps the last days moving with new data", () => {
+    const chosen = presetPeriod("14d", "2026-11-14");
+    expect(anchoredPeriod(chosen, "2026-11-15")).toMatchObject({
+      start: "2026-11-02",
+      end: "2026-11-15",
+    });
+    const past = presetPeriod("14d", "2014-12-31");
+    expect(anchoredPeriod(past, "2026-11-15")).toEqual(past);
   });
 });

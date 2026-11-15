@@ -98,7 +98,7 @@ export function HarmonizedSeriesFigure() {
         <svg
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
-          aria-label="Gráfico de linhas animado, focos de calor na Bolívia de 2003 a 2016. A contagem bruta salta em 2012, quando o VIIRS entra. Depois de harmonizada, a série sobe para a mesma escala e segue sem salto."
+          aria-label="Gráfico de linhas animado, focos de calor nos Estados Unidos de 2003 a 2016. A contagem bruta salta em 2012, quando o VIIRS entra. Depois de harmonizada, a série sobe para a mesma escala e segue sem salto."
           className="relative block w-full overflow-visible font-ui"
         >
           <defs>

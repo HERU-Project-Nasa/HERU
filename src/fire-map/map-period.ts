@@ -143,9 +143,66 @@ export function periodLabel(period: MapPeriod): string {
 }
 
 export function dateRangeLabel(start: string, end: string): string {
+  if (start.slice(0, 4) !== end.slice(0, 4)) {
+    return `${dayLabel(start)} ${start.slice(0, 4)}-${dayLabel(end)} ${end.slice(0, 4)}`;
+  }
   const range =
     start === end ? dayLabel(end) : `${dayLabel(start)}-${dayLabel(end)}`;
   return `${range} ${end.slice(0, 4)}`;
+}
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export function periodFromSearch(params: URLSearchParams): MapPeriod | null {
+  const start = params.get("from");
+  const end = params.get("to");
+  if (
+    !start ||
+    !end ||
+    !DATE_PATTERN.test(start) ||
+    !DATE_PATTERN.test(end) ||
+    start > end
+  ) {
+    return null;
+  }
+  const preset = PERIOD_PRESETS.find(
+    (option) => option.value === params.get("preset"),
+  );
+  return {
+    start,
+    end,
+    hours: preset?.hours ?? null,
+    preset: preset?.value ?? null,
+    seasonKey: preset ? null : params.get("season"),
+  };
+}
+
+export function addPeriodToSearch(
+  params: URLSearchParams,
+  period: MapPeriod | null,
+) {
+  if (!period) {
+    return;
+  }
+  params.set("from", period.start);
+  params.set("to", period.end);
+  if (period.preset) {
+    params.set("preset", period.preset);
+  } else if (period.seasonKey) {
+    params.set("season", period.seasonKey);
+  }
+}
+
+export function anchoredPeriod(
+  period: MapPeriod,
+  lastDataDate: string,
+): MapPeriod {
+  return period.preset
+    ? presetPeriod(
+        period.preset,
+        yearPeriodEnd(Number(period.end.slice(0, 4)), lastDataDate),
+      )
+    : period;
 }
 
 export function partialDaysLabel(

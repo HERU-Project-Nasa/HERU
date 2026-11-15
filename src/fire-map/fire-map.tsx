@@ -214,6 +214,7 @@ function ControlButton({
 export function FireMap({
   label,
   area,
+  areas,
   bounds,
   points,
   cells,
@@ -223,6 +224,7 @@ export function FireMap({
 }: {
   label: string;
   area: string | null;
+  areas?: string[];
   bounds: AreaBounds | null;
   points: MappedPoint[];
   cells: FireCell[];
@@ -233,6 +235,7 @@ export function FireMap({
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
+  const areaKey = (areas ?? (area ? [area] : [])).join(",");
   const [globe, setGlobe] = useState(true);
   const [look, setLook] = useState<MapLook>("sketch");
   const [fullscreen, setFullscreen] = useState(false);
@@ -529,9 +532,9 @@ export function FireMap({
       return;
     }
     const filter = [
-      "==",
+      "in",
       ["get", "code"],
-      area ?? "",
+      ["literal", areaKey ? areaKey.split(",") : []],
     ] as ExpressionSpecification;
     map.setFilter("area-fill", filter);
     map.setFilter("area-line", filter);
@@ -540,7 +543,7 @@ export function FireMap({
       ? 0
       : 1200;
     showArea(map, bounds, duration);
-  }, [map, area, bounds]);
+  }, [map, areaKey, bounds]);
 
   useEffect(() => {
     map?.getSource<GeoJSONSource>("points")?.setData(pointCollection(points));
