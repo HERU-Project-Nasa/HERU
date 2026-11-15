@@ -18,17 +18,16 @@ import {
 } from "./calendar-cell-style";
 import {
   formatCompact,
-  formatCount,
+  formatHotspots,
   MONTH_ABBREVIATIONS,
   MONTH_INITIALS,
   MONTH_NAMES,
   monthTitle,
 } from "./calendar-labels";
-import {
-  CALENDAR_FIRST_YEAR,
-  type CalendarCell,
-  type CalendarSource,
-  type CalendarYear,
+import type {
+  CalendarCell,
+  CalendarSource,
+  CalendarYear,
 } from "./calendar-matrix";
 import {
   type CalendarAnalysis,
@@ -61,7 +60,7 @@ const STATE_DESCRIPTIONS: Partial<Record<CalendarCell["state"], string>> = {
 function cellLabel(cell: CalendarCell, outlier: boolean): string {
   const parts = [
     cell.state === "value" || cell.state === "zero"
-      ? `${formatCount(cell.value!)} focos`
+      ? formatHotspots(cell.value!)
       : STATE_DESCRIPTIONS[cell.state]!,
   ];
   if (outlier) parts.push("fora do padrão");
@@ -147,9 +146,11 @@ function CellFace({
 function TotalMark({
   total,
   largest,
+  record,
 }: {
   total: YearTotal | undefined;
   largest: number;
+  record: boolean;
 }) {
   if (!total || total.total === null) {
     return (
@@ -174,10 +175,11 @@ function TotalMark({
         }}
       />
       <span
-        className={`truncate text-[11px] leading-4 whitespace-nowrap tabular-nums sm:text-xs ${settled ? "text-ink-muted" : "text-ink-disabled"}`}
+        className={`truncate text-[11px] leading-4 whitespace-nowrap tabular-nums sm:text-xs ${record ? "font-semibold text-ink" : settled ? "text-ink-muted" : "text-ink-disabled"}`}
       >
         {formatCompact(total.total)}
         {total.partial && <span className="hidden sm:inline"> até agora</span>}
+        {record && <span className="hidden sm:inline"> · recorde</span>}
       </span>
     </span>
   );
@@ -394,6 +396,7 @@ export function CalendarGrid({
             <TotalMark
               total={analysis.totals.get(year.year)}
               largest={analysis.largestTotal}
+              record={analysis.record?.year === year.year}
             />
           </div>
         ))}
@@ -412,12 +415,12 @@ export function CalendarGrid({
               role="gridcell"
               aria-label={
                 baseline
-                  ? `Mediana de ${MONTH_NAMES[index]}: ${formatCount(baseline.median)} focos`
+                  ? `Mediana de ${MONTH_NAMES[index]}: ${formatHotspots(baseline.median)}`
                   : `Mediana de ${MONTH_NAMES[index]}: sem referência`
               }
               title={
                 baseline
-                  ? `Mediana de ${MONTH_NAMES[index]}: ${formatCount(baseline.median)} focos em ${baseline.years} anos`
+                  ? `Mediana de ${MONTH_NAMES[index]}: ${formatHotspots(baseline.median)} em ${baseline.years} anos`
                   : undefined
               }
               className={`block h-4 rounded-xs shadow-[inset_0_0_0_1px_var(--color-surface-ground)] sm:h-5 ${
@@ -448,11 +451,11 @@ export function CalendarGrid({
             ) : (
               <>
                 <span className="sm:hidden">
-                  {String(CALENDAR_FIRST_YEAR).slice(2)}-
+                  {String(analysis.firstYear).slice(2)}-
                   {String(analysis.lastBaselineYear).slice(2)}
                 </span>
                 <span className="hidden sm:inline">
-                  {CALENDAR_FIRST_YEAR}-{analysis.lastBaselineYear}
+                  {analysis.firstYear}-{analysis.lastBaselineYear}
                 </span>
               </>
             )}

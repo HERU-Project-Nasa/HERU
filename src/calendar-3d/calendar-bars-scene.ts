@@ -137,7 +137,7 @@ export function startCalendarBars(
   const labelFont = getComputedStyle(container).fontFamily;
   const monthTexts = labels.months.map((text) => text.toUpperCase());
   const frontTexts = yearsAlongX
-    ? labels.years.map((year) => `’${year.slice(-2)}`)
+    ? labels.years.map((year) => `'${year.slice(-2)}`)
     : monthTexts;
   const sideTexts = yearsAlongX ? monthTexts : labels.years;
   const textLabels = [

@@ -3,21 +3,40 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { areaFiltersHref, areaMapHref } from "@/area-filters/area-links";
 import { findContinent } from "@/area-filters/continents";
 import { buttonClassName } from "@/button/button-class-name";
 import { useCountryOutlines } from "@/country-outlines/country-outlines";
-import { SOURCE_SHORT_UNITS } from "@/fire-calendar/calendar-labels";
+import {
+  capitalized,
+  SOURCE_SHORT_UNITS,
+} from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
-import { CalendarReports } from "@/fire-calendar/calendar-reports";
+import {
+  CalendarReports,
+  type PeriodReport,
+  type ReportKind,
+} from "@/fire-calendar/calendar-reports";
 import {
   CalendarSection,
   DataFootnote,
 } from "@/fire-calendar/calendar-section";
+import { periodComparison } from "@/fire-calendar/month-comparison";
 import { useAreaCalendar } from "@/fire-calendar/use-area-calendar";
+import {
+  dateRangeLabel,
+  type MapPeriod,
+  partialDaysLabel,
+  periodLabel,
+  periodName,
+  presetPeriod,
+  yearPeriodEnd,
+} from "@/fire-map/map-period";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import { FadeUp } from "@/motion/fade-up";
 import { WORLD_AREA } from "@/pipeline/series-row";
+import { ReportEvidence } from "@/report-evidence/report-evidence";
 
 const MapSection = dynamic(
   () => import("@/fire-map/map-section").then((module) => module.MapSection),
@@ -34,6 +53,9 @@ export function CalendarExplorer() {
   const searchParams = useSearchParams();
   const calendar = useAreaCalendar(searchParams.get("area"));
   const outlines = useCountryOutlines();
+  const [evidence, setEvidence] = useState<ReportKind | null>(null);
+  const [focusRequest, setFocusRequest] = useState<string | null>(null);
+  const [chosenPeriod, setChosenPeriod] = useState<MapPeriod | null>(null);
   const { area, areaName, countries, coverage, lastDataDate, years } = calendar;
   const world = area === WORLD_AREA;
   const continent = findContinent(
@@ -47,6 +69,53 @@ export function CalendarExplorer() {
       : requestedYear >= CALENDAR_FIRST_YEAR && requestedYear <= dataYear
         ? requestedYear
         : dataYear;
+  const periodEnd =
+    lastDataDate && selectedYear
+      ? yearPeriodEnd(selectedYear, lastDataDate)
+      : null;
+  const defaultPeriod = useMemo(
+    () => (periodEnd ? presetPeriod("7d", periodEnd) : null),
+    [periodEnd],
+  );
+  const period = chosenPeriod ?? defaultPeriod;
+  const completeDate = coverage?.completeDate ?? null;
+  const { dailyRows, analysis, source, passes, ready } = calendar;
+  const periodReport = useMemo<PeriodReport | null>(() => {
+    if (!period || !dailyRows || !completeDate || !ready) {
+      return null;
+    }
+    const comparison = periodComparison(
+      dailyRows,
+      years,
+      analysis,
+      source,
+      passes,
+      period,
+      completeDate,
+    );
+    if (!comparison) {
+      return null;
+    }
+    const partial = partialDaysLabel(period, completeDate);
+    return {
+      comparison,
+      eyebrow: periodName(period),
+      title: periodLabel({
+        ...period,
+        start: comparison.start,
+        end: comparison.end,
+        hours: null,
+      }),
+      dates: dateRangeLabel(comparison.start, comparison.end),
+      note:
+        [
+          partial && `${capitalized(partial)}, fora da comparação.`,
+          period.hours && "Contamos dias UTC inteiros.",
+        ]
+          .filter(Boolean)
+          .join(" ") || null,
+    };
+  }, [period, dailyRows, completeDate, ready, years, analysis, source, passes]);
   const appliedChips: { icon: SymbolName; text: string }[] = [
     ...(selectedYear
       ? [{ icon: "calendar_month" as const, text: String(selectedYear) }]
@@ -100,7 +169,7 @@ export function CalendarExplorer() {
         </section>
       </FadeUp>
 
-      {coverage && lastDataDate && selectedYear && (
+      {coverage && lastDataDate && selectedYear && period && (
         <FadeUp delay={0.1} onScroll>
           <MapSection
             area={world ? null : area}
@@ -110,6 +179,8 @@ export function CalendarExplorer() {
             coverage={coverage}
             dailyRows={calendar.dailyRows}
             calendarYears={years}
+            period={period}
+            onPeriodChange={setChosenPeriod}
           />
         </FadeUp>
       )}
@@ -118,13 +189,28 @@ export function CalendarExplorer() {
         <FadeUp onScroll>
           <CalendarReports
             areaName={areaName}
-            subtitle={`${years[0].year}-${years.at(-1)!.year} · ${SOURCE_SHORT_UNITS[calendar.source]}`}
+            subtitle={`${calendar.analysis.firstYear}-${calendar.analysis.lastYear} · ${SOURCE_SHORT_UNITS[calendar.source]}`}
             analysis={calendar.analysis}
             closedMonth={calendar.closedMonth}
             currentMonth={calendar.currentMonth}
             source={calendar.source}
+            period={periodReport}
+            onEvidence={setEvidence}
           />
         </FadeUp>
+      )}
+
+      {evidence && calendar.ready && (
+        <ReportEvidence
+          kind={evidence}
+          calendar={calendar}
+          period={periodReport}
+          onClose={() => setEvidence(null)}
+          onShow={(key) => {
+            setEvidence(null);
+            setFocusRequest(`${key}#${Date.now()}`);
+          }}
+        />
       )}
 
       <FadeUp onScroll>
@@ -136,7 +222,7 @@ export function CalendarExplorer() {
           title="Calendário de fogo"
           description="Cada linha é um ano e cada coluna, um mês. Os mesmos limites de cor valem para o calendário inteiro."
           initialMode="count"
-          focusRequest={null}
+          focusRequest={focusRequest}
         />
       </FadeUp>
 

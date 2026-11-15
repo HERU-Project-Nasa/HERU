@@ -4,6 +4,8 @@ import {
   loadCountryShape,
 } from "@/country-outlines/country-outlines";
 import type { PipelineCoverage } from "@/pipeline/pipeline-coverage";
+import { usePipelineRevision } from "@/pipeline/pipeline-files";
+import type { SeriesLayer } from "@/pipeline/series-row";
 import {
   layerForMonth,
   type MapPeriod,
@@ -46,13 +48,11 @@ const CELL_MARGIN = 1;
 async function readPoints(
   period: MapPeriod,
   area: string | null,
-  coverage: PipelineCoverage,
+  pointLayers: SeriesLayer[],
 ): Promise<MapFires> {
   const dates = periodDates(period);
   const days = await Promise.all(
-    dates.map((date) =>
-      loadDayPoints(layerForMonth(date.slice(0, 7), coverage), date, area),
-    ),
+    dates.map((date, index) => loadDayPoints(pointLayers[index], date, area)),
   );
   const loaded = days.flatMap((day) => day ?? []);
   const latest = Math.max(
@@ -81,6 +81,7 @@ async function readCells(
   area: string | null,
   bounds: AreaBounds | null,
   coverage: PipelineCoverage,
+  harmonized: boolean,
 ): Promise<MapFires> {
   const months = periodMonths(period);
   const box: AreaBounds | null = bounds && [
@@ -92,7 +93,11 @@ async function readCells(
   const [shape, ...monthly] = await Promise.all([
     area ? loadCountryShape(area) : null,
     ...months.map((month) =>
-      loadMonthCells(month, layerForMonth(month, coverage), box),
+      loadMonthCells(
+        month,
+        harmonized ? "harmonized" : layerForMonth(month, coverage),
+        box,
+      ),
     ),
   ]);
   const totals = new Map<string, FireCell>();
@@ -122,8 +127,12 @@ export function useMapFires(
   bounds: AreaBounds | null,
   coverage: PipelineCoverage | null,
   points: boolean,
+  attempt: number,
+  harmonized: boolean,
+  pointLayers: SeriesLayer[],
 ): MapFires {
-  const requestKey =
+  const revision = usePipelineRevision();
+  const dataKey =
     period && coverage
       ? [
           period.start,
@@ -133,31 +142,47 @@ export function useMapFires(
           bounds?.join(","),
           points,
           coverage.lastDataDate,
+          points ? pointLayers.join(",") : harmonized,
         ].join("|")
       : null;
+  const requestKey = dataKey && `${dataKey}|${revision}|${attempt}`;
   const [loaded, setLoaded] = useState<{
     requestKey: string;
+    dataKey: string;
     fires: MapFires;
   } | null>(null);
 
   useEffect(() => {
-    if (!requestKey || !period || !coverage) {
+    if (!requestKey || !dataKey || !period || !coverage) {
       return;
     }
     let current = true;
     const request = points
-      ? readPoints(period, area, coverage)
-      : readCells(period, area, bounds, coverage);
+      ? readPoints(period, area, pointLayers)
+      : readCells(period, area, bounds, coverage, harmonized);
     request.then(
-      (fires) => current && setLoaded({ requestKey, fires }),
-      () => current && setLoaded({ requestKey, fires: { status: "error" } }),
+      (fires) => current && setLoaded({ requestKey, dataKey, fires }),
+      () =>
+        current &&
+        setLoaded({ requestKey, dataKey, fires: { status: "error" } }),
     );
     return () => {
       current = false;
     };
-  }, [requestKey, period, area, bounds, coverage, points]);
+  }, [
+    requestKey,
+    dataKey,
+    period,
+    area,
+    bounds,
+    coverage,
+    points,
+    harmonized,
+    pointLayers,
+  ]);
 
-  return loaded && loaded.requestKey === requestKey
-    ? loaded.fires
-    : { status: "loading" };
+  const fresh =
+    loaded?.requestKey === requestKey ||
+    (loaded?.dataKey === dataKey && loaded.fires.status === "ready");
+  return loaded && fresh ? loaded.fires : { status: "loading" };
 }

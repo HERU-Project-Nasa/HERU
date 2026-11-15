@@ -21,11 +21,17 @@ export type YearTotal = {
   partial: boolean;
 };
 
-export type RecordYear = { year: number; total: number; ratio: number };
+export type RecordYear = {
+  year: number;
+  total: number;
+  ratio: number | null;
+};
 
 export type MonthRank = { rank: number; of: number };
 
 export type CalendarAnalysis = {
+  firstYear: number;
+  lastYear: number;
   lastBaselineYear: number;
   baselineYearCount: number;
   baselines: (MonthBaseline | null)[];
@@ -33,15 +39,25 @@ export type CalendarAnalysis = {
   season: CriticalSeason | null;
   totals: Map<number, YearTotal>;
   largestTotal: number;
+  completeYears: number;
   record: RecordYear | null;
   outliers: CalendarCell[];
 };
 
-const SEASON_SHARE = 0.75;
-const OUTLIER_MINIMUM = 20;
+export const SEASON_SHARE = 0.75;
+export const OUTLIER_MINIMUM = 20;
 
 export function isMeasured(cell: CalendarCell): boolean {
   return cell.state === "value" || cell.state === "zero";
+}
+
+export function peakMonth(year: CalendarYear | undefined): CalendarCell | null {
+  return (year?.cells ?? [])
+    .filter(isMeasured)
+    .reduce<CalendarCell | null>(
+      (peak, cell) => (!peak || cell.value! > peak.value! ? cell : peak),
+      null,
+    );
 }
 
 export function quantile(sorted: number[], q: number): number {
@@ -217,8 +233,11 @@ export function analyzeCalendar(
   visibleYears: CalendarYear[],
   enabledMonths: boolean[],
 ): CalendarAnalysis {
-  const lastBaselineYear = (years.at(-1)?.year ?? CALENDAR_FIRST_YEAR) - 1;
-  const baselines = monthBaselines(years, lastBaselineYear);
+  const lastFullYear = (years.at(-1)?.year ?? CALENDAR_FIRST_YEAR) - 1;
+  const firstYear = visibleYears[0]?.year ?? CALENDAR_FIRST_YEAR;
+  const lastYear = visibleYears.at(-1)?.year ?? lastFullYear + 1;
+  const lastBaselineYear = Math.min(lastYear, lastFullYear);
+  const baselines = monthBaselines(visibleYears, lastBaselineYear);
   const breaks = logBreaks(
     visibleYears.flatMap((year) =>
       year.cells
@@ -229,7 +248,7 @@ export function analyzeCalendar(
   const totals = new Map(
     years.map((year) => [year.year, yearTotal(year, enabledMonths)]),
   );
-  const baselineTotals = years
+  const baselineTotals = visibleYears
     .filter((year) => year.year <= lastBaselineYear)
     .flatMap((year) => {
       const total = totals.get(year.year)!;
@@ -247,18 +266,21 @@ export function analyzeCalendar(
     (year) => totals.get(year.year)?.total ?? 0,
   );
   return {
+    firstYear,
+    lastYear,
     lastBaselineYear,
-    baselineYearCount: lastBaselineYear - CALENDAR_FIRST_YEAR + 1,
+    baselineYearCount: Math.max(0, lastBaselineYear - firstYear + 1),
     baselines,
     breaks,
     season: criticalSeason(baselines),
     totals,
     largestTotal: Math.max(0, ...visibleTotals),
+    completeYears: baselineTotals.length,
     record:
-      best && typicalTotal
-        ? { ...best, ratio: best.total / typicalTotal }
+      best && best.total > 0
+        ? { ...best, ratio: typicalTotal ? best.total / typicalTotal : null }
         : null,
-    outliers: years.flatMap((year) =>
+    outliers: visibleYears.flatMap((year) =>
       year.cells.filter((cell, index) =>
         isOutlier(cell, baselines[index], enabledMonths[index]),
       ),

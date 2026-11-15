@@ -6,8 +6,9 @@ import {
   readCoverage,
 } from "@/pipeline/pipeline-coverage";
 import {
+  LATEST_PATH,
+  type LatestBatchRow,
   type PipelineFile,
-  useBatchPolling,
   usePipelineFile,
 } from "@/pipeline/pipeline-files";
 import {
@@ -72,7 +73,7 @@ function failed(paths: [string, PipelineFile<unknown>][]): string[] {
 }
 
 export function useAreaCalendar(requestedArea: string | null): AreaCalendar {
-  const latest = useBatchPolling();
+  const latest = usePipelineFile<LatestBatchRow>(LATEST_PATH);
   const coverageFile = usePipelineFile<CoverageRow>(COVERAGE_PATH);
   const countriesFile = usePipelineFile<CountryRow>(COUNTRIES_PATH);
   const countries = countriesFile.rows;

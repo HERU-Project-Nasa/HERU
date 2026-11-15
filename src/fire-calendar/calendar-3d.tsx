@@ -6,7 +6,7 @@ import {
   startCalendarBars,
 } from "@/calendar-3d/calendar-bars-scene";
 import {
-  formatCount,
+  formatHotspots,
   MONTH_ABBREVIATIONS,
   monthTitle,
 } from "./calendar-labels";
@@ -23,7 +23,7 @@ const STATE_DESCRIPTIONS: Partial<Record<CalendarCell["state"], string>> = {
 function barLabel(cell: CalendarCell, outlier: boolean): string {
   const parts = [
     cell.state === "value" || cell.state === "zero"
-      ? `${formatCount(cell.value ?? 0)} focos`
+      ? formatHotspots(cell.value ?? 0)
       : (STATE_DESCRIPTIONS[cell.state] ?? ""),
   ];
   if (outlier) parts.push("fora do padrão");

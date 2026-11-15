@@ -100,7 +100,7 @@ function SensorPanel({
           transition={{ duration: 0.3, ease: [0.65, 0, 0.35, 1] }}
         >
           {count === 0
-            ? "Procurando focos…"
+            ? "Procurando focos..."
             : `${count} ${count === 1 ? "foco" : "focos"} de calor`}
         </m.span>
       </p>

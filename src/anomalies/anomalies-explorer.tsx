@@ -4,22 +4,22 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { buttonClassName } from "@/button/button-class-name";
 import {
+  baselineLabel,
+  capitalized,
   formatCount,
   formatDayMonth,
-  formatRatio,
   MONTH_NAMES,
-  monthRangeLabel,
   monthTitle,
   ORIGIN_LABELS,
   rankLabel,
+  recordSummary,
   SOURCE_SHORT_UNITS,
+  seasonSummary,
+  sinceLabel,
   difference,
   yearsLabel,
 } from "@/fire-calendar/calendar-labels";
-import {
-  CALENDAR_FIRST_YEAR,
-  type CalendarCell,
-} from "@/fire-calendar/calendar-matrix";
+import type { CalendarCell } from "@/fire-calendar/calendar-matrix";
 import {
   DeltaBadge,
   ReportCard,
@@ -33,16 +33,13 @@ import {
 import {
   type MonthBaseline,
   monthRank,
+  peakMonth,
 } from "@/fire-calendar/calendar-statistics";
 import {
   type AreaCalendar,
   useAreaCalendar,
 } from "@/fire-calendar/use-area-calendar";
 import { MaterialSymbol } from "@/icons/material-symbols";
-
-function capitalized(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
 
 function CalendarLink({
   onClick,
@@ -272,7 +269,7 @@ function OutlierTable({
             Meses fora do padrão
           </h2>
           <p className="type-body-sm text-ink-muted">
-            {rows.length} desde {CALENDAR_FIRST_YEAR} · do mais recente ao mais
+            {rows.length} {sinceLabel(analysis)} · do mais recente ao mais
             antigo
           </p>
         </div>
@@ -291,7 +288,7 @@ function OutlierTable({
           Nenhum mês ficou fora do padrão com os filtros escolhidos.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-md border border-line bg-surface">
+        <div className="relative overflow-x-auto rounded-md border border-line bg-surface">
           <table className="w-full min-w-[720px] border-collapse text-left">
             <thead>
               <tr>
@@ -380,9 +377,8 @@ function Definitions({ calendar }: { calendar: AreaCalendar }) {
           <div>
             <dt className="type-body font-semibold text-ink">Típico</dt>
             <dd className="type-body text-ink-muted">
-              A mediana do mesmo mês de {CALENDAR_FIRST_YEAR} a{" "}
-              {analysis.lastBaselineYear}: metade dos anos fica acima, metade
-              abaixo.
+              A mediana do mesmo mês {baselineLabel(analysis)}: metade dos anos
+              fica acima, metade abaixo.
             </dd>
           </div>
           <div>
@@ -476,6 +472,18 @@ export function AnomaliesExplorer() {
   const { analysis, areaName, ready, source } = calendar;
   const show = (key: string) => setFocusRequest(`${key}#${Date.now()}`);
   const latestOutlier = analysis.outliers.at(-1);
+  const season = seasonSummary(analysis);
+  const record = recordSummary(analysis, SOURCE_SHORT_UNITS[source]);
+  const seasonStart = analysis.season?.months[0];
+  const seasonCell =
+    seasonStart === undefined
+      ? undefined
+      : calendar.years
+          .map((year) => year.cells[seasonStart])
+          .findLast((cell) => cell.state !== "future");
+  const recordCell = peakMonth(
+    calendar.years.find((year) => year.year === analysis.record?.year),
+  );
 
   return (
     <main className="mx-auto max-w-[1328px] px-4 pt-8 pb-24 sm:px-8 lg:px-16 lg:pt-12">
@@ -486,7 +494,7 @@ export function AnomaliesExplorer() {
         </h1>
         <p className="type-body max-w-[720px] text-ink-muted">
           Compare o último mês com o típico para a época e veja os meses que
-          fugiram do padrão desde {CALENDAR_FIRST_YEAR}.{" "}
+          fugiram do padrão {sinceLabel(analysis)}.{" "}
           <a href="#como-definimos" className="text-link hover:underline">
             Como definimos
           </a>
@@ -501,26 +509,24 @@ export function AnomaliesExplorer() {
           <MonthOverview calendar={calendar} onShow={show} />
           <ReportCard eyebrow="Temporada crítica" icon="event" className="">
             <h3 className="type-heading-md text-ink first-letter:uppercase">
-              {analysis.season
-                ? monthRangeLabel(analysis.season.months)
-                : "Ainda sem referência"}
+              {season.title}
             </h3>
-            {analysis.season && (
-              <p className="type-body text-ink-muted">
-                Concentra {Math.round(analysis.season.share * 100)}% dos focos
-                de um ano típico.
-              </p>
+            <p className="type-body text-ink-muted">{season.text}</p>
+            {seasonCell && (
+              <CalendarLink
+                label="Ver no calendário"
+                onClick={() => show(seasonCell.key)}
+              />
             )}
           </ReportCard>
           <ReportCard eyebrow="Ano recorde" icon="bar_chart" className="">
-            <h3 className="type-heading-md text-ink">
-              {analysis.record?.year ?? "Ainda sem anos completos"}
-            </h3>
-            {analysis.record && (
-              <p className="type-body text-ink-muted">
-                {formatRatio(analysis.record.ratio)}× a mediana dos anos desde{" "}
-                {CALENDAR_FIRST_YEAR}, em {SOURCE_SHORT_UNITS[source]}.
-              </p>
+            <h3 className="type-heading-md text-ink">{record.title}</h3>
+            <p className="type-body text-ink-muted">{record.text}</p>
+            {recordCell && (
+              <CalendarLink
+                label="Ver no calendário"
+                onClick={() => show(recordCell.key)}
+              />
             )}
           </ReportCard>
           <ReportCard eyebrow="Meses fora do padrão" icon="flag" className="">
@@ -528,7 +534,7 @@ export function AnomaliesExplorer() {
               {analysis.outliers.length}
             </h3>
             <p className="type-body text-ink-muted">
-              Desde {CALENDAR_FIRST_YEAR}.
+              {capitalized(sinceLabel(analysis))}.
               {latestOutlier &&
                 ` O mais recente foi ${monthTitle(latestOutlier)}.`}
             </p>
@@ -548,7 +554,7 @@ export function AnomaliesExplorer() {
           router.replace(`/anomalies?area=${next}`, { scroll: false })
         }
         title="Calendário de anomalias"
-        description={`Cada mês contra a mediana do mesmo mês, de ${CALENDAR_FIRST_YEAR} a ${analysis.lastBaselineYear}. Azul fica abaixo do típico; vermelho, acima.`}
+        description={`Cada mês contra a mediana do mesmo mês ${baselineLabel(analysis)}. Azul fica abaixo do típico; vermelho, acima.`}
         initialMode="anomaly"
         focusRequest={focusRequest}
       />

@@ -1,10 +1,10 @@
-import type {
-  CalendarCell,
-  CalendarPasses,
-  CalendarSource,
-  CellOrigin,
+import {
+  type CalendarCell,
+  type CalendarPasses,
+  type CalendarSource,
+  type CellOrigin,
 } from "./calendar-matrix";
-import type { MonthRank } from "./calendar-statistics";
+import type { CalendarAnalysis, MonthRank } from "./calendar-statistics";
 
 export const MONTH_NAMES = [
   "janeiro",
@@ -80,6 +80,14 @@ const DATE_TIME = new Intl.DateTimeFormat("pt-BR", {
 
 export function formatCount(value: number): string {
   return INTEGER.format(Math.round(value));
+}
+
+export function capitalized(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+export function formatHotspots(value: number): string {
+  return `${formatCount(value)} ${Math.round(value) === 1 ? "foco" : "focos"}`;
 }
 
 export function formatCompact(value: number): string {
@@ -187,4 +195,67 @@ export function computingReason(cell: CalendarCell): string {
   return cell.layer === "viirs_noaa20"
     ? "Em cálculo: o fator do NOAA-20 ainda não saiu."
     : "O valor harmonizado está em cálculo.";
+}
+
+export type CardSummary = { title: string; text: string };
+
+export function sinceLabel(analysis: CalendarAnalysis): string {
+  return analysis.lastYear > analysis.lastBaselineYear
+    ? `desde ${analysis.firstYear}`
+    : `de ${analysis.firstYear} a ${analysis.lastYear}`;
+}
+
+export function baselineLabel(analysis: CalendarAnalysis): string {
+  return analysis.firstYear >= analysis.lastBaselineYear
+    ? `de ${analysis.firstYear}`
+    : `de ${analysis.firstYear} a ${analysis.lastBaselineYear}`;
+}
+
+export function seasonSummary(analysis: CalendarAnalysis): CardSummary {
+  const { season } = analysis;
+  if (season) {
+    return {
+      title: monthRangeLabel(season.months),
+      text: `Concentra ${Math.round(season.share * 100)}% dos focos de um ano típico.`,
+    };
+  }
+  return analysis.baselines.every((baseline) => baseline !== null)
+    ? {
+        title: "Sem temporada",
+        text: "Em um ano típico, nenhum mês tem focos.",
+      }
+    : {
+        title: "Ainda sem referência",
+        text: "Falta a mediana de algum mês para achar a temporada.",
+      };
+}
+
+export function recordSummary(
+  analysis: CalendarAnalysis,
+  unit?: string,
+): CardSummary {
+  const { record } = analysis;
+  if (record && record.ratio !== null) {
+    return {
+      title: String(record.year),
+      text: unit
+        ? `${formatRatio(record.ratio)}× a mediana dos anos ${baselineLabel(analysis)}, em ${unit}.`
+        : `Teve ${formatRatio(record.ratio)}× os focos da mediana dos anos ${baselineLabel(analysis)}.`,
+    };
+  }
+  if (record) {
+    return {
+      title: String(record.year),
+      text: `Teve ${formatHotspots(record.total)}. Um ano típico ${baselineLabel(analysis)} não tem nenhum.`,
+    };
+  }
+  return analysis.completeYears > 0
+    ? {
+        title: "Sem recorde",
+        text: `Nenhum ano ${baselineLabel(analysis)} teve focos nos meses escolhidos.`,
+      }
+    : {
+        title: "Ainda sem anos completos",
+        text: `Nenhum ano completo ${sinceLabel(analysis)} tem todos os meses escolhidos com dado.`,
+      };
 }

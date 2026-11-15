@@ -52,7 +52,7 @@ The pipeline publishes small CSV files that the site reads as they are. The cale
 
 | File                                     | Use                                                                                                                 |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `meta/latest.csv`                        | Number of the last batch, checked every 5 minutes                                                                   |
+| `meta/latest.csv`                        | Number of the last batch, read first and checked every minute                                                       |
 | `meta/batches/{batch}.csv`               | Files changed by a batch, so only those are read again                                                              |
 | `meta/coverage.csv`                      | First and last day of each layer, which separates "not loaded" from 0, and `complete_date`, the last closed UTC day |
 | `meta/countries.csv`                     | Countries in the region filter                                                                                      |
@@ -62,15 +62,17 @@ The pipeline publishes small CSV files that the site reads as they are. The cale
 | `series/countries/{ISO3}/yearly.csv`     | Hotspots of the chosen year on the filter page                                                                      |
 | `points/{layer}/{year}/{date}.csv.gz`    | Hotspots of each day on the map, for periods up to 7 days                                                           |
 | `grid/monthly/{year}/{month}.csv`        | Hotspots per 0.25 degree cell on the map, for longer periods                                                        |
-| `meta/static_sources.csv`                | Static heat sources, removed from the VIIRS points as in the series                                                 |
-| `meta/validation.csv`                    | k, k20, error and correlation shown on the methodology page                                                         |
+| `meta/static_sources.csv`                | Static heat sources, removed from the near real-time points as in the series                                        |
+| `meta/validation.csv`                    | k, k20, error, correlation and confidence shown on the methodology page                                             |
 | `series/.../yearly.csv`                  | The before and after chart on the methodology page                                                                  |
 
-Each series has one column per layer (`modis`, `viirs_snpp`, `viirs_noaa20`) and a `harmonized` column, all with `_d` and `_n` versions for daytime and nighttime passes. Months and days are in UTC.
+Every page checks `meta/latest.csv` once a minute, one check at a time. When the batch number grows, the site reads the lists in `meta/batches/` and reloads only the listed files that are on screen; the others leave the cache. It starts over, reading `meta/latest.csv` first and then every file on screen, when a list is missing, when more than 500 batches were skipped or when the number goes down. The status in the header turns into "Dados até" with the time of the last batch when it is more than 2 hours old.
+
+Each series has one column per layer (`modis`, `viirs_snpp`, `viirs_noaa20`, `viirs_noaa21`, `landsat`) and a `harmonized` column, all but `landsat` with `_d` and `_n` versions for daytime and nighttime passes. Months and days are in UTC.
 
 How `harmonized` is built:
 
-- Every MODIS hotspot of type 0, at any confidence, is multiplied by the factor k of the 5 degree block where it fell. k is fitted on 2012 to 2019.
+- Every MODIS hotspot of type 0, at any confidence, is multiplied by the factor k of the 5 degree block where it fell. k is fitted on 2012 to 2019, and a block with fewer than 1,000 MODIS hotspots in those years uses the world k. Daytime and nighttime passes have their own k.
 - VIIRS S-NPP is used as observed from 2012 until it stopped, on 2026-11-02.
 - After that, VIIRS NOAA-20 is multiplied by k20, fitted against S-NPP on whole years from 2019 to 2025.
 - A country total adds hotspots one by one, so it is not the sum of the grid cells around it.
@@ -78,16 +80,17 @@ How `harmonized` is built:
 ## Pages
 
 - `/calendar` picks the year, the continent and the country (`src/area-filters`).
-- `/calendar/map?area={ISO3}&year={year}` shows the map, the reports and the fire calendar of that country; `area=world` shows the whole world.
+- `/calendar/map?area={ISO3}&year={year}` shows the map, the reports and the fire calendar of that country; `area=world` shows the whole world. Each report opens its evidence (`src/report-evidence`): the chart behind the number, a CSV and a link to the month in the calendar.
 - `/anomalies?area={ISO3}` compares the last month with the typical one, lists the months that stand out and opens the calendar in anomaly mode (`src/anomalies`).
-- `/methodology?area={ISO3}` explains the method, with the figures of `meta/validation.csv` for the chosen region (`src/methodology`).
+- `/methodology?area={ISO3}` explains the method, with the figures of `meta/validation.csv` for the chosen region (`src/methodology`). The confidence is high with 10,000 MODIS hotspots or more in the calibration years, medium from 1,000 to 9,999 and low below 1,000.
 
 ## Map
 
 The code is in `src/fire-map`. The globe is drawn with MapLibre from the boundaries in `public/geo`, without map tiles.
 
-- Periods up to 7 days show the hotspots of each day. MODIS keeps type 0 only, and VIIRS drops the points whose position, cut to 0.01 degree, is in `meta/static_sources.csv`, so the count matches the `daily.csv` series. Hotspots from the last 24 hours of the period are drawn as active fire.
-- Longer periods and the seasons show the monthly grid of the months they touch, keeping the cells whose center is inside the country. The count in the legend is the sum of the days of the period in `daily.csv`.
+- Periods up to 7 days show the hotspots of each day. Science points keep type 0 only, and near real-time points, which have no type, drop the ones whose position, cut to 0.01 degree, is in `meta/static_sources.csv`. This is the rule of the series, so the points of a day match `daily.csv`. Hotspots from the last 24 hours of the period are drawn as active fire.
+- The count in the legend is the sum of the days of the period in `daily.csv`. Only the 24 and 48 hour windows, which do not fit whole days, count the points.
+- Longer periods and the seasons show the monthly grid of the months they touch, keeping the cells whose center is inside the country.
 - Each date uses the layer of the calendar: MODIS before 2012, then VIIRS S-NPP, then VIIRS NOAA-20.
 - Seasons use whole months (December to February, March to May, June to August, September to November), named for the hemisphere of the country.
 
@@ -97,9 +100,10 @@ The code is in `src/fire-calendar`, and the file reading in `src/pipeline`.
 
 - Rows are years from 2003, when Terra and Aqua were both observing, to the current year. The Source filter picks `harmonized`, raw MODIS or raw VIIRS (S-NPP for its whole months, NOAA-20 after), and the Passes filter picks the daytime or nighttime columns.
 - A month is shown as a value, zero, no data, being calculated (raw count present but `harmonized` still empty), loading (outside the coverage of its layer) or future. The last month with data is marked partial, and months still built from near real-time data are marked preliminary.
-- The typical month is the median of the same month from 2003 to the last full year. Colors use 6 classes on a log scale, with limits rounded to 1 or 3 times a power of 10.
+- The typical month is the median of the same month over the years chosen in the Years filter, up to the last full year (2003 to the last full year by default). The fire season, the record year, the months that stand out and the month cards all use the same years and the chosen months. Colors use 6 classes on a log scale, with limits rounded to 1 or 3 times a power of 10.
 - A month stands out when it is above the 90th percentile of the same month, at least twice the median and at least 20 hotspots.
 - The fire season is the shortest run of consecutive months whose medians add up to 75% of a typical year.
 - The current month is compared with the sum of the same days in earlier years, from day 1 to `complete_date`. While the pipeline does not publish `complete_date`, the day before the last day with data is used.
+- The first report follows the period of the map (24 hours to a season): it sums the closed days of the period in `daily.csv` and compares them with the same days in each of the chosen years. The 24 and 48 hour windows are compared as whole UTC days.
 - In anomaly mode, each month is divided by the median of the same month: below 0.5, 0.5 to 0.8, typical from 0.8 to 1.25, 1.25 to 2, 2 to 3 and above 3.
 - Days after `complete_date` are marked as partial on the map and stay out of the comparisons.

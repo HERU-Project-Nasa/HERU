@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BeforeAfterChart } from "@/methodology/before-after-chart";
 import {
+  ConfidenceLegend,
   MethodologyDates,
   MethodologyFigures,
   MethodologyFiles,
@@ -48,14 +49,14 @@ const SENSORS = [
   {
     instrument: "VIIRS",
     satellite: "NOAA-21",
-    since: "17/01/2024",
+    since: "01/03/2023",
     pixel: "375 m",
     use: "Fica fora da série harmonizada",
   },
   {
     instrument: "OLI",
     satellite: "Landsat 8 e 9",
-    since: "-",
+    since: "20/06/2022",
     pixel: "30 m",
     use: "Só EUA e Canadá; fica fora do calendário",
   },
@@ -72,7 +73,7 @@ const SERIES_STEPS = [
   },
   {
     period: "3 de novembro de 2026 em diante",
-    text: "O S-NPP parou de observar. Entra o NOAA-20, multiplicado por k20 = focos S-NPP ÷ focos NOAA-20, em anos inteiros de 2019 a 2025.",
+    text: "O S-NPP parou de observar. Entra o NOAA-20, multiplicado por k20 = focos S-NPP ÷ focos NOAA-20, em anos inteiros de 2019 a 2025, também por bloco de 5°.",
   },
 ];
 
@@ -83,7 +84,11 @@ const HARMONIZATION_REASONS = [
   },
   {
     title: "Por que um k por bloco de 5°",
-    text: "A razão entre os sensores muda de uma região para outra. Um fator único para o mundo erraria em quase toda parte, então cada foco MODIS usa o k do seu bloco.",
+    text: "A razão entre os sensores muda de uma região para outra. Um fator único para o mundo erraria em quase toda parte, então cada foco MODIS usa o k do seu bloco. Um bloco com menos de 1.000 focos nos anos de calibração usa o k do mundo.",
+  },
+  {
+    title: "Por que um k por passagem",
+    text: "À noite, o VIIRS encontra muito mais focos que o MODIS do que de dia. Um k único distorceria o filtro de dia e noite. Por isso, a soma de dia e noite não dá exatamente o total.",
   },
   {
     title: "Por que somar foco a foco",
@@ -91,7 +96,7 @@ const HARMONIZATION_REASONS = [
   },
   {
     title: "Por que calibrar em 2012-2019",
-    text: "A partir de 2020, a deriva das órbitas do MODIS muda a contagem. Como a série só usa o MODIS até 2011, a deriva não entra no resultado.",
+    text: "A partir de 2020, a deriva das órbitas do MODIS muda a contagem. Como a série só usa o MODIS até 2011, a deriva não entra no resultado. O k20 usa anos inteiros de 2019 a 2025, todos do produto científico, para cobrir todas as estações do ano por igual.",
   },
 ];
 
@@ -114,7 +119,7 @@ export default function MethodologyPage() {
           <header className="flex flex-col gap-3">
             <p className="type-eyebrow text-ink-muted">Metodologia</p>
             <h1 className="type-heading-lg lg:type-heading-xl text-ink">
-              Como o HERU põe 24 anos de dois satélites na mesma escala
+              Como o HERU põe 24 anos de dois sensores na mesma escala
             </h1>
             <p className="type-body-lg max-w-[680px] text-ink-muted">
               De onde vêm os números, como foram ajustados e até onde dá para
@@ -181,11 +186,11 @@ export default function MethodologyPage() {
               números podem mudar.
             </p>
             <p className={PARAGRAPH}>
-              Os dias seguem o horário UTC. Um dia só fecha depois da última
-              passagem, perto da meia-noite UTC, mais o atraso do quase tempo
-              real. Até lá ele aparece como{" "}
-              <strong className="font-semibold">parcial</strong> e fica fora das
-              comparações.
+              Os dias seguem o horário UTC: no Brasil, um foco das 22 h cai no
+              dia seguinte. Um dia só fecha depois da última passagem, perto da
+              meia-noite UTC, mais o atraso do quase tempo real. Até lá ele
+              aparece como <strong className="font-semibold">parcial</strong> e
+              fica fora das comparações.
             </p>
             <SensorTimeline />
             <div className="overflow-x-auto">
@@ -231,12 +236,14 @@ export default function MethodologyPage() {
           <MethodologySection id="filtragem">
             <ul className={BULLET_LIST}>
               <li>
-                MODIS: só focos do tipo vegetação (type = 0). Vulcões, fontes
-                fixas e detecções no mar ficam de fora.
+                No produto científico, que informa o tipo de cada foco, só
+                entram os de vegetação (type 0). Vulcões, outras fontes fixas em
+                terra e detecções no mar ficam de fora.
               </li>
               <li>
-                VIIRS: saem os focos que caem sobre fontes fixas de calor já
-                conhecidas, como queima de gás e indústrias.
+                No quase tempo real, que não informa o tipo, saem os focos que
+                caem sobre fontes fixas de calor já conhecidas, como queima de
+                gás e indústrias, marcadas numa grade de 0,01°.
               </li>
               <li>
                 Todos os níveis de confiança entram, porque o VIIRS nunca marca
@@ -245,11 +252,14 @@ export default function MethodologyPage() {
               <li>
                 Contamos foco a foco por país e para o mundo, por dia, mês e
                 ano, separando dia e noite. Para o mapa, também por célula de
-                0,25° e mês.
+                0,25° e mês. Focos no mar entram no total do mundo, mas em
+                nenhum país.
               </li>
               <li>
-                A série começa em 2003. O Aqua só entrou em julho de 2002, e
-                antes disso a contagem cai pela metade sem que o fogo mude.
+                A série harmonizada começa em julho de 2002, quando o Aqua
+                começou a observar. Antes, só o Terra observava e a contagem cai
+                pela metade sem que o fogo mude. O calendário começa em 2003, o
+                primeiro ano inteiro com os dois.
               </li>
             </ul>
           </MethodologySection>
@@ -265,7 +275,8 @@ export default function MethodologyPage() {
                 k = focos S-NPP ÷ focos MODIS, de 2012 a 2019
               </p>
               <p className="type-body-sm text-ink-muted">
-                Calculado em cada bloco de 5° de latitude e longitude.
+                Calculado em cada bloco de 5° de latitude e longitude e para
+                cada passagem: todas, dia e noite.
               </p>
             </div>
             <ol className="flex flex-col gap-4">
@@ -295,7 +306,7 @@ export default function MethodologyPage() {
               {HARMONIZATION_REASONS.map((reason) => (
                 <article
                   key={reason.title}
-                  className={`${PANEL} flex flex-col gap-1.5 p-5`}
+                  className={`${PANEL} flex flex-col gap-1.5 p-5 last:odd:sm:col-span-2`}
                 >
                   <h3 className="type-heading-sm text-ink">{reason.title}</h3>
                   <p className="type-body text-ink-muted">{reason.text}</p>
@@ -306,9 +317,9 @@ export default function MethodologyPage() {
 
           <MethodologySection id="validacao">
             <p className={PARAGRAPH}>
-              Para testar o método, reconstruímos o VIIRS de 2020 a 2024 a
-              partir do MODIS × k e comparamos com o que o VIIRS de fato viu.
-              Esses anos não entram na calibração.
+              Para testar o método, reconstruímos o S-NPP de 2020 a 2024 a
+              partir do MODIS × k e comparamos mês a mês com o que o S-NPP de
+              fato viu. Esses anos não entram na calibração.
             </p>
             <ul className={BULLET_LIST}>
               <li>
@@ -317,14 +328,31 @@ export default function MethodologyPage() {
               </li>
               <li>
                 <strong className="font-semibold">Correlação r:</strong> quanto
-                a reconstrução acompanha o VIIRS observado, em escala log; 1 é o
+                a reconstrução acompanha o S-NPP observado, em escala log; 1 é o
                 acompanhamento perfeito.
+              </li>
+              <li>
+                <strong className="font-semibold">Meses usados:</strong> quantos
+                meses entraram na comparação. Com poucos meses, o erro diz
+                pouco.
+              </li>
+              <li>
+                <strong className="font-semibold">Concordância de país:</strong>{" "}
+                a fração dos focos do país em que a fronteira usada pela
+                pipeline dá o mesmo país do arquivo do FIRMS. A meta é 99% ou
+                mais.
               </li>
             </ul>
             <p className={PARAGRAPH}>
-              Os dois números da região escolhida estão no painel do topo. O
-              gráfico mês a mês da reconstrução entra quando essa série for
-              publicada.
+              O selo de confiança depende do volume de focos MODIS nos anos de
+              calibração:
+            </p>
+            <ConfidenceLegend />
+            <p className={PARAGRAPH}>
+              Os números da região escolhida estão no painel do topo. Num país,
+              eles são um diagnóstico: a série do país usa o k de cada bloco
+              onde o foco caiu. O gráfico mês a mês da reconstrução entra quando
+              essa série for publicada.
             </p>
           </MethodologySection>
 

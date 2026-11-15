@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { readCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesDayRow, SeriesMonthRow } from "@/pipeline/series-row";
-import { difference, heatRangeLabel } from "./calendar-labels";
+import {
+  baselineLabel,
+  difference,
+  formatHotspots,
+  heatRangeLabel,
+  recordSummary,
+  seasonSummary,
+  sinceLabel,
+} from "./calendar-labels";
 import { buildCalendarYears } from "./calendar-matrix";
 import {
   analyzeCalendar,
@@ -10,7 +18,7 @@ import {
   logBreaks,
   type MonthBaseline,
 } from "./calendar-statistics";
-import { currentMonthComparison } from "./month-comparison";
+import { currentMonthComparison, periodComparison } from "./month-comparison";
 
 const coverage = readCoverage([
   {
@@ -195,11 +203,130 @@ describe("currentMonthComparison", () => {
   });
 });
 
+describe("chosen date range", () => {
+  const years = buildCalendarYears(rows, coverage, "modis", "all");
+  const everyMonth = Array(12).fill(true);
+  const days: SeriesDayRow[] = [2024, 2025, 2026].flatMap((year) =>
+    Array.from(
+      { length: 14 },
+      (_, index) =>
+        ({
+          date: `${year}-11-${String(index + 1).padStart(2, "0")}`,
+          modis: index === 13 ? 1000 : year - 2020,
+        }) as SeriesDayRow,
+    ),
+  );
+  const week = { start: "2026-11-08", end: "2026-11-14" };
+
+  it("limits the typical month to the chosen years", () => {
+    const recent = analyzeCalendar(
+      years,
+      years.filter((year) => year.year >= 2024),
+      everyMonth,
+    );
+    expect(recent).toMatchObject({
+      firstYear: 2024,
+      lastYear: 2026,
+      lastBaselineYear: 2025,
+      baselineYearCount: 2,
+    });
+    expect(recent.baselines[10]?.years).toBe(2);
+    expect(sinceLabel(recent)).toBe("desde 2024");
+    const past = analyzeCalendar(
+      years,
+      years.filter((year) => year.year >= 2010 && year.year <= 2015),
+      everyMonth,
+    );
+    expect(past.lastBaselineYear).toBe(2015);
+    expect(sinceLabel(past)).toBe("de 2010 a 2015");
+    expect(baselineLabel(past)).toBe("de 2010 a 2015");
+  });
+
+  it("compares the map period with the same days of other years", () => {
+    const analysis = analyzeCalendar(years, years, everyMonth);
+    const comparison = periodComparison(
+      days,
+      years,
+      analysis,
+      "modis",
+      "all",
+      week,
+      "2026-11-13",
+    );
+    expect(comparison).toMatchObject({
+      start: "2026-11-08",
+      end: "2026-11-13",
+      value: 36,
+      typical: 27,
+      rank: { rank: 1, of: 3 },
+      baselineYears: 2,
+    });
+    const recent = analyzeCalendar(
+      years,
+      years.filter((year) => year.year >= 2025),
+      everyMonth,
+    );
+    expect(
+      periodComparison(days, years, recent, "modis", "all", week, "2026-11-13"),
+    ).toMatchObject({ typical: 30, baselineYears: 1, rank: { of: 2 } });
+  });
+
+  it("leaves out a period that has no closed day yet", () => {
+    const analysis = analyzeCalendar(years, years, everyMonth);
+    expect(
+      periodComparison(
+        days,
+        years,
+        analysis,
+        "modis",
+        "all",
+        { start: "2026-11-14", end: "2026-11-14" },
+        "2026-11-13",
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("summaries for areas without fire", () => {
+  const quiet = Array.from({ length: 23 * 12 }, (_, index) =>
+    row(
+      `${2003 + Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`,
+      { modis: index === 30 ? 1 : 0 },
+    ),
+  );
+  const years = buildCalendarYears(quiet, coverage, "modis", "all");
+  const analysis = analyzeCalendar(years, years, Array(12).fill(true));
+
+  it("tells a quiet area apart from missing data", () => {
+    expect(seasonSummary(analysis).title).toBe("Sem temporada");
+    expect(recordSummary(analysis)).toEqual({
+      title: "2005",
+      text: "Teve 1 foco. Um ano típico de 2003 a 2025 não tem nenhum.",
+    });
+  });
+
+  it("asks for data when no year is complete", () => {
+    const empty = analyzeCalendar(
+      buildCalendarYears([], coverage, "viirs", "all"),
+      [],
+      Array(12).fill(true),
+    );
+    expect(seasonSummary(empty).title).toBe("Ainda sem referência");
+    expect(recordSummary(empty).title).toBe("Ainda sem anos completos");
+  });
+});
+
 describe("labels", () => {
   it("describes the difference to the typical month", () => {
     expect(difference(138, 100).text).toBe("38% acima do típico");
     expect(difference(280, 100).text).toBe("2,8× o típico");
     expect(difference(4, 12).text).toBe("8 focos abaixo do típico");
+  });
+
+  it("writes one hotspot in the singular", () => {
+    expect(formatHotspots(1)).toBe("1 foco");
+    expect(formatHotspots(0.6)).toBe("1 foco");
+    expect(formatHotspots(1349)).toBe("1.349 focos");
   });
 
   it("shares the unit across a heat range", () => {

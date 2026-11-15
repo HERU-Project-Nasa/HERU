@@ -262,11 +262,6 @@
   }
 }
 
-/*
- * Celular: o Safari do iOS dá zoom ao focar campos com fonte menor que 16px,
- * e a página passa a rolar para os lados. Campos de data do iOS também têm
- * largura mínima própria; aqui eles cabem no espaço disponível.
- */
 @media (max-width: 767px) {
   input,
   select,

@@ -1,7 +1,8 @@
 import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
-import { formatCompact, formatCount } from "@/fire-calendar/calendar-labels";
+import { formatCompact, formatHotspots } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
+import { SegmentedChoice } from "@/fire-calendar/segmented-choice";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import {
   type MapPeriod,
@@ -45,7 +46,7 @@ function SeasonCard({
   onSelect: () => void;
 }) {
   const { season, total, future, current, complete } = entry;
-  const label = `${season.name} ${season.months[2].slice(0, 4)}, ${season.monthsLabel}${current ? ", em andamento" : ""}${total !== null ? `, ${formatCount(total)} focos` : ""}`;
+  const label = `${season.name} ${season.months[2].slice(0, 4)}, ${season.monthsLabel}${current ? ", em andamento" : ""}${total !== null ? `, ${formatHotspots(total)}` : ""}`;
   return (
     <button
       type="button"
@@ -82,7 +83,7 @@ function SeasonCard({
       </span>
       <span className="flex items-baseline gap-1">
         <span className="type-data text-ink tabular-nums">
-          {total === null ? "–" : formatCompact(total)}
+          {total === null ? "-" : formatCompact(total)}
         </span>
         <span className="text-[11px] leading-4 text-ink-muted">focos</span>
       </span>
@@ -101,6 +102,13 @@ function SeasonCard({
   );
 }
 
+export type MapCount = "harmonized" | "raw";
+
+const COUNT_OPTIONS: { value: MapCount; label: string }[] = [
+  { value: "harmonized", label: "Harmonizada" },
+  { value: "raw", label: "Bruta" },
+];
+
 export function MapFilters({
   period,
   lastDataDate,
@@ -111,6 +119,8 @@ export function MapFilters({
   southern,
   onSeason,
   onShiftSeasons,
+  count,
+  onCountChange,
 }: {
   period: MapPeriod;
   lastDataDate: string;
@@ -121,6 +131,8 @@ export function MapFilters({
   southern: boolean;
   onSeason: (season: Season) => void;
   onShiftSeasons: (step: number) => void;
+  count: MapCount;
+  onCountChange: (count: MapCount) => void;
 }) {
   const largest = Math.max(
     1,
@@ -197,7 +209,21 @@ export function MapFilters({
               />
             </label>
           </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="type-caption text-ink-muted">Contagem</span>
+            <SegmentedChoice
+              label="Contagem do mapa"
+              options={COUNT_OPTIONS}
+              value={count}
+              onChange={onCountChange}
+            />
+          </div>
         </div>
+        <p className="type-body-sm max-w-3xl text-ink-muted">
+          {count === "harmonized"
+            ? "Harmonizada: os números estão em focos equivalentes VIIRS, a régua do calendário. Cada ponto é uma detecção real e vale o fator k do bloco de 5° onde caiu."
+            : "Bruta: os números contam as detecções do sensor desenhado, sem conversão. Antes de 2012 o MODIS conta menos focos que o VIIRS, porque o pixel dele é maior."}
+        </p>
       </div>
 
       {seasonYears && (

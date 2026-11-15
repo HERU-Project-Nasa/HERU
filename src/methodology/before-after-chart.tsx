@@ -11,7 +11,12 @@ import {
   seriesPath,
   WORLD_AREA,
 } from "@/pipeline/series-row";
-import { useMethodologyArea } from "./methodology-figures";
+import {
+  factor,
+  useMethodologyArea,
+  type ValidationRow,
+  validationRowFor,
+} from "./methodology-figures";
 
 const LEFT = 64;
 const RIGHT = 690;
@@ -54,6 +59,8 @@ export function BeforeAfterChart() {
   const yearly = usePipelineFile<SeriesYearRow>(seriesPath("yearly", area));
   const coverageRows = usePipelineFile<CoverageRow>("meta/coverage.csv").rows;
   const countries = usePipelineFile<CountryRow>("meta/countries.csv").rows;
+  const validation = usePipelineFile<ValidationRow>("meta/validation.csv");
+  const k = factor(validationRowFor(validation.rows, area)?.k);
   const lastDataDate = coverageRows
     ? readCoverage(coverageRows).lastDataDate
     : null;
@@ -136,8 +143,16 @@ export function BeforeAfterChart() {
   return (
     <figure className="flex flex-col gap-4 rounded-md border border-line bg-surface p-4 sm:p-6">
       <figcaption className="flex flex-wrap items-baseline justify-between gap-3">
-        <span className="type-heading-sm text-ink">
-          Antes e depois da harmonização · {areaName}
+        <span className="flex flex-col gap-1">
+          <span className="type-heading-sm text-ink">
+            Antes e depois da harmonização · {areaName}
+          </span>
+          {k && (
+            <span className="type-body-sm text-ink-muted">
+              {area === WORLD_AREA ? "No mundo" : "Nesta área"}, 1 foco MODIS ≈{" "}
+              {k} focos VIIRS.
+            </span>
+          )}
         </span>
         <span className="type-body-sm text-ink-muted">
           Focos por ano, de {CALENDAR_FIRST_YEAR} a {lastYear}

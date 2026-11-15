@@ -41,7 +41,7 @@ const SATELLITES = [
   {
     instrument: "VIIRS",
     satellite: "NOAA-21",
-    from: 2024 + 16 / 365,
+    from: 2023 + 59 / 365,
     to: LAST_YEAR,
     driftFrom: null,
     className: "bg-viirs opacity-45",
@@ -79,7 +79,7 @@ export function SensorTimeline() {
   return (
     <figure
       role="img"
-      aria-label="Linha do tempo dos sensores de 2000 a 2027. MODIS no Terra desde 2000 e no Aqua desde 2002, com deriva de órbita a partir de 2020 e 2021. VIIRS no Suomi NPP de 2012 a novembro de 2026, no NOAA-20 desde 2018 e no NOAA-21 desde 2024. A série do HERU usa MODIS vezes k de 2003 a 2011, S-NPP de 2012 a outubro de 2026 e NOAA-20 vezes k2 depois."
+      aria-label="Linha do tempo dos sensores de 2000 a 2027. MODIS no Terra desde 2000 e no Aqua desde 2002, com deriva de órbita a partir de 2020 e 2021. VIIRS no Suomi NPP de 2012 a 2 de novembro de 2026, no NOAA-20 desde 2018 e no NOAA-21 desde 2023. A série do HERU usa MODIS vezes k de 2003 a 2011, S-NPP de 2012 a 2 de novembro de 2026 e NOAA-20 vezes k20 depois."
       className="rounded-md border border-line bg-surface p-4 sm:p-6"
     >
       <div className="relative flex flex-col gap-2.5">
@@ -164,14 +164,14 @@ export function SensorTimeline() {
             aria-hidden="true"
             className="h-2.5 w-6 rounded-xs bg-viirs opacity-45"
           />
-          NOAA-21: fora do MVP
+          NOAA-21: fora da série harmonizada
         </span>
         <span className="inline-flex items-center gap-2">
           <span
             aria-hidden="true"
             className="h-2.5 w-6 rounded-xs bg-viirs-adjusted"
           />
-          NOAA-20 × k₂, de novembro de 2026 em diante
+          NOAA-20 × k20, a partir de 03/11/2026
         </span>
       </figcaption>
     </figure>

@@ -1,9 +1,3 @@
-/*
- * Escala de calor do projeto, do nível 1 (poucos focos) ao nível 6 (muitos).
- * Poucos focos ficam claros e muitos focos ficam no vermelho mais escuro.
- * Tudo que pinta por nível de focos (calendário, legenda, mapa, estações e
- * calendário 3D) usa esta ordem, então mude aqui para mudar em todo lugar.
- */
 export const HEAT_TOKENS = [
   "heat-6",
   "heat-5",

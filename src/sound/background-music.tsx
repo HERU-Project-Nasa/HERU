@@ -5,11 +5,6 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 const MUSIC_URL = "/sound/background-sound.mp3";
 const PREFERENCE_KEY = "heru:music";
 
-/*
- * A música foi masterizada alta (cerca de -21 dBFS de média). Com ganho 0,28
- * ela fica perto de -32 dBFS: presente, mas abaixo de qualquer outro som e
- * confortável para ficar tocando enquanto a pessoa lê.
- */
 const MUSIC_VOLUME = 0.28;
 const FADE_IN_SECONDS = 2.5;
 const FADE_OUT_SECONDS = 0.6;
@@ -44,9 +39,7 @@ function savePreference(enabled: boolean) {
   sessionPreference = enabled;
   try {
     window.localStorage.setItem(PREFERENCE_KEY, enabled ? "on" : "off");
-  } catch {
-    // Sem armazenamento disponível: a escolha vale só nesta visita.
-  }
+  } catch {}
   for (const listener of preferenceListeners) {
     listener();
   }

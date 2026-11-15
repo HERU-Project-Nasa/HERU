@@ -83,6 +83,13 @@ export function CalendarSection({
 }) {
   const [mode, setMode] = useState(initialMode);
   const [view, setView] = useState<CalendarView>("3d");
+  const [handledFocus, setHandledFocus] = useState(focusRequest);
+  if (focusRequest !== handledFocus) {
+    setHandledFocus(focusRequest);
+    if (focusRequest) {
+      setView("grid");
+    }
+  }
   const showIn3D = mode === "count" && view === "3d";
   const {
     analysis,

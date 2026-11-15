@@ -3,13 +3,15 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
+  capitalized,
   formatDayMonth,
+  formatHotspots,
   formatUpdatedAt,
   PASSES_OPTIONS,
 } from "@/fire-calendar/calendar-labels";
 import type { CalendarPasses } from "@/fire-calendar/calendar-matrix";
 import { SegmentedChoice } from "@/fire-calendar/segmented-choice";
-import { MaterialSymbol } from "@/icons/material-symbols";
+import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import {
@@ -19,28 +21,61 @@ import {
 import { PIPELINE_BASE } from "@/pipeline/read-pipeline-csv";
 import { seriesPath, WORLD_AREA } from "@/pipeline/series-row";
 
-type ValidationRow = Record<
+export type ValidationRow = Record<
   | "scope"
   | "id"
   | "k"
   | "k20"
   | "median_error_2020_2024"
   | "r_log10"
+  | "months_used"
+  | "country_agreement"
   | "k_d"
   | "k_n"
+  | "calib_years"
+  | "modis_calib_hotspots"
   | "k20_d"
   | "k20_n"
-  | "calib_years"
-  | "calib_years_k20",
+  | "calib_years_k20"
+  | "noaa20_calib_hotspots",
   string
 >;
 
-const WORLD_IDS = new Set(["world", "global", "mundo", "wld"]);
 const FACTOR = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-const PERCENT = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+const PERCENT = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
+const HIGH_CONFIDENCE_HOTSPOTS = 10000;
+const MEDIUM_CONFIDENCE_HOTSPOTS = 1000;
+
+type ConfidenceLevel = "high" | "medium" | "low";
+
+const CONFIDENCE_LOOKS: Record<
+  ConfidenceLevel,
+  { label: string; symbol: SymbolName; className: string; description: string }
+> = {
+  high: {
+    label: "Confiança alta",
+    symbol: "verified",
+    className: "bg-status-live/14 text-status-live",
+    description: "Muitos focos MODIS nos anos de calibração: 10.000 ou mais.",
+  },
+  medium: {
+    label: "Confiança média",
+    symbol: "adjust",
+    className: "bg-status-stale/12 text-status-stale",
+    description:
+      "Volume intermediário, de 1.000 a 9.999 focos: leia as diferenças pequenas com cautela.",
+  },
+  low: {
+    label: "Confiança baixa",
+    symbol: "error",
+    className: "bg-alert/14 text-delta-above",
+    description:
+      "Poucos focos para calibrar a área sozinha, menos de 1.000. Um bloco assim usa o k do mundo.",
+  },
+};
 
 export function useMethodologyArea(): [string, (area: string) => void] {
   const router = useRouter();
@@ -56,45 +91,106 @@ export function useMethodologyArea(): [string, (area: string) => void] {
   ];
 }
 
-function validationRowFor(
+export function validationRowFor(
   rows: ValidationRow[] | null,
   area: string,
 ): ValidationRow | null {
   return (
     rows?.find((row) =>
       area === WORLD_AREA
-        ? WORLD_IDS.has(row.scope.toLowerCase()) ||
-          WORLD_IDS.has(row.id.toLowerCase())
-        : row.id === area,
+        ? row.scope === "world"
+        : row.scope === "country" && row.id === area,
     ) ?? null
   );
 }
 
-function factor(text: string | undefined): string | null {
+export function factor(text: string | undefined): string | null {
   const value = Number(text);
   return text && Number.isFinite(value) ? FACTOR.format(value) : null;
 }
 
-function errorPercent(text: string | undefined): string | null {
+function percent(text: string | undefined): string | null {
   const value = Number(text);
-  if (!text || !Number.isFinite(value)) {
+  return text && Number.isFinite(value)
+    ? `${PERCENT.format(value * 100)}%`
+    : null;
+}
+
+function validationDetails(row: ValidationRow): string[] {
+  const months = Number(row.months_used);
+  const agreement = percent(row.country_agreement);
+  return [
+    row.months_used
+      ? `${months} ${months === 1 ? "mês comparado" : "meses comparados"} em 2020-2024`
+      : null,
+    row.modis_calib_hotspots
+      ? `${formatHotspots(Number(row.modis_calib_hotspots))} MODIS na calibração do k`
+      : null,
+    row.noaa20_calib_hotspots
+      ? `${formatHotspots(Number(row.noaa20_calib_hotspots))} NOAA-20 na calibração do k20`
+      : null,
+    agreement ? `concordância de país de ${agreement}` : null,
+  ].filter((detail) => detail !== null);
+}
+
+function confidenceLevel(row: ValidationRow | null): ConfidenceLevel | null {
+  const hotspots = Number(row?.modis_calib_hotspots);
+  if (!row?.modis_calib_hotspots || !Number.isFinite(hotspots)) {
     return null;
   }
-  return `${PERCENT.format(value <= 1 ? value * 100 : value)}%`;
+  return hotspots >= HIGH_CONFIDENCE_HOTSPOTS
+    ? "high"
+    : hotspots >= MEDIUM_CONFIDENCE_HOTSPOTS
+      ? "medium"
+      : "low";
+}
+
+function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
+  const { label, symbol, className } = CONFIDENCE_LOOKS[level];
+  return (
+    <span
+      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-sm px-2 font-ui text-xs leading-4 font-semibold tracking-[0.06em] whitespace-nowrap uppercase ${className}`}
+    >
+      <MaterialSymbol name={symbol} className="size-4" />
+      {label}
+    </span>
+  );
+}
+
+export function ConfidenceLegend() {
+  return (
+    <dl className="flex flex-col gap-3">
+      {(Object.keys(CONFIDENCE_LOOKS) as ConfidenceLevel[]).map((level) => (
+        <div
+          key={level}
+          className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4"
+        >
+          <dt className="sm:w-44">
+            <ConfidenceBadge level={level} />
+          </dt>
+          <dd className="type-body text-ink-muted">
+            {CONFIDENCE_LOOKS[level].description}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 function Figure({
   value,
   description,
+  missing,
 }: {
   value: string | null;
   description: string;
+  missing: string;
 }) {
   return (
     <div className="flex min-w-0 flex-col-reverse justify-end gap-0.5">
       <dt className="type-body-sm text-ink-muted">{description}</dt>
       <dd className="font-text text-2xl leading-8 font-semibold whitespace-nowrap text-ink tabular-nums">
-        {value ?? <span className="text-ink-disabled">em cálculo</span>}
+        {value ?? <span className="text-ink-disabled">{missing}</span>}
       </dd>
     </div>
   );
@@ -123,15 +219,27 @@ export function MethodologyFigures() {
     passes === "all" ? "" : passes === "day" ? ", de dia" : ", de noite";
   const k = factor(row?.[`k${passSuffix}` as keyof ValidationRow]);
   const k20 = factor(row?.[`k20${passSuffix}` as keyof ValidationRow]);
+  const confidence = confidenceLevel(row);
+  const factorsReady = Boolean(
+    validationRowFor(validation.rows, WORLD_AREA)?.k,
+  );
+  const missing = !validation.rows
+    ? "\u00a0"
+    : factorsReady
+      ? "sem dado"
+      : "em cálculo";
 
   return (
     <section
       aria-labelledby="confidence-title"
       className="flex flex-col gap-5 rounded-md border border-line bg-surface p-6"
     >
-      <h2 id="confidence-title" className="type-heading-sm text-ink">
-        Quanto dá para confiar?
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="confidence-title" className="type-heading-sm text-ink">
+          Quanto dá para confiar?
+        </h2>
+        {confidence && <ConfidenceBadge level={confidence} />}
+      </div>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
         <label className="flex flex-col gap-1.5">
           <span className="type-caption text-ink-muted">Região</span>
@@ -169,29 +277,42 @@ export function MethodologyFigures() {
       </div>
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Figure
+          missing={missing}
           value={k}
           description={`focos VIIRS por foco MODIS (k${passName})${row?.calib_years ? `, calibrado em ${row.calib_years}` : ""}`}
         />
         <Figure
+          missing={missing}
           value={k20}
           description={`focos S-NPP por foco NOAA-20 (k20${passName})${row?.calib_years_k20 ? `, calibrado em ${row.calib_years_k20}` : ""}`}
         />
         <Figure
-          value={
-            passes === "all" ? errorPercent(row?.median_error_2020_2024) : null
-          }
+          missing={missing}
+          value={passes === "all" ? percent(row?.median_error_2020_2024) : null}
           description="erro mediano mensal da reconstrução, 2020-2024"
         />
         <Figure
+          missing={missing}
           value={passes === "all" ? factor(row?.r_log10) : null}
           description="correlação r em escala log, 2020-2024"
         />
       </dl>
-      {!row && (
+      {row && (
+        <p className="type-body-sm text-ink-muted">
+          {capitalized(validationDetails(row).join(" · "))}.
+        </p>
+      )}
+      {validation.rows && !row && (
+        <p className="type-body-sm flex items-start gap-2 text-ink-muted">
+          <MaterialSymbol name="info" className="mt-0.5 size-4 shrink-0" />A
+          pipeline não publicou a validação desta região. Os focos dela usam o k
+          dos blocos de 5° onde caíram.
+        </p>
+      )}
+      {!validation.rows && validation.error && (
         <p className="type-body-sm flex items-start gap-2 text-ink-muted">
           <MaterialSymbol name="schedule" className="mt-0.5 size-4 shrink-0" />
-          Os fatores desta região ainda não foram publicados. Eles aparecem aqui
-          assim que a validação for gerada.
+          Não conseguimos ler a validação agora.
         </p>
       )}
       {row && passes !== "all" && (

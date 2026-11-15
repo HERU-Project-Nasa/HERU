@@ -1,20 +1,54 @@
 import type { ReactNode } from "react";
+import { buttonClassName } from "@/button/button-class-name";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import {
+  capitalized,
   computingReason,
+  type Difference,
   difference,
   formatCount,
   formatDayMonth,
-  formatRatio,
+  formatHotspots,
   MONTH_NAMES,
-  monthRangeLabel,
   monthTitle,
   noDataReason,
+  recordSummary,
+  seasonSummary,
+  sinceLabel,
   yearsLabel,
 } from "./calendar-labels";
-import { CALENDAR_FIRST_YEAR, type CalendarSource } from "./calendar-matrix";
+import type { CalendarSource } from "./calendar-matrix";
 import type { CalendarAnalysis } from "./calendar-statistics";
-import type { MonthComparison } from "./month-comparison";
+import type { MonthComparison, PeriodComparison } from "./month-comparison";
+
+export type PeriodReport = {
+  comparison: PeriodComparison;
+  eyebrow: string;
+  title: string;
+  dates: string;
+  note: string | null;
+};
+
+export type ReportKind =
+  | "period"
+  | "closed-month"
+  | "current-month"
+  | "season"
+  | "record"
+  | "outliers";
+
+function EvidenceLink({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${buttonClassName({ variant: "secondary", size: "sm" })} mt-auto self-start`}
+    >
+      Ver evidências
+      <MaterialSymbol name="arrow_forward" className="size-[18px]" />
+    </button>
+  );
+}
 
 export function ReportCard({
   eyebrow,
@@ -47,7 +81,10 @@ export function DeltaBadge({
   value: number;
   typical: number;
 }) {
-  const { text, direction } = difference(value, typical);
+  return <TrendBadge {...difference(value, typical)} />;
+}
+
+export function TrendBadge({ text, direction }: Difference) {
   return (
     <span
       className={`type-button inline-flex h-6 items-center gap-1 self-start rounded-sm px-2 tracking-normal normal-case tabular-nums ${direction === "above" ? "bg-tint-alert text-delta-above" : direction === "below" ? "bg-tint-info text-delta-below" : "bg-surface-raised text-ink"}`}
@@ -77,21 +114,70 @@ export function unavailableText(
   return noDataReason(source, cell);
 }
 
+function PeriodCard({
+  report,
+  onEvidence,
+}: {
+  report: PeriodReport;
+  onEvidence: (() => void) | null;
+}) {
+  const { comparison, eyebrow, title, note } = report;
+  const { value, typical, rank, baselineYears } = comparison;
+  return (
+    <ReportCard eyebrow={eyebrow} icon="date_range" className="lg:col-span-2">
+      <h3 className="type-heading-md text-ink">{title}</h3>
+      {value === null ? (
+        <p className="type-body flex items-start gap-2 text-ink-muted">
+          <MaterialSymbol
+            name="schedule"
+            className="mt-1 size-[18px] shrink-0"
+          />
+          Ainda faltam dados de algum dia deste período.
+        </p>
+      ) : (
+        <>
+          <p className="flex items-baseline gap-2">
+            <span className="type-stat-xl text-ink">{formatCount(value)}</span>
+            <span className="type-body-sm text-ink-muted">
+              {Math.round(value) === 1 ? "foco" : "focos"}
+            </span>
+          </p>
+          {typical !== null && <DeltaBadge value={value} typical={typical} />}
+          <p className="type-body-sm text-ink-muted">
+            {typical === null
+              ? "Ainda sem referência para estas datas."
+              : `Típico para as mesmas datas: ${formatHotspots(typical)}, mediana de ${yearsLabel(baselineYears)}.`}
+            {rank &&
+              rank.of > 1 &&
+              ` É o ${rank.rank}º mais ativo nestas datas em ${yearsLabel(rank.of)}.`}
+          </p>
+          {note && <p className="type-caption text-ink-muted">{note}</p>}
+          {typical !== null && onEvidence && (
+            <EvidenceLink onClick={onEvidence} />
+          )}
+        </>
+      )}
+    </ReportCard>
+  );
+}
+
 function MonthCard({
   eyebrow,
   comparison,
   source,
   typicalLabel,
+  onEvidence,
 }: {
   eyebrow: string;
   comparison: MonthComparison;
   source: CalendarSource;
   typicalLabel: string;
+  onEvidence: (() => void) | null;
 }) {
   const { cell, value, typical, rank, baselineYears, throughDay } = comparison;
   const monthName = MONTH_NAMES[cell.month - 1];
   return (
-    <ReportCard eyebrow={eyebrow} className="lg:col-span-3">
+    <ReportCard eyebrow={eyebrow} className="lg:col-span-2">
       <h3 className="type-heading-md text-ink">
         {monthTitle(cell)}
         {throughDay !== null && (
@@ -116,17 +202,22 @@ function MonthCard({
         <>
           <p className="flex items-baseline gap-2">
             <span className="type-stat-xl text-ink">{formatCount(value)}</span>
-            <span className="type-body-sm text-ink-muted">focos</span>
+            <span className="type-body-sm text-ink-muted">
+              {Math.round(value) === 1 ? "foco" : "focos"}
+            </span>
           </p>
           {typical !== null && <DeltaBadge value={value} typical={typical} />}
           <p className="type-body-sm text-ink-muted">
             {typical === null
               ? "Ainda sem referência para este mês."
-              : `${typicalLabel}: ${formatCount(typical)} focos, mediana de ${yearsLabel(baselineYears)}.`}
+              : `${typicalLabel}: ${formatHotspots(typical)}, mediana de ${yearsLabel(baselineYears)}.`}
             {rank &&
               rank.of > 1 &&
               ` É o ${rank.rank}º ${monthName} mais ativo em ${yearsLabel(rank.of)}.`}
           </p>
+          {typical !== null && onEvidence && (
+            <EvidenceLink onClick={onEvidence} />
+          )}
         </>
       )}
     </ReportCard>
@@ -140,6 +231,8 @@ export function CalendarReports({
   closedMonth,
   currentMonth,
   source,
+  period,
+  onEvidence,
 }: {
   areaName: string;
   subtitle: string;
@@ -147,10 +240,13 @@ export function CalendarReports({
   closedMonth: MonthComparison | null;
   currentMonth: MonthComparison | null;
   source: CalendarSource;
+  period: PeriodReport | null;
+  onEvidence: ((kind: ReportKind) => void) | null;
 }) {
-  const { season, record, outliers } = analysis;
+  const { outliers } = analysis;
   const latestOutlier = outliers.at(-1);
-  const seasonName = season ? monthRangeLabel(season.months) : null;
+  const season = seasonSummary(analysis);
+  const record = recordSummary(analysis);
 
   return (
     <section aria-labelledby="reports-title" className="mt-12">
@@ -163,12 +259,19 @@ export function CalendarReports({
         </span>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
+        {period && (
+          <PeriodCard
+            report={period}
+            onEvidence={onEvidence && (() => onEvidence("period"))}
+          />
+        )}
         {closedMonth && (
           <MonthCard
             eyebrow="Último mês fechado"
             comparison={closedMonth}
             source={source}
             typicalLabel={`Típico de ${MONTH_NAMES[closedMonth.cell.month - 1]}`}
+            onEvidence={onEvidence && (() => onEvidence("closed-month"))}
           />
         )}
         {currentMonth && (
@@ -177,6 +280,7 @@ export function CalendarReports({
             comparison={currentMonth}
             source={source}
             typicalLabel={`Típico de 1 a ${currentMonth.throughDay} de ${MONTH_NAMES[currentMonth.cell.month - 1]}`}
+            onEvidence={onEvidence && (() => onEvidence("current-month"))}
           />
         )}
         <ReportCard
@@ -185,27 +289,23 @@ export function CalendarReports({
           className="lg:col-span-2"
         >
           <h3 className="type-heading-md text-ink first-letter:uppercase">
-            {seasonName ?? "Ainda sem referência"}
+            {season.title}
           </h3>
-          <p className="type-body text-ink-muted">
-            {season
-              ? `Concentra ${Math.round(season.share * 100)}% dos focos de um ano típico.`
-              : "Falta a mediana de algum mês para achar a temporada."}
-          </p>
+          <p className="type-body text-ink-muted">{season.text}</p>
+          {analysis.season && onEvidence && (
+            <EvidenceLink onClick={() => onEvidence("season")} />
+          )}
         </ReportCard>
         <ReportCard
           eyebrow="Ano recorde"
           icon="bar_chart"
           className="lg:col-span-2"
         >
-          <h3 className="type-heading-md text-ink">
-            {record ? record.year : "Ainda sem anos completos"}
-          </h3>
-          <p className="type-body text-ink-muted">
-            {record
-              ? `Teve ${formatRatio(record.ratio)}× os focos da mediana dos anos desde ${CALENDAR_FIRST_YEAR}.`
-              : `Nenhum ano desde ${CALENDAR_FIRST_YEAR} tem todos os meses escolhidos com dado.`}
-          </p>
+          <h3 className="type-heading-md text-ink">{record.title}</h3>
+          <p className="type-body text-ink-muted">{record.text}</p>
+          {analysis.record && onEvidence && (
+            <EvidenceLink onClick={() => onEvidence("record")} />
+          )}
         </ReportCard>
         <ReportCard
           eyebrow="Fora do padrão"
@@ -218,10 +318,13 @@ export function CalendarReports({
               : `${outliers.length} ${outliers.length === 1 ? "mês" : "meses"}`}
           </h3>
           <p className="type-body text-ink-muted">
-            Desde {CALENDAR_FIRST_YEAR}.
+            {capitalized(sinceLabel(analysis))}.
             {latestOutlier &&
               ` O mais recente foi ${monthTitle(latestOutlier)}.`}
           </p>
+          {latestOutlier && onEvidence && (
+            <EvidenceLink onClick={() => onEvidence("outliers")} />
+          )}
         </ReportCard>
       </div>
     </section>

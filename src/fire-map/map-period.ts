@@ -99,6 +99,21 @@ export function presetPeriod(preset: PeriodPreset, end: string): MapPeriod {
   };
 }
 
+export function yearPeriodEnd(year: number, lastDataDate: string): string {
+  const yearEnd = `${year}-12-31`;
+  return yearEnd < lastDataDate ? yearEnd : lastDataDate;
+}
+
+export function periodName(period: MapPeriod): string {
+  if (period.hours) {
+    return `Últimas ${period.hours} h`;
+  }
+  if (period.preset) {
+    return `Últimos ${periodDates(period).length} dias`;
+  }
+  return period.seasonKey ? "Estação escolhida" : "Período escolhido";
+}
+
 export function usesPoints(period: MapPeriod, world: boolean): boolean {
   return (
     periodDates(period).length <=
@@ -124,11 +139,13 @@ export function periodLabel(period: MapPeriod): string {
     return `Últimas ${period.hours} h até ${dayLabel(period.end)} ${period.end.slice(0, 4)}`;
   }
   const days = periodDates(period).length;
+  return `${dateRangeLabel(period.start, period.end)} · ${days} ${days === 1 ? "dia" : "dias"}`;
+}
+
+export function dateRangeLabel(start: string, end: string): string {
   const range =
-    period.start === period.end
-      ? dayLabel(period.end)
-      : `${dayLabel(period.start)}-${dayLabel(period.end)}`;
-  return `${range} ${period.end.slice(0, 4)} · ${days} ${days === 1 ? "dia" : "dias"}`;
+    start === end ? dayLabel(end) : `${dayLabel(start)}-${dayLabel(end)}`;
+  return `${range} ${end.slice(0, 4)}`;
 }
 
 export function partialDaysLabel(

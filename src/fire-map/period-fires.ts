@@ -1,3 +1,4 @@
+import { type ChangedPaths, onPipelineChange } from "@/pipeline/pipeline-files";
 import {
   PipelineFileError,
   parsePipelineCsv,
@@ -13,9 +14,60 @@ export type FirePoint = {
   satellite: string;
   confidence: string;
   daynight: string;
+  provisional: boolean;
 };
 
 export type FireCell = { latitude: number; longitude: number; count: number };
+
+export type CellColumn = SeriesLayer | "harmonized";
+
+export type FactorRow = { scope: string; id: string; k: string; k20: string };
+
+type Factors = { k: number; k20: number };
+
+export type BlockFactors = { world: Factors; blocks: Map<string, Factors> };
+
+export function readBlockFactors(rows: FactorRow[]): BlockFactors | null {
+  const world = rows.find((row) => row.scope === "world");
+  if (!world || !Number(world.k) || !Number(world.k20)) {
+    return null;
+  }
+  const worldFactors = { k: Number(world.k), k20: Number(world.k20) };
+  return {
+    world: worldFactors,
+    blocks: new Map(
+      rows
+        .filter((row) => row.scope === "block")
+        .map((row) => [
+          row.id,
+          {
+            k: Number(row.k) || worldFactors.k,
+            k20: Number(row.k20) || worldFactors.k20,
+          },
+        ]),
+    ),
+  };
+}
+
+export function blockId(latitude: number, longitude: number): string {
+  return `${Math.floor(latitude / 5) * 5}_${Math.floor(longitude / 5) * 5}`;
+}
+
+export function harmonizedWeight(
+  point: Pick<FirePoint, "latitude" | "longitude" | "layer">,
+  factors: BlockFactors | null,
+): number | null {
+  if (point.layer === "viirs_snpp") {
+    return 1;
+  }
+  if (!factors || (point.layer !== "modis" && point.layer !== "viirs_noaa20")) {
+    return null;
+  }
+  const block =
+    factors.blocks.get(blockId(point.latitude, point.longitude)) ??
+    factors.world;
+  return point.layer === "modis" ? block.k : block.k20;
+}
 
 export type AreaBounds = [
   west: number,
@@ -35,31 +87,68 @@ type PointRow = {
   daynight: string;
   confidence: string;
   type: number | null;
+  processing: string;
 };
+
+const STATIC_SOURCES_PATH = "meta/static_sources.csv";
 
 const dayPoints = new Map<string, Promise<FirePoint[] | null>>();
 const monthCells = new Map<string, Promise<FireCell[] | null>>();
 
 let staticSources: Promise<Set<string>> | null = null;
 
+function forgetChanged(cache: Map<string, unknown>, paths: ChangedPaths) {
+  for (const key of [...cache.keys()]) {
+    if (!paths || paths.has(key.split("|")[0])) {
+      cache.delete(key);
+    }
+  }
+}
+
+onPipelineChange((paths) => {
+  if (!paths || paths.has(STATIC_SOURCES_PATH)) {
+    staticSources = null;
+    dayPoints.clear();
+  }
+  forgetChanged(dayPoints, paths);
+  forgetChanged(monthCells, paths);
+});
+
 function staticKey(latitude: number, longitude: number): string {
   return `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
 }
 
-function loadStaticSources(): Promise<Set<string>> {
-  staticSources ??= readPipelineText("meta/static_sources.csv").then(
-    (text) =>
-      new Set(
-        text
-          .split("\n")
-          .slice(1)
-          .filter((line) => line.includes(","))
-          .map((line) => {
-            const [latitude, longitude] = line.split(",").map(Number);
-            return staticKey(latitude, longitude);
-          }),
-      ),
+export function readStaticSources(text: string): Set<string> {
+  return new Set(
+    text
+      .split("\n")
+      .slice(1)
+      .filter((line) => line.includes(","))
+      .map((line) => {
+        const [latitude, longitude] = line.split(",").map(Number);
+        return staticKey(latitude, longitude);
+      }),
   );
+}
+
+export function countedInSeries(
+  row: Pick<PointRow, "latitude" | "longitude" | "type">,
+  staticSources: Set<string> | null,
+): boolean {
+  if (row.type !== null) {
+    return row.type === 0;
+  }
+  return !staticSources?.has(
+    staticKey(
+      Math.floor(row.latitude * 100) / 100,
+      Math.floor(row.longitude * 100) / 100,
+    ),
+  );
+}
+
+function loadStaticSources(): Promise<Set<string>> {
+  staticSources ??=
+    readPipelineText(STATIC_SOURCES_PATH).then(readStaticSources);
   staticSources.catch(() => {
     staticSources = null;
   });
@@ -82,11 +171,8 @@ export function loadDayPoints(
   const key = `${path}|${area ?? ""}`;
   let request = dayPoints.get(key);
   if (!request) {
-    request = Promise.all([
-      readPipelineText(path),
-      layer === "modis" ? null : loadStaticSources(),
-    ]).then(
-      ([text, staticSources]) => {
+    request = readPipelineText(path).then(
+      async (text) => {
         const lines = text.split("\n");
         const marker = `,${area},`;
         const kept = area
@@ -95,18 +181,14 @@ export function loadDayPoints(
               ...lines.slice(1).filter((line) => line.includes(marker)),
             ]
           : lines;
-        return parsePipelineCsv<PointRow>(kept.join("\n"))
-          .filter(
-            (row) =>
-              (!area || row.country === area) &&
-              (row.layer !== "modis" || row.type === 0) &&
-              !staticSources?.has(
-                staticKey(
-                  Math.floor(row.latitude * 100) / 100,
-                  Math.floor(row.longitude * 100) / 100,
-                ),
-              ),
-          )
+        const rows = parsePipelineCsv<PointRow>(kept.join("\n")).filter(
+          (row) => !area || row.country === area,
+        );
+        const mask = rows.some((row) => row.type === null)
+          ? await loadStaticSources()
+          : null;
+        return rows
+          .filter((row) => countedInSeries(row, mask))
           .map((row) => ({
             latitude: row.latitude,
             longitude: row.longitude,
@@ -115,6 +197,7 @@ export function loadDayPoints(
             satellite: row.satellite,
             confidence: row.confidence,
             daynight: row.daynight,
+            provisional: row.processing.toLowerCase() === "nrt",
           }));
       },
       missingIsNull<FirePoint[]>,
@@ -127,7 +210,7 @@ export function loadDayPoints(
 
 export function loadMonthCells(
   month: string,
-  column: SeriesLayer,
+  column: CellColumn,
   bounds: AreaBounds | null,
 ): Promise<FireCell[] | null> {
   const path = `grid/monthly/${month.slice(0, 4)}/${month}.csv`;
