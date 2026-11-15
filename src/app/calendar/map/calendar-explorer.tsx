@@ -4,6 +4,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { useEffect, useMemo, useState } from "react";
 import {
   areaFiltersHref,
@@ -21,6 +24,7 @@ import {
 import { useCountryOutlines } from "@/country-outlines/country-outlines";
 import {
   monthTitle,
+<<<<<<< HEAD
 =======
 import { useMemo, useState } from "react";
 import { areaFiltersHref, areaMapHref } from "@/area-filters/area-links";
@@ -30,6 +34,8 @@ import { useCountryOutlines } from "@/country-outlines/country-outlines";
 import {
   capitalized,
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   SOURCE_SHORT_UNITS,
 } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
@@ -43,6 +49,9 @@ import {
   DataFootnote,
 } from "@/fire-calendar/calendar-section";
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { useAreaCalendar } from "@/fire-calendar/use-area-calendar";
 import {
   type MapPeriod,
@@ -50,6 +59,7 @@ import {
   yearPeriodEnd,
 } from "@/fire-map/map-period";
 import { periodReport as buildPeriodReport } from "@/fire-map/period-report";
+<<<<<<< HEAD
 =======
 import { periodComparison } from "@/fire-calendar/month-comparison";
 import { useAreaCalendar } from "@/fire-calendar/use-area-calendar";
@@ -63,6 +73,8 @@ import {
   yearPeriodEnd,
 } from "@/fire-map/map-period";
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import { FadeUp } from "@/motion/fade-up";
 import { WORLD_AREA } from "@/pipeline/series-row";
@@ -100,6 +112,9 @@ export function CalendarExplorer() {
         ? requestedYear
         : dataYear;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const selection = useCalendarSelection();
   const selectedMonth = selection.area === area ? selection.month : null;
   useEffect(() => {
@@ -107,13 +122,19 @@ export function CalendarExplorer() {
       rememberSelection({ area, year: selectedYear });
     }
   }, [area, selectedYear]);
+<<<<<<< HEAD
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const periodEnd =
     lastDataDate && selectedYear
       ? yearPeriodEnd(selectedYear, lastDataDate)
       : null;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const period = useMemo(() => {
     if (!periodEnd) {
       return null;
@@ -147,6 +168,7 @@ export function CalendarExplorer() {
         : null,
     [period, dailyRows, completeDate, ready, years, analysis, source, passes],
   );
+<<<<<<< HEAD
 =======
   const defaultPeriod = useMemo(
     () => (periodEnd ? presetPeriod("7d", periodEnd) : null),
@@ -192,6 +214,8 @@ export function CalendarExplorer() {
     };
   }, [period, dailyRows, completeDate, ready, years, analysis, source, passes]);
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const appliedChips: { icon: SymbolName; text: string }[] = [
     ...(selectedYear
       ? [{ icon: "calendar_month" as const, text: String(selectedYear) }]
@@ -259,6 +283,9 @@ export function CalendarExplorer() {
             onPeriodChange={setChosenPeriod}
           />
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href={compareDatesHref(area, selectedYear)}
@@ -275,8 +302,11 @@ export function CalendarExplorer() {
               Comparar regiões
             </Link>
           </div>
+<<<<<<< HEAD
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
         </FadeUp>
       )}
 
@@ -319,6 +349,9 @@ export function CalendarExplorer() {
           initialMode="count"
           focusRequest={focusRequest}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           selectedMonth={selectedMonth}
           onSelectMonth={(key) =>
             rememberSelection({
@@ -364,8 +397,11 @@ export function CalendarExplorer() {
               </p>
             )
           }
+<<<<<<< HEAD
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
         />
       </FadeUp>
 

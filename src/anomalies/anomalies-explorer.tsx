@@ -2,6 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { useEffect, useMemo, useState } from "react";
 import { buttonClassName } from "@/button/button-class-name";
 import {
@@ -10,11 +13,14 @@ import {
   useCalendarSelection,
 } from "@/calendar-selection/calendar-selection";
 import {
+<<<<<<< HEAD
 =======
 import { useState } from "react";
 import { buttonClassName } from "@/button/button-class-name";
 import {
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   baselineLabel,
   capitalized,
   formatCount,
@@ -34,9 +40,13 @@ import type { CalendarCell } from "@/fire-calendar/calendar-matrix";
 import {
   DeltaBadge,
 <<<<<<< HEAD
+<<<<<<< HEAD
   PeriodCard,
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+  PeriodCard,
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   ReportCard,
   unavailableText,
 } from "@/fire-calendar/calendar-reports";
@@ -52,6 +62,9 @@ import {
 } from "@/fire-calendar/calendar-statistics";
 import {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   type MonthComparison,
   monthComparisonFor,
 } from "@/fire-calendar/month-comparison";
@@ -67,12 +80,15 @@ import {
 import { periodReport } from "@/fire-map/period-report";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { ReportEvidence } from "@/report-evidence/report-evidence";
+<<<<<<< HEAD
 =======
   type AreaCalendar,
   useAreaCalendar,
 } from "@/fire-calendar/use-area-calendar";
 import { MaterialSymbol } from "@/icons/material-symbols";
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 
 function CalendarLink({
   onClick,
@@ -151,6 +167,9 @@ function TypicalRange({
 function MonthOverview({
   calendar,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   focus,
   focusLabel,
   showCurrent,
@@ -165,6 +184,7 @@ function MonthOverview({
   const { analysis, source } = calendar;
   const closedMonth = focus;
   const currentMonth = showCurrent ? calendar.currentMonth : null;
+<<<<<<< HEAD
 =======
   onShow,
 }: {
@@ -173,17 +193,23 @@ function MonthOverview({
 }) {
   const { closedMonth, currentMonth, analysis, source } = calendar;
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const baseline = closedMonth
     ? analysis.baselines[closedMonth.cell.month - 1]
     : null;
   const unit = SOURCE_SHORT_UNITS[source];
   return (
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     <article className="flex flex-col gap-4 rounded-md border border-line bg-surface p-6">
       {closedMonth && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="type-eyebrow text-ink-muted">{focusLabel}</p>
+<<<<<<< HEAD
 =======
     <article className="flex flex-col gap-4 rounded-md border border-line bg-surface p-6 lg:col-span-2 lg:row-span-3">
       {closedMonth && (
@@ -191,6 +217,8 @@ function MonthOverview({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="type-eyebrow text-ink-muted">Último mês completo</p>
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
             <CalendarLink
               label="Ver no calendário"
               onClick={() => onShow(closedMonth.cell.key)}
@@ -199,10 +227,15 @@ function MonthOverview({
           <h2 className="type-heading-md text-ink first-letter:uppercase">
             {monthTitle(closedMonth.cell)}
 <<<<<<< HEAD
+<<<<<<< HEAD
             {closedMonth.throughDay !== null &&
               `, até o dia ${closedMonth.throughDay}`}
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+            {closedMonth.throughDay !== null &&
+              `, até o dia ${closedMonth.throughDay}`}
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           </h2>
           {closedMonth.value === null ? (
             <p className="type-body text-ink-muted">
@@ -231,10 +264,14 @@ function MonthOverview({
                   )}
               </div>
 <<<<<<< HEAD
+<<<<<<< HEAD
               {baseline && closedMonth.throughDay === null && (
 =======
               {baseline && (
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+              {baseline && closedMonth.throughDay === null && (
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                 <>
                   <TypicalRange value={closedMonth.value} baseline={baseline} />
                   <p className="type-body-sm text-ink-muted tabular-nums">
@@ -295,6 +332,9 @@ function OutlierTable({
   calendar,
   onShow,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   focusYear,
   focusKey,
 }: {
@@ -302,11 +342,14 @@ function OutlierTable({
   onShow: (key: string) => void;
   focusYear: number | null;
   focusKey: string | null;
+<<<<<<< HEAD
 =======
 }: {
   calendar: AreaCalendar;
   onShow: (key: string) => void;
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 }) {
   const { analysis, years, source, area } = calendar;
   const outliers = [...analysis.outliers].reverse();
@@ -391,14 +434,20 @@ function OutlierTable({
             <tbody className="type-body-sm text-ink">
               {rows.map(({ cell, typical, rank }) => (
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                 <tr
                   key={cell.key}
                   aria-current={cell.key === focusKey ? "true" : undefined}
                   className={`border-t border-line ${cell.year === focusYear ? "bg-surface-hover" : ""} ${cell.key === focusKey ? "font-semibold" : ""}`}
                 >
+<<<<<<< HEAD
 =======
                 <tr key={cell.key} className="border-t border-line">
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
                   <td className="px-4 py-3 first-letter:uppercase">
                     {monthTitle(cell)}
                   </td>
@@ -553,6 +602,9 @@ export function AnomaliesExplorer() {
   const router = useRouter();
   const searchParams = useSearchParams();
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const selection = useCalendarSelection();
   const fromUrl = searchParams.has("area");
   const calendar = useAreaCalendar(
@@ -675,6 +727,7 @@ export function AnomaliesExplorer() {
     ? 1 +
       completeTotals.filter((entry) => entry.total > focusTotal.total).length
     : null;
+<<<<<<< HEAD
 =======
   const calendar = useAreaCalendar(searchParams.get("area"));
   const [focusRequest, setFocusRequest] = useState<string | null>(null);
@@ -684,6 +737,8 @@ export function AnomaliesExplorer() {
   const season = seasonSummary(analysis);
   const record = recordSummary(analysis, SOURCE_SHORT_UNITS[source]);
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const seasonStart = analysis.season?.months[0];
   const seasonCell =
     seasonStart === undefined
@@ -701,6 +756,9 @@ export function AnomaliesExplorer() {
         <p className="type-eyebrow text-ink-muted">Anomalias</p>
         <h1 className="type-heading-lg min-h-9 text-ink">
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           {areaName &&
             `${areaName}: o que está fora do normal${focusYear && chosen ? ` em ${focusYear}` : ""}?`}
         </h1>
@@ -708,6 +766,7 @@ export function AnomaliesExplorer() {
           {chosen && focusCell
             ? `Mostrando ${monthTitle(focusCell)} contra o típico para a época. Clique em outro mês do calendário para trocar; os meses que fugiram do padrão ${sinceLabel(analysis)} estão no fim da página.`
             : `Compare o último mês com o típico para a época e veja os meses que fugiram do padrão ${sinceLabel(analysis)}. Clique num mês do calendário para analisá-lo.`}{" "}
+<<<<<<< HEAD
 =======
           {areaName && `${areaName}: o que está fora do normal?`}
         </h1>
@@ -715,6 +774,8 @@ export function AnomaliesExplorer() {
           Compare o último mês com o típico para a época e veja os meses que
           fugiram do padrão {sinceLabel(analysis)}.{" "}
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           <a href="#como-definimos" className="text-link hover:underline">
             Como definimos
           </a>
@@ -727,6 +788,9 @@ export function AnomaliesExplorer() {
           className="mt-10 grid gap-6 lg:grid-cols-3"
         >
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           <div className="flex flex-col gap-6 lg:col-span-2">
             <MonthOverview
               calendar={calendar}
@@ -839,6 +903,7 @@ export function AnomaliesExplorer() {
             }),
             { scroll: false },
           )
+<<<<<<< HEAD
 =======
           <MonthOverview calendar={calendar} onShow={show} />
           <ReportCard eyebrow="Temporada crítica" icon="event" className="">
@@ -887,12 +952,17 @@ export function AnomaliesExplorer() {
         onAreaChange={(next) =>
           router.replace(`/anomalies?area=${next}`, { scroll: false })
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
         }
         title="Calendário de anomalias"
         description={`Cada mês contra a mediana do mesmo mês ${baselineLabel(analysis)}. Azul fica abaixo do típico; vermelho, acima.`}
         initialMode="anomaly"
         focusRequest={focusRequest}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
         selectedMonth={focusKey}
         onSelectMonth={selectMonth}
       />
@@ -905,11 +975,14 @@ export function AnomaliesExplorer() {
           focusKey={focusKey}
         />
       )}
+<<<<<<< HEAD
 =======
       />
 
       {ready && <OutlierTable calendar={calendar} onShow={show} />}
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
       {ready && <Definitions calendar={calendar} />}
 
       <DataFootnote updatedAt={calendar.updatedAt} />

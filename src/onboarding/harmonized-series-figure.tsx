@@ -99,10 +99,14 @@ export function HarmonizedSeriesFigure() {
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
 <<<<<<< HEAD
+<<<<<<< HEAD
           aria-label="Gráfico de linhas animado, focos de calor nos Estados Unidos de 2003 a 2016. A contagem bruta salta em 2012, quando o VIIRS entra. Depois de harmonizada, a série sobe para a mesma escala e segue sem salto."
 =======
           aria-label="Gráfico de linhas animado, focos de calor na Bolívia de 2003 a 2016. A contagem bruta salta em 2012, quando o VIIRS entra. Depois de harmonizada, a série sobe para a mesma escala e segue sem salto."
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+          aria-label="Gráfico de linhas animado, focos de calor nos Estados Unidos de 2003 a 2016. A contagem bruta salta em 2012, quando o VIIRS entra. Depois de harmonizada, a série sobe para a mesma escala e segue sem salto."
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           className="relative block w-full overflow-visible font-ui"
         >
           <defs>

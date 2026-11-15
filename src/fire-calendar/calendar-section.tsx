@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { type ReactNode, useState } from "react";
 =======
 import { useState } from "react";
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+import { type ReactNode, useState } from "react";
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { reloadPipelineFile } from "@/pipeline/pipeline-files";
 import { CALENDAR_MODES, type CalendarMode } from "./calendar-anomaly";
@@ -87,11 +91,17 @@ export function CalendarSection({
   initialMode,
   focusRequest,
 <<<<<<< HEAD
+<<<<<<< HEAD
   selectedMonth = null,
   onSelectMonth,
   selectionAction,
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+  selectedMonth = null,
+  onSelectMonth,
+  selectionAction,
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 }: {
   calendar: AreaCalendar;
   onAreaChange: (area: string) => void;
@@ -100,11 +110,17 @@ export function CalendarSection({
   initialMode: CalendarMode;
   focusRequest: string | null;
 <<<<<<< HEAD
+<<<<<<< HEAD
   selectedMonth?: string | null;
   onSelectMonth?: (key: string) => void;
   selectionAction?: ReactNode;
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+  selectedMonth?: string | null;
+  onSelectMonth?: (key: string) => void;
+  selectionAction?: ReactNode;
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 }) {
   const [mode, setMode] = useState(initialMode);
   const latestYear = calendar.years.at(-1)?.year ?? null;
@@ -262,15 +278,21 @@ export function CalendarSection({
               mode={mode}
               focusRequest={focusRequest}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               selectedKey={selectedMonth}
               onSelect={onSelectMonth && ((cell) => onSelectMonth(cell.key))}
             />
           )}
           {selectionAction}
+<<<<<<< HEAD
 =======
             />
           )}
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
           <HeatLegend breaks={analysis.breaks} states={states} mode={mode} />
         </div>
       )}

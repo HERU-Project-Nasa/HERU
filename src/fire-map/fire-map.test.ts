@@ -9,6 +9,9 @@ import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesMonthRow } from "@/pipeline/series-row";
 import {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   addPeriodToSearch,
   anchoredPeriod,
   dateRangeLabel,
@@ -19,6 +22,7 @@ import {
   usesPoints,
 } from "./map-period";
 import { createMapLink, type MapCamera } from "./map-link";
+<<<<<<< HEAD
 =======
   layerForMonth,
   partialDaysLabel,
@@ -26,6 +30,8 @@ import { createMapLink, type MapCamera } from "./map-link";
   usesPoints,
 } from "./map-period";
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 import { sensorCovers, sensorFactor } from "./sensor-picker";
 import {
   blockId,
@@ -292,6 +298,9 @@ describe("grid cells of a small island", () => {
   });
 });
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 
 describe("period chosen on the map", () => {
   it("names both years when the range crosses a year", () => {
@@ -360,5 +369,8 @@ describe("maps that move together", () => {
     expect(seen).toEqual([]);
   });
 });
+<<<<<<< HEAD
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e

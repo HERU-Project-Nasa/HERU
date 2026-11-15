@@ -361,12 +361,18 @@ export function MethodologyFiles() {
   const files = [
     { label: "validation.csv", path: "meta/validation.csv" },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     {
       label: "validation_monthly.csv",
       path: "meta/validation_monthly.csv",
     },
+<<<<<<< HEAD
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     { label: "Série mensal (CSV)", path: seriesPath("monthly", area) },
   ];
   return (

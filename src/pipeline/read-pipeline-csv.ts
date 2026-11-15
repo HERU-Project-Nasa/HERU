@@ -19,10 +19,15 @@ const NUMERIC_COLUMNS = new Set([
   "cell_lat",
   "cell_lon",
 <<<<<<< HEAD
+<<<<<<< HEAD
   "area_km2",
   "modis_x_k",
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+  "area_km2",
+  "modis_x_k",
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 ]);
 
 export class PipelineFileError extends Error {

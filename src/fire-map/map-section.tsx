@@ -521,12 +521,18 @@ export function MapSection({
     cellWeight,
     cellWeight ? String(factorKind) : "",
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
     (period.preset === "24h" || period.preset === "48h") &&
       period.end === lastDataDate
       ? period.preset
       : null,
+<<<<<<< HEAD
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   );
   const [seasonShift, setSeasonShift] = useState(0);
   const lastYear = Number(lastDataDate.slice(0, 4));
@@ -954,6 +960,7 @@ function MapLegend({
               <span className="text-xs leading-4 text-ink-muted">
                 {harmonized ? "Focos equivalentes VIIRS" : "Focos"} por célula
 <<<<<<< HEAD
+<<<<<<< HEAD
                 de 0,25° (cerca de 28 km) em {cellMonths}.
                 {country &&
                   " Entra todo quadrado que toca o país, para nenhum foco dele ficar de fora. Na fronteira, o quadrado pode trazer focos do vizinho; o total acima não muda, porque é contado foco a foco."}
@@ -962,6 +969,11 @@ function MapLegend({
                 {country &&
                   " Células na fronteira podem somar focos do país vizinho."}
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+                de 0,25° (cerca de 28 km) em {cellMonths}.
+                {country &&
+                  " Entra todo quadrado que toca o país, para nenhum foco dele ficar de fora. Na fronteira, o quadrado pode trazer focos do vizinho; o total acima não muda, porque é contado foco a foco."}
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
               </span>
               <span className="grid grid-cols-6 gap-1">
                 {(cellBreaks.length === 0 ? [4] : [1, 2, 3, 4, 5, 6]).map(

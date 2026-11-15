@@ -163,16 +163,24 @@ function missingIsNull<T>(error: unknown): T | null {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export type RecentWindow = "24h" | "48h";
 
 =======
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+export type RecentWindow = "24h" | "48h";
+
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
 export function loadDayPoints(
   layer: SeriesLayer,
   date: string,
   area: string | null,
 ): Promise<FirePoint[] | null> {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   return loadPointsFile(
     `points/${layer}/${date.slice(0, 4)}/${date}.csv.gz`,
     area,
@@ -191,9 +199,12 @@ function loadPointsFile(
   path: string,
   area: string | null,
 ): Promise<FirePoint[] | null> {
+<<<<<<< HEAD
 =======
   const path = `points/${layer}/${date.slice(0, 4)}/${date}.csv.gz`;
 >>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
+=======
+>>>>>>> 64dcc6316b354790f1c2374c891c435a06dbd88e
   const key = `${path}|${area ?? ""}`;
   let request = dayPoints.get(key);
   if (!request) {
