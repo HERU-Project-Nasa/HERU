@@ -14,13 +14,17 @@ import {
   type FireCell,
   type FirePoint,
   loadDayPoints,
+<<<<<<< HEAD
   loadRecentPoints,
   type RecentWindow,
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
   loadMonthCells,
 } from "./period-fires";
 
 export type MappedPoint = FirePoint & { active: boolean };
 
+<<<<<<< HEAD
 const CELLS_PER_TASK = 4000;
 
 function nextTask(): Promise<void> {
@@ -34,6 +38,8 @@ function nextTask(): Promise<void> {
   });
 }
 
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 export type MapFires =
   | { status: "loading" }
   | { status: "error" }
@@ -62,6 +68,7 @@ async function readPoints(
   period: MapPeriod,
   area: string | null,
   pointLayers: SeriesLayer[],
+<<<<<<< HEAD
   recentWindow: RecentWindow | null,
 ): Promise<MapFires> {
   const dates = periodDates(period);
@@ -75,6 +82,13 @@ async function readPoints(
           loadDayPoints(pointLayers[index], date, area),
         ),
       );
+=======
+): Promise<MapFires> {
+  const dates = periodDates(period);
+  const days = await Promise.all(
+    dates.map((date, index) => loadDayPoints(pointLayers[index], date, area)),
+  );
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
   const loaded = days.flatMap((day) => day ?? []);
   const latest = Math.max(
     0,
@@ -92,7 +106,11 @@ async function readPoints(
     mode: "points",
     points,
     activeCount: points.filter((point) => point.active).length,
+<<<<<<< HEAD
     missingDays: recent ? 0 : days.filter((day) => day === null).length,
+=======
+    missingDays: days.filter((day) => day === null).length,
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
     totalDays: dates.length,
   };
 }
@@ -117,6 +135,7 @@ async function readCells(
       loadMonthCells(month, cellColumns[index], box),
     ),
   ]);
+<<<<<<< HEAD
   const totals = new Map<string, FireCell>();
   for (const cells of monthly) {
     await nextTask();
@@ -146,11 +165,35 @@ async function readCells(
     ) {
       cells.push(cell);
     }
+=======
+  const country = shape && shapeCells(shape, CELL_SIZE);
+  const totals = new Map<string, FireCell>();
+  for (const cell of monthly.flatMap((cells) => cells ?? [])) {
+    if (
+      country &&
+      !cellTouchesShape(cell.latitude, cell.longitude, CELL_SIZE, country)
+    ) {
+      continue;
+    }
+    const key = `${cell.latitude}:${cell.longitude}`;
+    const total = totals.get(key);
+    const count = cellWeight
+      ? cell.count * cellWeight(cell.latitude, cell.longitude)
+      : cell.count;
+    totals.set(key, {
+      ...cell,
+      count: (total?.count ?? 0) + count,
+    });
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
   }
   return {
     status: "ready",
     mode: "cells",
+<<<<<<< HEAD
     cells,
+=======
+    cells: [...totals.values()],
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
     months,
     missingMonths: monthly.filter((cells) => cells === null).length,
   };
@@ -167,7 +210,10 @@ export function useMapFires(
   cellColumns: CellColumn[],
   cellWeight: ((latitude: number, longitude: number) => number) | null,
   weightKey: string,
+<<<<<<< HEAD
   recentWindow: RecentWindow | null,
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 ): MapFires {
   const revision = usePipelineRevision();
   const dataKey =
@@ -181,7 +227,11 @@ export function useMapFires(
           points,
           coverage.lastDataDate,
           points ? pointLayers.join(",") : cellColumns.join(","),
+<<<<<<< HEAD
           points ? (recentWindow ?? "") : weightKey,
+=======
+          points ? "" : weightKey,
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
         ].join("|")
       : null;
   const requestKey = dataKey && `${dataKey}|${revision}|${attempt}`;
@@ -197,7 +247,11 @@ export function useMapFires(
     }
     let current = true;
     const request = points
+<<<<<<< HEAD
       ? readPoints(period, area, pointLayers, recentWindow)
+=======
+      ? readPoints(period, area, pointLayers)
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
       : readCells(period, area, bounds, cellColumns, cellWeight);
     request.then(
       (fires) => current && setLoaded({ requestKey, dataKey, fires }),
@@ -219,7 +273,10 @@ export function useMapFires(
     pointLayers,
     cellColumns,
     cellWeight,
+<<<<<<< HEAD
     recentWindow,
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
   ]);
 
   const fresh =

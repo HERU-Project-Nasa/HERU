@@ -18,6 +18,7 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
+<<<<<<< HEAD
 const DESCRIPTION =
   "Queimadas vistas pelos sensores MODIS e VIIRS, harmonizadas em uma só escala desde 2003.";
 
@@ -32,6 +33,12 @@ export const metadata: Metadata = {
     title: "HERU",
     description: DESCRIPTION,
   },
+=======
+export const metadata: Metadata = {
+  title: "HERU",
+  description:
+    "Queimadas vistas pelos sensores MODIS e VIIRS, harmonizadas em uma só escala desde 2003.",
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

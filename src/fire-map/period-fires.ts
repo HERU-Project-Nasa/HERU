@@ -162,13 +162,17 @@ function missingIsNull<T>(error: unknown): T | null {
   throw error;
 }
 
+<<<<<<< HEAD
 export type RecentWindow = "24h" | "48h";
 
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 export function loadDayPoints(
   layer: SeriesLayer,
   date: string,
   area: string | null,
 ): Promise<FirePoint[] | null> {
+<<<<<<< HEAD
   return loadPointsFile(
     `points/${layer}/${date.slice(0, 4)}/${date}.csv.gz`,
     area,
@@ -187,6 +191,9 @@ function loadPointsFile(
   path: string,
   area: string | null,
 ): Promise<FirePoint[] | null> {
+=======
+  const path = `points/${layer}/${date.slice(0, 4)}/${date}.csv.gz`;
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
   const key = `${path}|${area ?? ""}`;
   let request = dayPoints.get(key);
   if (!request) {

@@ -143,14 +143,18 @@ export function periodLabel(period: MapPeriod): string {
 }
 
 export function dateRangeLabel(start: string, end: string): string {
+<<<<<<< HEAD
   if (start.slice(0, 4) !== end.slice(0, 4)) {
     return `${dayLabel(start)} ${start.slice(0, 4)}-${dayLabel(end)} ${end.slice(0, 4)}`;
   }
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
   const range =
     start === end ? dayLabel(end) : `${dayLabel(start)}-${dayLabel(end)}`;
   return `${range} ${end.slice(0, 4)}`;
 }
 
+<<<<<<< HEAD
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function periodFromSearch(params: URLSearchParams): MapPeriod | null {
@@ -205,6 +209,8 @@ export function anchoredPeriod(
     : period;
 }
 
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 export function partialDaysLabel(
   period: MapPeriod,
   completeDate: string | null,

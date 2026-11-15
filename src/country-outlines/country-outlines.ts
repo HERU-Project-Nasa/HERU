@@ -148,6 +148,7 @@ const AREA = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+<<<<<<< HEAD
 const SMALL_AREA = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 2,
 });
@@ -160,3 +161,9 @@ export const AREA_SOURCES: Record<string, string> = {
   world_bank: "área de terra, Banco Mundial",
   cgaz: "área das fronteiras (CGAZ), com lagos e rios",
 };
+=======
+
+export function approximateArea(areaKm2: number): string {
+  return areaKm2 < 1 ? "< 1 km²" : `≈ ${AREA.format(areaKm2)} km²`;
+}
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd

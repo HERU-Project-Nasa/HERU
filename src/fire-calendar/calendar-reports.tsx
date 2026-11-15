@@ -114,7 +114,11 @@ export function unavailableText(
   return noDataReason(source, cell);
 }
 
+<<<<<<< HEAD
 export function PeriodCard({
+=======
+function PeriodCard({
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
   report,
   onEvidence,
 }: {

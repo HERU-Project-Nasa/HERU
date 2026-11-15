@@ -8,6 +8,7 @@ import { buildCalendarYears } from "@/fire-calendar/calendar-matrix";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesMonthRow } from "@/pipeline/series-row";
 import {
+<<<<<<< HEAD
   addPeriodToSearch,
   anchoredPeriod,
   dateRangeLabel,
@@ -18,6 +19,13 @@ import {
   usesPoints,
 } from "./map-period";
 import { createMapLink, type MapCamera } from "./map-link";
+=======
+  layerForMonth,
+  partialDaysLabel,
+  presetPeriod,
+  usesPoints,
+} from "./map-period";
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 import { sensorCovers, sensorFactor } from "./sensor-picker";
 import {
   blockId,
@@ -283,6 +291,7 @@ describe("grid cells of a small island", () => {
     expect(cellTouchesShape(14.625, -60.875, 0.25, cells)).toBe(false);
   });
 });
+<<<<<<< HEAD
 
 describe("period chosen on the map", () => {
   it("names both years when the range crosses a year", () => {
@@ -351,3 +360,5 @@ describe("maps that move together", () => {
     expect(seen).toEqual([]);
   });
 });
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd

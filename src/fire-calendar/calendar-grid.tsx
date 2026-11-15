@@ -195,8 +195,11 @@ export function CalendarGrid({
   lastDataDate,
   mode,
   focusRequest,
+<<<<<<< HEAD
   selectedKey = null,
   onSelect,
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 }: {
   areaName: string;
   years: CalendarYear[];
@@ -207,8 +210,11 @@ export function CalendarGrid({
   lastDataDate: string;
   mode: CalendarMode;
   focusRequest: string | null;
+<<<<<<< HEAD
   selectedKey?: string | null;
   onSelect?: (cell: CalendarCell) => void;
+=======
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipPlace | null>(null);
@@ -382,6 +388,7 @@ export function CalendarGrid({
                     showTooltip(cell, event.currentTarget);
                   }}
                   onBlur={() => setTooltip(null)}
+<<<<<<< HEAD
                   onClick={() => open && onSelect?.(cell)}
                   onKeyDown={(event) => {
                     if (
@@ -399,6 +406,10 @@ export function CalendarGrid({
                     onSelect && open ? cell.key === selectedKey : undefined
                   }
                   className={`rounded-xs outline-offset-1 ${enabledMonths[index] ? "" : "opacity-20"} ${open ? (onSelect ? "cursor-pointer" : "cursor-default") : ""} ${cell.key === selectedKey ? "ring-2 ring-ink ring-offset-2 ring-offset-surface" : ""}`}
+=======
+                  onKeyDown={(event) => moveFocus(event, cell)}
+                  className={`rounded-xs outline-offset-1 ${enabledMonths[index] ? "" : "opacity-20"} ${open ? "cursor-default" : ""}`}
+>>>>>>> 83fef8f61d6288c5b84ef231aa5b5245e2564acd
                 >
                   <CellFace
                     cell={cell}
