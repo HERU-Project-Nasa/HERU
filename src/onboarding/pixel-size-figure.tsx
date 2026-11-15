@@ -13,7 +13,7 @@ export function PixelSizeFigure() {
     <figure className="rounded-xl border border-line bg-surface p-6 sm:p-10">
       <div
         role="img"
-        aria-label="Esquema animado: o mesmo quadrado de chão com três fogos pequenos é varrido pelo sensor. O MODIS, com um pixel de 1 km, registra um foco. O VIIRS, com pixels de 375 m, registra três."
+        aria-label="Esquema animado: o mesmo quadrado de chão com três fontes de calor pequenas é varrido pelo sensor. O MODIS, com um pixel de 1 km, registra um foco. O VIIRS, com pixels de 375 m, registra três."
         className="flex gap-6 sm:gap-10"
       >
         <SensorPanel
@@ -34,7 +34,7 @@ export function PixelSizeFigure() {
           aria-hidden="true"
           className="size-2.5 shrink-0 rounded-full bg-heat-4 shadow-[0_0_0_3px_rgba(255,138,61,0.25)]"
         />
-        Mesmo chão, os mesmos três fogos. Esquema simplificado.
+        Mesmo chão, as mesmas três fontes de calor. Esquema simplificado.
       </figcaption>
     </figure>
   );

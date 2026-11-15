@@ -332,7 +332,7 @@ export function CalendarGrid({
       </div>
       <div
         role="grid"
-        aria-label={`Calendário de atividade de queima, ${areaName}`}
+        aria-label={`Calendário de fontes de calor, ${areaName}`}
         className="flex flex-col gap-0.5 sm:gap-[3px]"
       >
         {years.map((year) => (

@@ -19,7 +19,7 @@ const outfit = Outfit({
 });
 
 const DESCRIPTION =
-  "Queimadas vistas pelos sensores MODIS e VIIRS, harmonizadas em uma só escala desde 2003.";
+  "Fontes de calor vistas pelos sensores MODIS e VIIRS, harmonizadas em uma só escala desde 2003.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://heruproject.io"),

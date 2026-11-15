@@ -89,7 +89,7 @@ export function Calendar3D({
     <div
       ref={stageRef}
       role="img"
-      aria-label={`Calendário de fogo em 3D, ${areaName}: cada coluna é um mês e cada fileira um ano; a altura e a cor mostram a quantidade de focos. Para ler os valores, use a visão em grade.`}
+      aria-label={`Calendário de fontes de calor em 3D, ${areaName}: cada coluna é um mês e cada fileira um ano; a altura e a cor mostram a quantidade de focos. Para ler os valores, use a visão em grade.`}
       className="relative aspect-[4/5] touch-none overflow-hidden rounded-md bg-[radial-gradient(ellipse_at_50%_35%,rgba(255,255,255,0.05),transparent_70%)] select-none sm:aspect-[16/11]"
     >
       <canvas

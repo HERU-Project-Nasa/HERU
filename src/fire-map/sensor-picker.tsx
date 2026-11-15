@@ -195,8 +195,8 @@ export function SensorPicker({
           Sensor
         </h3>
         <span className="type-body-sm text-ink-muted">
-          Um sensor por vez: o mesmo fogo aparece em vários satélites, então
-          somar sensores contaria o mesmo fogo mais de uma vez.
+          Um sensor por vez: a mesma fonte de calor aparece em vários satélites,
+          então somar sensores a contaria mais de uma vez.
         </span>
       </div>
       <div

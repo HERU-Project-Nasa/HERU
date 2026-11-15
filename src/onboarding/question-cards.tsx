@@ -10,7 +10,7 @@ const QUESTIONS = [
     href: "/calendar",
   },
   {
-    question: "O fogo tem o mesmo ritmo em todo lugar?",
+    question: "As fontes de calor têm o mesmo ritmo em todo lugar?",
     answer:
       "Escolha uma região e descubra como os focos de calor mudam ao longo dos anos.",
     action: "Escolher região",
@@ -26,7 +26,7 @@ const QUESTIONS = [
   {
     question: "Posso confiar nesses números?",
     answer:
-      "Veja como fizemos a conta, como conferimos e o que a ferramenta não mede.",
+      "Veja como fizemos a conta, como conferimos e de onde vêm os dados.",
     action: "Ver metodologia",
     href: "/methodology",
   },

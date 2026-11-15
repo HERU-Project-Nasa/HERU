@@ -138,15 +138,15 @@ export default function MethodologyPage() {
           <MethodologySection id="foco">
             <p className={PARAGRAPH}>
               Um foco é um pixel em que o satélite detectou uma anomalia térmica
-              durante uma passagem. Não é um incêndio inteiro: um fogo grande
-              pode gerar dezenas de focos, e um pequeno, ou coberto por nuvens,
-              pode não aparecer.
+              durante uma passagem. Ele não mostra o tamanho da fonte de calor:
+              uma fonte grande pode gerar dezenas de focos, e uma pequena, ou
+              coberta por nuvens, pode não aparecer.
             </p>
             <p className={PARAGRAPH}>
-              Queimadas agrícolas, descarte de resíduos e atividades industriais
+              Manejo agrícola, descarte de resíduos e atividades industriais
               também geram focos. Por isso falamos sempre em{" "}
-              <strong className="font-semibold">focos detectados</strong>, nunca
-              em incêndios.
+              <strong className="font-semibold">fontes de calor</strong>{" "}
+              detectadas.
             </p>
             <figure
               className={`${PANEL} flex flex-wrap items-end gap-x-10 gap-y-4 p-6`}
@@ -248,8 +248,8 @@ export default function MethodologyPage() {
               </li>
               <li>
                 No quase tempo real, que não informa o tipo, saem os focos que
-                caem sobre fontes fixas de calor já conhecidas, como queima de
-                gás e indústrias, marcadas numa grade de 0,01°.
+                caem sobre fontes fixas de calor já conhecidas, como refinarias,
+                campos de gás e indústrias, marcadas numa grade de 0,01°.
               </li>
               <li>
                 Todos os níveis de confiança entram, porque o VIIRS nunca marca
@@ -273,17 +273,17 @@ export default function MethodologyPage() {
               <li>
                 A série harmonizada começa em julho de 2002, quando o Aqua
                 começou a observar. Antes, só o Terra observava e a contagem cai
-                pela metade sem que o fogo mude. O calendário começa em 2003, o
-                primeiro ano inteiro com os dois.
+                pela metade sem que as fontes de calor mudem. O calendário
+                começa em 2003, o primeiro ano inteiro com os dois.
               </li>
             </ul>
           </MethodologySection>
 
           <MethodologySection id="harmonizacao">
             <p className={PARAGRAPH}>
-              Os dois sensores enxergam o mesmo fogo de jeitos diferentes. Para
-              comparar 2005 com 2025, convertemos o passado para a régua do
-              VIIRS S-NPP.
+              Os dois sensores enxergam a mesma fonte de calor de jeitos
+              diferentes. Para comparar 2005 com 2025, convertemos o passado
+              para a régua do VIIRS S-NPP.
             </p>
             <div className="flex flex-col gap-2.5 rounded-md bg-surface-hover px-6 py-5">
               <p className="font-ui text-lg leading-6 font-semibold text-ink tabular-nums">
@@ -375,23 +375,6 @@ export default function MethodologyPage() {
             </Suspense>
           </MethodologySection>
 
-          <MethodologySection id="limites">
-            <ul className={BULLET_LIST}>
-              <li>
-                Área queimada, emissões, fumaça ou intensidade do fogo (FRP).
-              </li>
-              <li>Previsão de fogo ou risco meteorológico.</li>
-              <li>
-                Incêndios registrados em bases oficiais. Mostramos só focos
-                detectados por satélite.
-              </li>
-              <li>
-                Áreas menores que um país, como estados e biomas. Por enquanto,
-                só países e o mundo.
-              </li>
-            </ul>
-          </MethodologySection>
-
           <MethodologySection id="creditos">
             <ul className={BULLET_LIST}>
               <li>
@@ -413,8 +396,9 @@ export default function MethodologyPage() {
             <div className="flex flex-col gap-4 pt-4">
               <h3 className="type-heading-sm text-ink">Equipe</h3>
               <p className={PARAGRAPH}>
-                O HERU foi feito para o NASA Space Apps Challenge 2026, no
-                desafio <em>Harmonization of MODIS and VIIRS Hot Spots</em>.
+                O HERU foi feito pela equipe Mystical Magical para o NASA Space
+                Apps Challenge 2026, no desafio{" "}
+                <em>Harmonization of MODIS and VIIRS Hot Spots</em>.
               </p>
               <ul className="grid gap-4 sm:grid-cols-3">
                 {HERU_TEAM.map((member) => (

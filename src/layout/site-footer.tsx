@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="flex flex-col items-center gap-5 px-6 py-8 lg:px-16">
         <div className="flex flex-col items-center gap-3">
           <p className="type-caption text-ink-muted">
-            Equipe HERU · NASA Space Apps Challenge 2026
+            Equipe Mystical Magical · NASA Space Apps Challenge 2026
           </p>
           <ul className="flex flex-wrap justify-center gap-x-6 gap-y-3">
             {HERU_TEAM.map((member) => (

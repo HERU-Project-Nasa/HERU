@@ -238,7 +238,7 @@ export function CalendarExplorer() {
           onAreaChange={(next) =>
             router.replace(areaMapHref(next, selectedYear), { scroll: false })
           }
-          title="Calendário de fogo"
+          title="Calendário de fontes de calor"
           description="Cada linha é um ano e cada coluna, um mês. Os mesmos limites de cor valem para o calendário inteiro."
           initialMode="count"
           focusRequest={focusRequest}

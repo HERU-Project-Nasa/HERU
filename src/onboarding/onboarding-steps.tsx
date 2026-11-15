@@ -21,7 +21,7 @@ const MOBILE_GLOBE_FRAME =
 export const ONBOARDING_STEPS: OnboardingStepContent[] = [
   {
     eyebrow: "O que os satélites veem",
-    title: "Há mais de 20 anos, satélites vigiam o fogo na Terra.",
+    title: "Há mais de 20 anos, satélites vigiam as fontes de calor da Terra.",
     body: (
       <>
         <p className="type-body-lg text-ink">
@@ -30,8 +30,8 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
           <strong className="font-semibold">foco de calor</strong>.
         </p>
         <p className="type-body-lg text-ink">
-          Um ponto não é um incêndio inteiro. É o lugar onde o satélite sentiu o
-          calor.
+          Um ponto não mostra o tamanho da fonte de calor. É só o lugar onde o
+          satélite sentiu o calor.
         </p>
       </>
     ),
@@ -51,8 +51,8 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
           registraram: o ano de 2012 tem quase quatro vezes os focos de 2011.
         </p>
         <p className="type-body-lg text-ink">
-          Parece um ano trágico. Mas será que o fogo mudou tanto assim de um ano
-          para o outro?
+          Parece um ano trágico. Mas será que as fontes de calor mudaram tanto
+          assim de um ano para o outro?
         </p>
       </>
     ),
@@ -72,8 +72,9 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
           deles em um quadrado do MODIS.
         </p>
         <p className="type-body-lg text-ink">
-          Com uma lente mais fina, ele encontra fogos pequenos que o MODIS
-          deixava passar. O fogo não aumentou. A régua mudou.
+          Com uma lente mais fina, ele encontra fontes de calor pequenas que o
+          MODIS deixava passar. As fontes de calor não aumentaram. A régua
+          mudou.
         </p>
       </>
     ),
@@ -94,8 +95,8 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
         </p>
         <p className="type-body-lg text-ink">
           Nos Estados Unidos, o salto de 2012 some: na mesma régua, 2012 fica
-          quase igual a 2011. Um salto no gráfico passa a significar mais fogo,
-          e não um sensor novo.
+          quase igual a 2011. Um salto no gráfico passa a significar mais fontes
+          de calor, e não um sensor novo.
         </p>
       </>
     ),
@@ -106,7 +107,7 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
   },
   {
     eyebrow: "Como ler o calendário",
-    title: "Cada lugar tem o seu ritmo de fogo.",
+    title: "Cada lugar tem o seu ritmo de fontes de calor.",
     body: (
       <>
         <p className="type-body-lg text-ink">

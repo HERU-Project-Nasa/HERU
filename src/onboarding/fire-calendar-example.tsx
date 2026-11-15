@@ -166,7 +166,7 @@ export function FireCalendarExample() {
       </div>
       <div
         role="table"
-        aria-label="Calendário de fogo, focos por mês"
+        aria-label="Calendário de fontes de calor, focos por mês"
         className="sr-only"
       >
         <div role="row">

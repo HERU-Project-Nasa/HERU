@@ -227,7 +227,7 @@ export function BeforeAfterChart() {
                 fontSize="12"
                 className="fill-ink-muted"
               >
-                o VIIRS entra; o fogo não muda
+                o VIIRS entra; as fontes de calor não mudam
               </text>
             </>
           )}

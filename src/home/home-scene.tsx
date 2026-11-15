@@ -79,7 +79,7 @@ export function HomeScene() {
               className="hidden h-px flex-1 bg-line lg:block"
             />
             <p className="type-eyebrow text-ink-muted">
-              Harmonizando o que os sensores
+              Harmonizando as fontes de calor
             </p>
             <span
               aria-hidden="true"
@@ -91,7 +91,7 @@ export function HomeScene() {
               variants={RISE}
               className="type-heading-lg lg:type-heading-xl"
             >
-              MODIS e VIIRS viram queimar na
+              que MODIS e VIIRS viram na
             </m.span>
             <m.span
               variants={RISE}

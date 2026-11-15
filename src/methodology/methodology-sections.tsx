@@ -6,11 +6,6 @@ export const METHODOLOGY_SECTIONS = [
   { id: "filtragem", title: "Filtragem", label: null },
   { id: "harmonizacao", title: "Harmonização", label: null },
   { id: "validacao", title: "Validação", label: null },
-  {
-    id: "limites",
-    title: "O que esta ferramenta não mede",
-    label: "O que não medimos",
-  },
   { id: "creditos", title: "Créditos", label: null },
 ] as const;
 

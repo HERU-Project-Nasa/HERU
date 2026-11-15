@@ -82,9 +82,9 @@ const CONFIDENCE_LEVELS: Record<string, number> = {
 };
 
 const CONFIDENCE_TEXTS = [
-  "Baixa: sinal fraco, pode não ser fogo",
-  "Nominal: sinal típico de fogo",
-  "Alta: sinal forte de fogo",
+  "Baixa: sinal fraco, pode não ser uma fonte de calor real",
+  "Nominal: sinal típico de fonte de calor",
+  "Alta: sinal forte de fonte de calor",
 ];
 
 const PIXEL_SIZES: Record<SeriesLayer, { label: string; size: number }> = {
@@ -309,7 +309,7 @@ function FireTooltip({
               : "size-2 rounded-full bg-data-burned"
           }
         />
-        {point.active ? "Fogo ativo" : "Foco de calor"} ·{" "}
+        {point.active ? "Fonte de calor ativa" : "Foco de calor"} ·{" "}
         {elapsedLabel(point.acquiredAt, minute)}
       </p>
       <p className="type-heading-sm pr-6 text-ink">{areaName}</p>
@@ -934,7 +934,7 @@ function MapLegend({
                 />
                 <span className="flex flex-col">
                   <span className="type-body-sm font-semibold text-ink">
-                    Fogo ativo
+                    Fonte de calor ativa
                   </span>
                   <span className="text-xs leading-4 text-ink-muted">
                     Detectado nas últimas 24 h do período
