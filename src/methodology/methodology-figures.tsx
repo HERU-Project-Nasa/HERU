@@ -1,9 +1,11 @@
 "use client";
 
+import { AnimatePresence, m } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   capitalized,
+  formatCount,
   formatDayMonth,
   formatHotspots,
   formatUpdatedAt,
@@ -20,6 +22,7 @@ import {
 } from "@/pipeline/pipeline-files";
 import { PIPELINE_BASE } from "@/pipeline/read-pipeline-csv";
 import { seriesPath, WORLD_AREA } from "@/pipeline/series-row";
+import { AnimatedNumber, EASE_STANDARD } from "@/motion/chart-motion";
 
 export type ValidationRow = Record<
   | "scope"
@@ -104,16 +107,22 @@ export function validationRowFor(
   );
 }
 
-export function factor(text: string | undefined): string | null {
+function numeric(text: string | undefined): number | null {
   const value = Number(text);
-  return text && Number.isFinite(value) ? FACTOR.format(value) : null;
+  return text && Number.isFinite(value) ? value : null;
+}
+
+const formatFactor = (value: number) => FACTOR.format(value);
+const formatPercent = (value: number) => `${PERCENT.format(value * 100)}%`;
+
+export function factor(text: string | undefined): string | null {
+  const value = numeric(text);
+  return value === null ? null : formatFactor(value);
 }
 
 function percent(text: string | undefined): string | null {
-  const value = Number(text);
-  return text && Number.isFinite(value)
-    ? `${PERCENT.format(value * 100)}%`
-    : null;
+  const value = numeric(text);
+  return value === null ? null : formatPercent(value);
 }
 
 function validationDetails(row: ValidationRow): string[] {
@@ -157,6 +166,129 @@ function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
   );
 }
 
+const SCALE_MIN_POWER = 1;
+const SCALE_MAX_POWER = 8;
+const SCALE_ZONES: {
+  level: ConfidenceLevel;
+  from: number;
+  to: number;
+  className: string;
+}[] = [
+  {
+    level: "low",
+    from: 10 ** SCALE_MIN_POWER,
+    to: MEDIUM_CONFIDENCE_HOTSPOTS,
+    className: "bg-alert/55",
+  },
+  {
+    level: "medium",
+    from: MEDIUM_CONFIDENCE_HOTSPOTS,
+    to: HIGH_CONFIDENCE_HOTSPOTS,
+    className: "bg-status-stale/70",
+  },
+  {
+    level: "high",
+    from: HIGH_CONFIDENCE_HOTSPOTS,
+    to: 10 ** SCALE_MAX_POWER,
+    className: "bg-status-live/70",
+  },
+];
+
+function scalePosition(hotspots: number): number {
+  const power = Math.log10(Math.max(hotspots, 10 ** SCALE_MIN_POWER));
+  return Math.min(
+    1,
+    (power - SCALE_MIN_POWER) / (SCALE_MAX_POWER - SCALE_MIN_POWER),
+  );
+}
+
+/** Where the chosen region falls between the confidence thresholds, on a log scale. */
+export function ConfidenceScale() {
+  const [area] = useMethodologyArea();
+  const validation = usePipelineFile<ValidationRow>("meta/validation.csv");
+  const countries = usePipelineFile<CountryRow>("meta/countries.csv").rows;
+  const row = validationRowFor(validation.rows, area);
+  const hotspots = numeric(row?.modis_calib_hotspots);
+  const country = countries?.find((candidate) => candidate.iso3 === area);
+  const areaName =
+    area === WORLD_AREA ? "Mundo" : country ? countryName(country) : area;
+
+  return (
+    <figure className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4 sm:p-5">
+      <figcaption className="type-caption text-ink-muted">
+        Focos MODIS nos anos de calibração · escala log
+      </figcaption>
+      <div className="relative pt-9 pb-6">
+        <div
+          aria-hidden="true"
+          className="flex h-2.5 overflow-hidden rounded-full"
+        >
+          {SCALE_ZONES.map((zone, index) => (
+            <m.span
+              key={zone.level}
+              className={`h-full ${zone.className}`}
+              style={{
+                width: `${(scalePosition(zone.to) - scalePosition(zone.from)) * 100}%`,
+                originX: 0,
+              }}
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.5,
+                delay: index * 0.25,
+                ease: EASE_STANDARD,
+              }}
+            />
+          ))}
+        </div>
+        {[MEDIUM_CONFIDENCE_HOTSPOTS, HIGH_CONFIDENCE_HOTSPOTS].map((tick) => (
+          <span
+            key={tick}
+            aria-hidden="true"
+            className="type-caption absolute bottom-0 -translate-x-1/2 text-[10px] text-ink-muted tabular-nums"
+            style={{ left: `${scalePosition(tick) * 100}%` }}
+          >
+            {formatCount(tick)}
+          </span>
+        ))}
+        <AnimatePresence>
+          {hotspots !== null && (
+            <m.span
+              aria-hidden="true"
+              className="absolute top-0 flex w-0 flex-col items-center gap-1"
+              initial={{ opacity: 0, left: "0%" }}
+              animate={{
+                opacity: 1,
+                left: `${scalePosition(hotspots) * 100}%`,
+              }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: EASE_STANDARD }}
+            >
+              <m.span
+                className="type-data self-start rounded-sm bg-surface-raised px-1.5 py-0.5 text-xs whitespace-nowrap text-ink"
+                initial={{ x: "0%" }}
+                animate={{ x: `${-scalePosition(hotspots) * 100}%` }}
+                transition={{ duration: 0.8, ease: EASE_STANDARD }}
+              >
+                {areaName}
+              </m.span>
+              <span className="h-4 w-0.5 shrink-0 rounded-full bg-ink" />
+            </m.span>
+          )}
+        </AnimatePresence>
+      </div>
+      <p className="type-body-sm text-ink-muted">
+        {hotspots !== null
+          ? `${areaName}: ${formatHotspots(hotspots)} MODIS na calibração. Troque a região no painel do topo.`
+          : validation.rows
+            ? "A pipeline ainda não publicou o volume de calibração desta região."
+            : " "}
+      </p>
+    </figure>
+  );
+}
+
 export function ConfidenceLegend() {
   return (
     <dl className="flex flex-col gap-3">
@@ -179,18 +311,24 @@ export function ConfidenceLegend() {
 
 function Figure({
   value,
+  format,
   description,
   missing,
 }: {
-  value: string | null;
+  value: number | null;
+  format: (value: number) => string;
   description: string;
   missing: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-col-reverse justify-end gap-0.5">
+    <div className="flex min-w-0 flex-col-reverse justify-end gap-0.5 border-l-2 border-line pl-3">
       <dt className="type-body-sm text-ink-muted">{description}</dt>
       <dd className="font-text text-2xl leading-8 font-semibold whitespace-nowrap text-ink tabular-nums">
-        {value ?? <span className="text-ink-disabled">{missing}</span>}
+        {value === null ? (
+          <span className="text-ink-disabled">{missing}</span>
+        ) : (
+          <AnimatedNumber value={value} format={format} />
+        )}
       </dd>
     </div>
   );
@@ -217,8 +355,8 @@ export function MethodologyFigures() {
   const passSuffix = passes === "day" ? "_d" : passes === "night" ? "_n" : "";
   const passName =
     passes === "all" ? "" : passes === "day" ? ", de dia" : ", de noite";
-  const k = factor(row?.[`k${passSuffix}` as keyof ValidationRow]);
-  const k20 = factor(row?.[`k20${passSuffix}` as keyof ValidationRow]);
+  const k = numeric(row?.[`k${passSuffix}` as keyof ValidationRow]);
+  const k20 = numeric(row?.[`k20${passSuffix}` as keyof ValidationRow]);
   const confidence = confidenceLevel(row);
   const factorsReady = Boolean(
     validationRowFor(validation.rows, WORLD_AREA)?.k,
@@ -238,7 +376,19 @@ export function MethodologyFigures() {
         <h2 id="confidence-title" className="type-heading-sm text-ink">
           Quanto dá para confiar?
         </h2>
-        {confidence && <ConfidenceBadge level={confidence} />}
+        <AnimatePresence mode="wait" initial={false}>
+          {confidence && (
+            <m.span
+              key={confidence}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ duration: 0.25, ease: EASE_STANDARD }}
+            >
+              <ConfidenceBadge level={confidence} />
+            </m.span>
+          )}
+        </AnimatePresence>
       </div>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
         <label className="flex flex-col gap-1.5">
@@ -279,21 +429,25 @@ export function MethodologyFigures() {
         <Figure
           missing={missing}
           value={k}
+          format={formatFactor}
           description={`focos VIIRS por foco MODIS (k${passName})${row?.calib_years ? `, calibrado em ${row.calib_years}` : ""}`}
         />
         <Figure
           missing={missing}
           value={k20}
+          format={formatFactor}
           description={`focos S-NPP por foco NOAA-20 (k20${passName})${row?.calib_years_k20 ? `, calibrado em ${row.calib_years_k20}` : ""}`}
         />
         <Figure
           missing={missing}
-          value={passes === "all" ? percent(row?.median_error_2020_2024) : null}
+          value={passes === "all" ? numeric(row?.median_error_2020_2024) : null}
+          format={formatPercent}
           description="erro mediano mensal da reconstrução, 2020-2024"
         />
         <Figure
           missing={missing}
-          value={passes === "all" ? factor(row?.r_log10) : null}
+          value={passes === "all" ? numeric(row?.r_log10) : null}
+          format={formatFactor}
           description="correlação r em escala log, 2020-2024"
         />
       </dl>

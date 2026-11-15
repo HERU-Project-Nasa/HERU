@@ -1,6 +1,11 @@
 "use client";
 
-import { formatCompact, formatRatio } from "@/fire-calendar/calendar-labels";
+import { useRef } from "react";
+import {
+  formatCompact,
+  formatCount,
+  formatRatio,
+} from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
@@ -17,6 +22,12 @@ import {
   type ValidationRow,
   validationRowFor,
 } from "./methodology-figures";
+import {
+  ChartHover,
+  FadeInSvg,
+  RevealClip,
+  useChartReveal,
+} from "@/motion/chart-motion";
 
 const LEFT = 64;
 const RIGHT = 690;
@@ -56,6 +67,8 @@ function segments(
 
 export function BeforeAfterChart() {
   const [area] = useMethodologyArea();
+  const figureRef = useRef<HTMLElement>(null);
+  const reveal = useChartReveal(figureRef);
   const yearly = usePipelineFile<SeriesYearRow>(seriesPath("yearly", area));
   const coverageRows = usePipelineFile<CoverageRow>("meta/coverage.csv").rows;
   const countries = usePipelineFile<CountryRow>("meta/countries.csv").rows;
@@ -70,7 +83,10 @@ export function BeforeAfterChart() {
 
   if (!yearly.rows || !lastDataDate) {
     return (
-      <div className="h-[360px] animate-pulse rounded-md border border-line bg-surface" />
+      <figure
+        ref={figureRef}
+        className="h-[360px] animate-pulse rounded-md border border-line bg-surface"
+      />
     );
   }
 
@@ -118,6 +134,7 @@ export function BeforeAfterChart() {
       points: modis,
       label: "Só MODIS",
       className: "stroke-ink-muted",
+      swatch: "fill-ink-muted",
       width: 1.5,
       dash: undefined,
       text: "fill-ink-muted",
@@ -126,6 +143,7 @@ export function BeforeAfterChart() {
       points: raw,
       label: "Soma bruta",
       className: "stroke-delta-above",
+      swatch: "fill-delta-above",
       width: 2,
       dash: "6 5",
       text: "fill-delta-above",
@@ -134,6 +152,7 @@ export function BeforeAfterChart() {
       points: harmonized,
       label: "Harmonizada",
       className: "stroke-ink",
+      swatch: "fill-ink",
       width: 3,
       dash: undefined,
       text: "fill-ink",
@@ -141,7 +160,10 @@ export function BeforeAfterChart() {
   ];
 
   return (
-    <figure className="flex flex-col gap-4 rounded-md border border-line bg-surface p-4 sm:p-6">
+    <figure
+      ref={figureRef}
+      className="flex flex-col gap-4 rounded-md border border-line bg-surface p-4 sm:p-6"
+    >
       <figcaption className="flex flex-wrap items-baseline justify-between gap-3">
         <span className="flex flex-col gap-1">
           <span className="type-heading-sm text-ink">
@@ -163,25 +185,39 @@ export function BeforeAfterChart() {
           viewBox="0 0 840 320"
           role="img"
           aria-label={`Focos por ano em ${areaName}, de ${CALENDAR_FIRST_YEAR} a ${lastYear}: só MODIS, soma bruta de MODIS até 2011 e VIIRS S-NPP depois, e série harmonizada.${jump ? ` A soma bruta muda ${formatRatio(jump)} vezes em 2012.` : ""}`}
-          className="block w-full min-w-[640px] font-ui"
+          className="block w-full min-w-[640px] touch-pan-y font-ui"
         >
-          <rect
-            x={x(VIIRS_FIRST_YEAR)}
-            y={TOP}
-            width={x(CALIBRATION_LAST_YEAR) - x(VIIRS_FIRST_YEAR)}
-            height={BOTTOM - TOP}
-            className="fill-viirs-adjusted/8"
-          />
-          <text
-            x={(x(VIIRS_FIRST_YEAR) + x(CALIBRATION_LAST_YEAR)) / 2}
-            y={BOTTOM - 8}
-            fontSize="12"
-            letterSpacing="1"
-            textAnchor="middle"
-            className="fill-viirs-adjusted"
-          >
-            ANOS DE CALIBRAÇÃO
-          </text>
+          <defs>
+            <RevealClip
+              id={reveal.clipId}
+              x={0}
+              y={0}
+              width={840}
+              height={320}
+              shown={reveal.shown}
+              reduced={reveal.reduced}
+              replayKey={area}
+            />
+          </defs>
+          <FadeInSvg shown={reveal.shown}>
+            <rect
+              x={x(VIIRS_FIRST_YEAR)}
+              y={TOP}
+              width={x(CALIBRATION_LAST_YEAR) - x(VIIRS_FIRST_YEAR)}
+              height={BOTTOM - TOP}
+              className="fill-viirs-adjusted/8"
+            />
+            <text
+              x={(x(VIIRS_FIRST_YEAR) + x(CALIBRATION_LAST_YEAR)) / 2}
+              y={BOTTOM - 8}
+              fontSize="12"
+              letterSpacing="1"
+              textAnchor="middle"
+              className="fill-viirs-adjusted"
+            >
+              ANOS DE CALIBRAÇÃO
+            </text>
+          </FadeInSvg>
           {ticks.map((tick) => (
             <g key={tick}>
               <line
@@ -211,7 +247,7 @@ export function BeforeAfterChart() {
             className="stroke-ink"
           />
           {jump && (
-            <>
+            <FadeInSvg shown={reveal.shown} delay={0.9}>
               <text
                 x={x(VIIRS_FIRST_YEAR) + 8}
                 y={TOP + 4}
@@ -229,38 +265,42 @@ export function BeforeAfterChart() {
               >
                 o VIIRS entra; as fontes de calor não mudam
               </text>
-            </>
+            </FadeInSvg>
           )}
-          {lines.map((line) =>
-            segments(line.points, x, y).map((points) => (
-              <polyline
-                key={`${line.label}-${points.slice(0, 12)}`}
-                points={points}
-                fill="none"
-                strokeWidth={line.width}
-                strokeDasharray={line.dash}
-                strokeLinejoin="round"
-                className={line.className}
-              />
-            )),
-          )}
-          {lines.map((line) => {
-            const last = [...line.points]
-              .reverse()
-              .find((point) => point.value !== null);
-            return last ? (
-              <text
-                key={line.label}
-                x={x(last.year) + 10}
-                y={y(last.value!) + 4}
-                fontSize="13"
-                fontWeight="600"
-                className={line.text}
-              >
-                {line.label}
-              </text>
-            ) : null;
-          })}
+          <g key={area} clipPath={`url(#${reveal.clipId})`}>
+            {lines.map((line) =>
+              segments(line.points, x, y).map((points) => (
+                <polyline
+                  key={`${line.label}-${points.slice(0, 12)}`}
+                  points={points}
+                  fill="none"
+                  strokeWidth={line.width}
+                  strokeDasharray={line.dash}
+                  strokeLinejoin="round"
+                  className={line.className}
+                />
+              )),
+            )}
+          </g>
+          <FadeInSvg shown={reveal.shown} delay={1.4}>
+            {lines.map((line) => {
+              const last = [...line.points]
+                .reverse()
+                .find((point) => point.value !== null);
+              return last ? (
+                <text
+                  key={line.label}
+                  x={x(last.year) + 10}
+                  y={y(last.value!) + 4}
+                  fontSize="13"
+                  fontWeight="600"
+                  className={line.text}
+                >
+                  {line.label}
+                </text>
+              ) : null;
+            })}
+          </FadeInSvg>
           {ticks.length > 0 &&
             Array.from(
               { length: Math.floor((lastYear - CALENDAR_FIRST_YEAR) / 3) + 1 },
@@ -277,6 +317,38 @@ export function BeforeAfterChart() {
                 {year}
               </text>
             ))}
+          <ChartHover
+            count={rows.length}
+            x={(index) => x(rows[index].year)}
+            top={TOP}
+            bottom={BOTTOM}
+            left={LEFT}
+            right={RIGHT}
+            viewWidth={840}
+            title={(index) => String(rows[index].year)}
+            rows={(index) =>
+              lines.flatMap((line) => {
+                const value = line.points[index].value;
+                return value === null
+                  ? []
+                  : [
+                      {
+                        label: line.label,
+                        value: formatCount(value),
+                        swatch: line.swatch,
+                      },
+                    ];
+              })
+            }
+            points={(index) =>
+              lines.flatMap((line) => {
+                const value = line.points[index].value;
+                return value === null
+                  ? []
+                  : [{ y: y(value), className: line.className }];
+              })
+            }
+          />
         </svg>
       </div>
       {(!hasViirs || !hasHarmonized) && (

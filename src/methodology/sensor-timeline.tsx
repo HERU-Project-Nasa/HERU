@@ -1,3 +1,9 @@
+"use client";
+
+import { m, useInView } from "motion/react";
+import { useRef } from "react";
+import { EASE_STANDARD } from "@/motion/chart-motion";
+
 const FIRST_YEAR = 2000;
 const LAST_YEAR = 2027;
 const AXIS_YEARS = [2000, 2005, 2010, 2015, 2020, 2025];
@@ -75,9 +81,21 @@ const HERU_SERIES = [
 const ROW_CLASS_NAME =
   "grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4";
 
+const BAR_DURATION = 0.9;
+const ROW_DELAY = 0.12;
+const SERIES_DELAY = 0.9;
+
 export function SensorTimeline() {
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.3 });
+  const grow = (delay: number, duration = BAR_DURATION) => ({
+    initial: { scaleX: 0 },
+    animate: { scaleX: inView ? 1 : 0 },
+    transition: { duration, delay, ease: EASE_STANDARD },
+  });
   return (
     <figure
+      ref={ref}
       role="img"
       aria-label="Linha do tempo dos sensores de 2000 a 2027. MODIS no Terra desde 2000 e no Aqua desde 2002, com deriva de órbita a partir de 2020 e 2021. VIIRS no Suomi NPP de 2012 a 2 de novembro de 2026, no NOAA-20 desde 2018 e no NOAA-21 desde 2023. A série do HERU usa MODIS vezes k de 2003 a 2011, S-NPP de 2012 a 2 de novembro de 2026 e NOAA-20 vezes k20 depois."
       className="rounded-md border border-line bg-surface p-4 sm:p-6"
@@ -95,7 +113,7 @@ export function SensorTimeline() {
             />
           ))}
         </div>
-        {SATELLITES.map((row) => (
+        {SATELLITES.map((row, index) => (
           <div key={row.satellite} className={`${ROW_CLASS_NAME} min-h-9`}>
             <span className="flex flex-col">
               <span className="font-ui text-sm leading-4 font-semibold text-ink">
@@ -106,13 +124,20 @@ export function SensorTimeline() {
               </span>
             </span>
             <span aria-hidden="true" className="relative block h-6">
-              <span
+              <m.span
                 className={`absolute top-1.5 h-3 rounded-xs ${row.className}`}
-                style={span(row.from, row.to)}
+                {...grow(index * ROW_DELAY)}
+                style={{ ...span(row.from, row.to), originX: 0 }}
               />
               {row.driftFrom && (
-                <span
+                <m.span
                   className={`absolute top-1.5 h-3 rounded-r-xs ${ORBIT_DRIFT_STRIPES}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: inView ? 1 : 0 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * ROW_DELAY + BAR_DURATION,
+                  }}
                   style={span(row.driftFrom, row.to)}
                 />
               )}
@@ -124,15 +149,22 @@ export function SensorTimeline() {
             Série do HERU
           </span>
           <span aria-hidden="true" className="relative block h-6">
-            {HERU_SERIES.map((segment) => (
-              <span
+            {HERU_SERIES.map((segment, index) => (
+              <m.span
                 key={segment.from}
                 className={`absolute top-0.5 flex h-5 items-center justify-center overflow-hidden font-ui text-[11px] font-semibold whitespace-nowrap sm:text-xs ${segment.className}`}
-                style={span(segment.from, segment.to)}
+                {...grow(SERIES_DELAY + index * 0.45, 0.5)}
+                style={{ ...span(segment.from, segment.to), originX: 0 }}
               >
-                <span className="sm:hidden">{segment.shortLabel}</span>
-                <span className="max-sm:hidden">{segment.label}</span>
-              </span>
+                <m.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: inView ? 1 : 0 }}
+                  transition={{ delay: SERIES_DELAY + index * 0.45 + 0.4 }}
+                >
+                  <span className="sm:hidden">{segment.shortLabel}</span>
+                  <span className="max-sm:hidden">{segment.label}</span>
+                </m.span>
+              </m.span>
             ))}
           </span>
         </div>
