@@ -360,6 +360,10 @@ export function MethodologyFiles() {
   const [area] = useMethodologyArea();
   const files = [
     { label: "validation.csv", path: "meta/validation.csv" },
+    {
+      label: "validation_monthly.csv",
+      path: "meta/validation_monthly.csv",
+    },
     { label: "Série mensal (CSV)", path: seriesPath("monthly", area) },
   ];
   return (

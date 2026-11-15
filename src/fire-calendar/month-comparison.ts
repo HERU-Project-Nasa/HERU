@@ -46,9 +46,14 @@ export function closedMonthComparison(
   const cells = years.flatMap((year) => year.cells);
   const partialIndex = cells.findIndex((cell) => cell.partial);
   const cell = cells[partialIndex - 1];
-  if (!cell) {
-    return null;
-  }
+  return cell ? monthComparisonFor(cell, years, analysis) : null;
+}
+
+export function monthComparisonFor(
+  cell: CalendarCell,
+  years: CalendarYear[],
+  analysis: CalendarAnalysis,
+): MonthComparison {
   const baseline = analysis.baselines[cell.month - 1];
   const compared = comparedYears(years, analysis, cell.year);
   return {
@@ -148,13 +153,13 @@ function isLeapYear(year: number): boolean {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
 
-function shiftYears(date: string, years: number): string | null {
+export function shiftYears(date: string, years: number): string | null {
   const year = Number(date.slice(0, 4)) + years;
   const rest = date.slice(4);
   return rest === "-02-29" && !isLeapYear(year) ? null : `${year}${rest}`;
 }
 
-function datesBetween(start: string, end: string): string[] {
+export function datesBetween(start: string, end: string): string[] {
   const dates: string[] = [];
   const day = new Date(`${start}T00:00:00Z`);
   for (let date = start; date <= end;) {
@@ -163,6 +168,28 @@ function datesBetween(start: string, end: string): string[] {
     date = day.toISOString().slice(0, 10);
   }
   return dates;
+}
+
+export function dayValues(
+  dailyRows: SeriesDayRow[],
+  years: CalendarYear[],
+  source: CalendarSource,
+  passes: CalendarPasses,
+  dates: string[],
+): (number | null)[] {
+  const rowsByDate = new Map(dailyRows.map((row) => [row.date, row]));
+  const cellsByKey = new Map(
+    years.flatMap((year) => year.cells.map((cell) => [cell.key, cell])),
+  );
+  return dates.map((date) => {
+    const layer = cellsByKey.get(date.slice(0, 7))?.layer;
+    const column =
+      source === "harmonized"
+        ? countColumn("harmonized", passes)
+        : layer && countColumn(layer, passes);
+    const value = column ? rowsByDate.get(date)?.[column] : null;
+    return value ?? null;
+  });
 }
 
 export function periodComparison(

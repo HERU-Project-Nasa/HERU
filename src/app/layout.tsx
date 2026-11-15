@@ -18,10 +18,20 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
+const DESCRIPTION =
+  "Queimadas vistas pelos sensores MODIS e VIIRS, harmonizadas em uma só escala desde 2003.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://heruproject.io"),
   title: "HERU",
-  description:
-    "Queimadas vistas pelos sensores MODIS e VIIRS, harmonizadas em uma só escala desde 2003.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "HERU",
+    locale: "pt_BR",
+    title: "HERU",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

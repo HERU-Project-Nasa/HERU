@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { reloadPipelineFile } from "@/pipeline/pipeline-files";
 import { CALENDAR_MODES, type CalendarMode } from "./calendar-anomaly";
@@ -82,6 +82,9 @@ export function CalendarSection({
   description,
   initialMode,
   focusRequest,
+  selectedMonth = null,
+  onSelectMonth,
+  selectionAction,
 }: {
   calendar: AreaCalendar;
   onAreaChange: (area: string) => void;
@@ -89,6 +92,9 @@ export function CalendarSection({
   description: string;
   initialMode: CalendarMode;
   focusRequest: string | null;
+  selectedMonth?: string | null;
+  onSelectMonth?: (key: string) => void;
+  selectionAction?: ReactNode;
 }) {
   const [mode, setMode] = useState(initialMode);
   const latestYear = calendar.years.at(-1)?.year ?? null;
@@ -245,8 +251,11 @@ export function CalendarSection({
               lastDataDate={lastDataDate}
               mode={mode}
               focusRequest={focusRequest}
+              selectedKey={selectedMonth}
+              onSelect={onSelectMonth && ((cell) => onSelectMonth(cell.key))}
             />
           )}
+          {selectionAction}
           <HeatLegend breaks={analysis.breaks} states={states} mode={mode} />
         </div>
       )}

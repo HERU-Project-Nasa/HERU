@@ -114,7 +114,7 @@ export function unavailableText(
   return noDataReason(source, cell);
 }
 
-function PeriodCard({
+export function PeriodCard({
   report,
   onEvidence,
 }: {

@@ -195,6 +195,8 @@ export function CalendarGrid({
   lastDataDate,
   mode,
   focusRequest,
+  selectedKey = null,
+  onSelect,
 }: {
   areaName: string;
   years: CalendarYear[];
@@ -205,6 +207,8 @@ export function CalendarGrid({
   lastDataDate: string;
   mode: CalendarMode;
   focusRequest: string | null;
+  selectedKey?: string | null;
+  onSelect?: (cell: CalendarCell) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipPlace | null>(null);
@@ -378,8 +382,23 @@ export function CalendarGrid({
                     showTooltip(cell, event.currentTarget);
                   }}
                   onBlur={() => setTooltip(null)}
-                  onKeyDown={(event) => moveFocus(event, cell)}
-                  className={`rounded-xs outline-offset-1 ${enabledMonths[index] ? "" : "opacity-20"} ${open ? "cursor-default" : ""}`}
+                  onClick={() => open && onSelect?.(cell)}
+                  onKeyDown={(event) => {
+                    if (
+                      onSelect &&
+                      open &&
+                      (event.key === "Enter" || event.key === " ")
+                    ) {
+                      event.preventDefault();
+                      onSelect(cell);
+                      return;
+                    }
+                    moveFocus(event, cell);
+                  }}
+                  aria-selected={
+                    onSelect && open ? cell.key === selectedKey : undefined
+                  }
+                  className={`rounded-xs outline-offset-1 ${enabledMonths[index] ? "" : "opacity-20"} ${open ? (onSelect ? "cursor-pointer" : "cursor-default") : ""} ${cell.key === selectedKey ? "ring-2 ring-ink ring-offset-2 ring-offset-surface" : ""}`}
                 >
                   <CellFace
                     cell={cell}

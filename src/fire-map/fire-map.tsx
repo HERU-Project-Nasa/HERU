@@ -14,6 +14,7 @@ import { COUNTRY_BOUNDARIES_URL } from "@/country-outlines/country-outlines";
 import { HEAT_TOKENS } from "@/fire-calendar/calendar-cell-style";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
+import type { MapCamera, MapLink } from "./map-link";
 import type { MappedPoint } from "./use-map-fires";
 import type { AreaBounds, FireCell } from "./period-fires";
 
@@ -214,25 +215,30 @@ function ControlButton({
 export function FireMap({
   label,
   area,
+  areas,
   bounds,
   points,
   cells,
   cellBreaks,
   renderTooltip,
+  link = null,
   children,
 }: {
   label: string;
   area: string | null;
+  areas?: string[];
   bounds: AreaBounds | null;
   points: MappedPoint[];
   cells: FireCell[];
   cellBreaks: number[];
   renderTooltip: (tooltip: MapTooltip, pinned: boolean) => ReactNode;
+  link?: MapLink | null;
   children: ReactNode;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
+  const areaKey = (areas ?? (area ? [area] : [])).join(",");
   const [globe, setGlobe] = useState(true);
   const [look, setLook] = useState<MapLook>("sketch");
   const [fullscreen, setFullscreen] = useState(false);
@@ -529,9 +535,9 @@ export function FireMap({
       return;
     }
     const filter = [
-      "==",
+      "in",
       ["get", "code"],
-      area ?? "",
+      ["literal", areaKey ? areaKey.split(",") : []],
     ] as ExpressionSpecification;
     map.setFilter("area-fill", filter);
     map.setFilter("area-line", filter);
@@ -540,7 +546,44 @@ export function FireMap({
       ? 0
       : 1200;
     showArea(map, bounds, duration);
-  }, [map, area, bounds]);
+  }, [map, areaKey, bounds]);
+
+  useEffect(() => {
+    if (!map || !link) {
+      return;
+    }
+    const member = {};
+    let following = false;
+    const camera = (): MapCamera => ({
+      center: map.getCenter().toArray(),
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+    });
+    const share = () => {
+      if (!following) {
+        link.share(member, camera());
+      }
+    };
+    const stopFollowing = link.follow(member, (next) => {
+      following = true;
+      map.jumpTo(next);
+      following = false;
+    });
+    const leader = link.lastCamera();
+    if (leader) {
+      following = true;
+      map.jumpTo(leader);
+      following = false;
+    } else {
+      link.share(member, camera());
+    }
+    map.on("move", share);
+    return () => {
+      map.off("move", share);
+      stopFollowing();
+    };
+  }, [map, link]);
 
   useEffect(() => {
     map?.getSource<GeoJSONSource>("points")?.setData(pointCollection(points));

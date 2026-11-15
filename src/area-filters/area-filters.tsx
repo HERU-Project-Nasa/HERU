@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { buttonClassName } from "@/button/button-class-name";
 import {
-  approximateArea,
+  AREA_SOURCES,
+  formatArea,
   type CountryOutline,
   useCountryOutlines,
 } from "@/country-outlines/country-outlines";
@@ -193,8 +194,13 @@ function CountryCard({
           }}
         />
       </span>
-      {outline && (
-        <span className="flex items-center justify-between gap-2 border-t border-current/15 pt-2">
+      {country.area_km2 ? (
+        <span
+          title={
+            country.area_source ? AREA_SOURCES[country.area_source] : undefined
+          }
+          className="flex items-center justify-between gap-2 border-t border-current/15 pt-2"
+        >
           <span
             className={`type-body-sm flex items-center gap-1 ${selected ? "" : "text-ink-muted"}`}
           >
@@ -202,10 +208,11 @@ function CountryCard({
             Território
           </span>
           <span className="type-body-sm tabular-nums">
-            {approximateArea(outline.areaKm2)}
+            {formatArea(country.area_km2)}
+            {country.area_source === "cgaz" && "*"}
           </span>
         </span>
-      )}
+      ) : null}
     </button>
   );
 }
@@ -250,6 +257,14 @@ export function AreaFilters() {
   const continentId = chosenContinent ?? area?.continent ?? null;
   const continent = findContinent(continentId ?? undefined);
   const { column, totals, pending } = useCountryYearTotals(countries, year);
+  const boundaryAreas = useMemo(
+    () =>
+      (countries ?? [])
+        .filter((country) => country.area_source === "cgaz")
+        .map(countryName)
+        .sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [countries],
+  );
   const unit = column ? TOTAL_UNITS[column] : "focos";
 
   const choices = useMemo<CountryChoice[]>(
@@ -449,9 +464,11 @@ export function AreaFilters() {
                 </button>
               )}
               <p className="type-body-sm text-ink-muted">
-                Território: área aproximada, calculada da fronteira do Natural
-                Earth 1:50m. Os focos são os números da pipeline, sem
-                arredondamento além do número inteiro.
+                Território: área de terra do Banco Mundial.
+                {boundaryAreas.length > 0 &&
+                  ` * ${boundaryAreas.join(", ")}: o Banco Mundial não tem a área, então ela vem das fronteiras (CGAZ) e inclui lagos e rios.`}{" "}
+                Os focos são os números da pipeline, sem arredondamento além do
+                número inteiro.
               </p>
             </>
           )}

@@ -3,13 +3,23 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import { areaFiltersHref, areaMapHref } from "@/area-filters/area-links";
+import { useEffect, useMemo, useState } from "react";
+import {
+  areaFiltersHref,
+  areaMapHref,
+  compareDatesHref,
+  compareRegionsHref,
+} from "@/area-filters/area-links";
 import { findContinent } from "@/area-filters/continents";
 import { buttonClassName } from "@/button/button-class-name";
+import {
+  anomaliesHref,
+  rememberSelection,
+  useCalendarSelection,
+} from "@/calendar-selection/calendar-selection";
 import { useCountryOutlines } from "@/country-outlines/country-outlines";
 import {
-  capitalized,
+  monthTitle,
   SOURCE_SHORT_UNITS,
 } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
@@ -22,17 +32,13 @@ import {
   CalendarSection,
   DataFootnote,
 } from "@/fire-calendar/calendar-section";
-import { periodComparison } from "@/fire-calendar/month-comparison";
 import { useAreaCalendar } from "@/fire-calendar/use-area-calendar";
 import {
-  dateRangeLabel,
   type MapPeriod,
-  partialDaysLabel,
-  periodLabel,
-  periodName,
   presetPeriod,
   yearPeriodEnd,
 } from "@/fire-map/map-period";
+import { periodReport as buildPeriodReport } from "@/fire-map/period-report";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import { FadeUp } from "@/motion/fade-up";
 import { WORLD_AREA } from "@/pipeline/series-row";
@@ -69,53 +75,50 @@ export function CalendarExplorer() {
       : requestedYear >= CALENDAR_FIRST_YEAR && requestedYear <= dataYear
         ? requestedYear
         : dataYear;
+  const selection = useCalendarSelection();
+  const selectedMonth = selection.area === area ? selection.month : null;
+  useEffect(() => {
+    if (area && selectedYear) {
+      rememberSelection({ area, year: selectedYear });
+    }
+  }, [area, selectedYear]);
   const periodEnd =
     lastDataDate && selectedYear
       ? yearPeriodEnd(selectedYear, lastDataDate)
       : null;
-  const defaultPeriod = useMemo(
-    () => (periodEnd ? presetPeriod("7d", periodEnd) : null),
-    [periodEnd],
-  );
-  const period = chosenPeriod ?? defaultPeriod;
+  const period = useMemo(() => {
+    if (!periodEnd) {
+      return null;
+    }
+    if (!chosenPeriod) {
+      return presetPeriod("7d", periodEnd);
+    }
+    return chosenPeriod.preset
+      ? presetPeriod(chosenPeriod.preset, periodEnd)
+      : chosenPeriod;
+  }, [chosenPeriod, periodEnd]);
+  useEffect(() => {
+    if (period) {
+      rememberSelection({ period });
+    }
+  }, [period]);
   const completeDate = coverage?.completeDate ?? null;
   const { dailyRows, analysis, source, passes, ready } = calendar;
-  const periodReport = useMemo<PeriodReport | null>(() => {
-    if (!period || !dailyRows || !completeDate || !ready) {
-      return null;
-    }
-    const comparison = periodComparison(
-      dailyRows,
-      years,
-      analysis,
-      source,
-      passes,
-      period,
-      completeDate,
-    );
-    if (!comparison) {
-      return null;
-    }
-    const partial = partialDaysLabel(period, completeDate);
-    return {
-      comparison,
-      eyebrow: periodName(period),
-      title: periodLabel({
-        ...period,
-        start: comparison.start,
-        end: comparison.end,
-        hours: null,
-      }),
-      dates: dateRangeLabel(comparison.start, comparison.end),
-      note:
-        [
-          partial && `${capitalized(partial)}, fora da comparação.`,
-          period.hours && "Contamos dias UTC inteiros.",
-        ]
-          .filter(Boolean)
-          .join(" ") || null,
-    };
-  }, [period, dailyRows, completeDate, ready, years, analysis, source, passes]);
+  const periodReport = useMemo<PeriodReport | null>(
+    () =>
+      period && dailyRows && completeDate && ready
+        ? buildPeriodReport(
+            dailyRows,
+            years,
+            analysis,
+            source,
+            passes,
+            period,
+            completeDate,
+          )
+        : null,
+    [period, dailyRows, completeDate, ready, years, analysis, source, passes],
+  );
   const appliedChips: { icon: SymbolName; text: string }[] = [
     ...(selectedYear
       ? [{ icon: "calendar_month" as const, text: String(selectedYear) }]
@@ -182,6 +185,22 @@ export function CalendarExplorer() {
             period={period}
             onPeriodChange={setChosenPeriod}
           />
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href={compareDatesHref(area, selectedYear)}
+              className={buttonClassName({ variant: "secondary", size: "md" })}
+            >
+              <MaterialSymbol name="date_range" className="size-[18px]" />
+              Comparar datas
+            </Link>
+            <Link
+              href={compareRegionsHref(world ? [] : [area], selectedYear)}
+              className={buttonClassName({ variant: "secondary", size: "md" })}
+            >
+              <MaterialSymbol name="public" className="size-[18px]" />
+              Comparar regiões
+            </Link>
+          </div>
         </FadeUp>
       )}
 
@@ -223,6 +242,51 @@ export function CalendarExplorer() {
           description="Cada linha é um ano e cada coluna, um mês. Os mesmos limites de cor valem para o calendário inteiro."
           initialMode="count"
           focusRequest={focusRequest}
+          selectedMonth={selectedMonth}
+          onSelectMonth={(key) =>
+            rememberSelection({
+              area,
+              year: Number(key.slice(0, 4)),
+              month: key,
+            })
+          }
+          selectionAction={
+            selectedMonth ? (
+              <p className="type-body-sm flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-surface-hover px-4 py-3 text-ink">
+                <span>
+                  Mês escolhido:{" "}
+                  <strong className="font-semibold">
+                    {monthTitle({
+                      year: Number(selectedMonth.slice(0, 4)),
+                      month: Number(selectedMonth.slice(5, 7)),
+                    })}
+                  </strong>
+                </span>
+                <Link
+                  href={anomaliesHref({
+                    area,
+                    year: Number(selectedMonth.slice(0, 4)),
+                    month: selectedMonth,
+                    period,
+                  })}
+                  className={buttonClassName({
+                    variant: "secondary",
+                    size: "sm",
+                  })}
+                >
+                  Ver as anomalias deste mês
+                  <MaterialSymbol
+                    name="arrow_forward"
+                    className="size-[18px]"
+                  />
+                </Link>
+              </p>
+            ) : (
+              <p className="type-body-sm text-ink-muted">
+                Na visão em grade, clique num mês para ver as anomalias dele.
+              </p>
+            )
+          }
         />
       </FadeUp>
 

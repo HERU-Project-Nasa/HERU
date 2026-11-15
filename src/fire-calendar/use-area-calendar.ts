@@ -32,7 +32,7 @@ import {
   type MonthComparison,
 } from "./month-comparison";
 
-export const DEFAULT_AREA = "BOL";
+export const DEFAULT_AREA = "USA";
 
 const COVERAGE_PATH = "meta/coverage.csv";
 const COUNTRIES_PATH = "meta/countries.csv";

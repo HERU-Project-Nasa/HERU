@@ -18,6 +18,8 @@ const NUMERIC_COLUMNS = new Set([
   "type",
   "cell_lat",
   "cell_lon",
+  "area_km2",
+  "modis_x_k",
 ]);
 
 export class PipelineFileError extends Error {
