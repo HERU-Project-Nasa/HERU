@@ -32,20 +32,97 @@ python -m http.server 8000 --bind 127.0.0.1 --directory path/to/pipeline-output
 
 ## Deploy
 
-`npm run build` writes a static site to `out/`. The site and the pipeline output live on the same server and domain: nginx serves `out/` at `/` and the pipeline's `saida/v1/` at `/v1/`, so `NEXT_PUBLIC_HERU_BASE` stays empty and no CORS is needed.
+The site is static: `npm run build` writes it to `out/`. It runs on the same VPS as the pipeline, behind one nginx and one domain, with the site at `/` and the pipeline's `saida/v1/` at `/v1/`. `NEXT_PUBLIC_HERU_BASE` stays empty, so there is no CORS and no environment variable to set.
+
+| Path on the VPS                            | What it is                                  |
+| ------------------------------------------ | ------------------------------------------- |
+| `/srv/heru/HERU-Pipeline/saida/v1/`        | Pipeline output, read by the site at `/v1/` |
+| `/srv/heru/HERU-Pipeline/data/` and `.env` | Pipeline store and FIRMS key, never served  |
+| `/srv/heru/HERU`                           | This repository                             |
+| `/srv/heru/frontend`                       | The published site, a copy of `out/`        |
+
+Build on Linux: a Windows build writes some prefetch files with backslashes in their names, and the browser gets a 404 on them. The copy to `/srv/heru/frontend` keeps the site up while a new build runs, because `next build` empties `out/` first.
+
+```sh
+cd /srv/heru
+git clone https://github.com/HERU-Project-Nasa/HERU.git
+cd HERU
+npm ci
+npm run build
+sudo mkdir -p /srv/heru/frontend
+sudo rsync -a --delete out/ /srv/heru/frontend/
+```
+
+To publish a new version:
+
+```sh
+cd /srv/heru/HERU && git pull && npm ci && npm run build && sudo rsync -a --delete out/ /srv/heru/frontend/
+```
+
+The site answers at `heruproject.io`, and `www.heruproject.io` redirects there. nginx reads `/etc/nginx/sites-available/heruproject.io`, linked in `sites-enabled`. For HTTPS, run `sudo certbot --nginx -d heruproject.io -d www.heruproject.io` once it works on port 80; certbot adds the certificate lines to the same file.
 
 ```nginx
 server {
-    root /path/to/HERU/out;
+    listen 80;
+    server_name www.heruproject.io;
+    return 301 https://heruproject.io$request_uri;
+}
+
+server {
+    listen 80;
+    server_name heruproject.io;
+    autoindex off;
+    absolute_redirect off;
+    error_page 404 /404.html;
+
+    gzip on;
+    gzip_types text/csv text/css application/javascript application/json application/geo+json image/svg+xml;
+
+    root /srv/heru/frontend;
+
     location / {
         try_files $uri $uri/ =404;
-    }
-    location /v1/ {
-        alias /path/to/saida/v1/;
         add_header Cache-Control "no-cache";
+    }
+
+    location /_next/static/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location /geo/ {
+        types { application/json json; application/geo+json geojson; }
+        add_header Cache-Control "no-cache";
+    }
+
+    location /v1/ {
+        root /srv/heru/HERU-Pipeline/saida;
+        types { text/csv csv; application/gzip gz; }
+        add_header Cache-Control "no-cache" always;
     }
 }
 ```
+
+What this follows from the pipeline manual:
+
+- `.csv.gz` files go out as `application/gzip`, without `Content-Encoding`. The site unzips them itself, and also reads them if a server unzips them first.
+- `/v1/` answers with `Cache-Control: no-cache` and an ETag, so the check every minute costs a 304 when nothing changed.
+- `gzip` covers the plain CSV files. It matters for the map: each month of `grid/monthly/` is about 4.5 MB, and a long period reads one file per month.
+- nginx only points at `saida/` and at the published site, never at the pipeline folder, so `data/` and `.env` stay out. nginx runs as `www-data`, which must be able to read `saida/` and enter the folders above it.
+- Pages revalidate on every visit, and the files in `/_next/static/`, whose names change with every build, are kept for a year. After a new version is published, nobody gets an old page that points to files the copy removed.
+- `absolute_redirect off` keeps the redirect from `/anomalies?area=USA` to `/anomalies/?area=USA` on the same address and protocol behind HTTPS.
+
+Checks after `sudo nginx -t && sudo systemctl reload nginx`:
+
+| Command                                                                                       | Expected                                                |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `namei -l /srv/heru/HERU-Pipeline/saida/v1/meta/latest.csv`                                   | every folder open to others (`x`), the file readable    |
+| `curl -sI https://heruproject.io/v1/meta/latest.csv`                                          | 200, `Cache-Control: no-cache` and an `ETag`            |
+| `curl -sI https://heruproject.io/v1/recent/viirs_noaa20/24h.csv.gz`                           | `Content-Type: application/gzip`, no `Content-Encoding` |
+| `curl -sI -H "Accept-Encoding: gzip" https://heruproject.io/v1/grid/monthly/2026/2026-10.csv` | `Content-Encoding: gzip`                                |
+| `curl -sI https://heruproject.io/calendar/map/`                                               | 200                                                     |
+| `journalctl -u heru-atualizar -f`                                                             | a new batch every hour                                  |
+
+The checks of `meta/latest.csv` only show their effect on the VPS: when a new batch is published, the status in the header changes without reloading the page.
 
 ## Pipeline files
 
@@ -84,9 +161,9 @@ How `harmonized` is built:
 
 - `/calendar` picks the year, the continent and the country (`src/area-filters`).
 - `/calendar/map?area={ISO3}&year={year}` shows the map, the reports and the fire calendar of that country; `area=world` shows the whole world. Each report opens its evidence (`src/report-evidence`): the chart behind the number, a CSV and a link to the month in the calendar.
-- `/calendar/compare-dates?area={ISO3}&year={year}` compares two periods of the same length in one area: two maps on the same color scale, the totals against the typical for those dates, week by week and month by month (`src/compare-dates`).
+- `/calendar/compare-dates?area={ISO3}&year={year}` compares two periods of the same length in one area: two maps on the same color scale that move together (a switch lets each one move alone), the totals against the typical for those dates, week by week and month by month (`src/compare-dates`).
 - `/calendar/compare-regions?areas={ISO3},{ISO3}&year={year}` compares up to four countries in the same period, as total hotspots or per 1,000 km² of land, with the month by month calendar on one scale (`src/compare-regions`).
-- `/anomalies?area={ISO3}` compares the last month with the typical one, lists the months that stand out and opens the calendar in anomaly mode (`src/anomalies`).
+- `/anomalies?area={ISO3}&year={year}&month={yyyy-mm}` follows the country, year and month chosen in any calendar (`src/calendar-selection` keeps them for the session, so the header links carry them). It compares that month with the typical one, or the last full month when none was chosen. Below it comes the period of the map's date filter (`from`, `to` and `preset` in the address, the last 7 days when none was chosen), then the months that stand out, with the chosen year highlighted, and the calendar in anomaly mode (`src/anomalies`).
 - `/methodology?area={ISO3}` explains the method, with the figures of `meta/validation.csv` for the chosen region (`src/methodology`). The confidence is high with 10,000 MODIS hotspots or more in the calibration years, medium from 1,000 to 9,999 and low below 1,000.
 
 ## Map
@@ -96,6 +173,7 @@ The code is in `src/fire-map`. The globe is drawn with MapLibre from the boundar
 - Periods up to 7 days show the hotspots of each day. Science points keep type 0 only, and near real-time points, which have no type, drop the ones whose position, cut to 0.01 degree, is in `meta/static_sources.csv`. This is the rule of the series, so the points of a day match `daily.csv`. Hotspots from the last 24 hours of the period are drawn as active fire.
 - The count in the legend is the sum of the days of the period in `daily.csv`. Only the 24 and 48 hour windows, which do not fit whole days, count the points.
 - Longer periods and the seasons show the monthly grid of the months they touch. A cell is kept when it touches the country, even if its center falls in the sea or in a neighbour, so no hotspot of the country is left out (on a small island such as Saint Lucia no cell center falls on land). At a land border a cell may also hold hotspots of the neighbour; the total in the legend does not change, because it is counted hotspot by hotspot in `daily.csv`.
+- Long periods read one grid file per month. The months are added up first and each cell is tested against the country once, in small steps, so the page keeps responding.
 - The latest 24 and 48 hour windows read `recent/`, and fall back to the daily points when it is missing.
 - Each date uses the layer of the calendar: MODIS before 2012, then VIIRS S-NPP, then VIIRS NOAA-20.
 - Seasons use whole months (December to February, March to May, June to August, September to November), named for the hemisphere of the country.

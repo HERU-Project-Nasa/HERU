@@ -17,6 +17,7 @@ import {
   presetPeriod,
   usesPoints,
 } from "./map-period";
+import { createMapLink, type MapCamera } from "./map-link";
 import { sensorCovers, sensorFactor } from "./sensor-picker";
 import {
   blockId,
@@ -316,5 +317,37 @@ describe("period chosen on the map", () => {
     });
     const past = presetPeriod("14d", "2014-12-31");
     expect(anchoredPeriod(past, "2026-11-15")).toEqual(past);
+  });
+});
+
+describe("maps that move together", () => {
+  const camera = (zoom: number): MapCamera => ({
+    center: [-98, 39],
+    zoom,
+    bearing: 0,
+    pitch: 0,
+  });
+
+  it("sends the move of one map to the other, never back to itself", () => {
+    const link = createMapLink();
+    const first = {};
+    const second = {};
+    const seenByFirst: number[] = [];
+    const seenBySecond: number[] = [];
+    link.follow(first, (next) => seenByFirst.push(next.zoom));
+    link.follow(second, (next) => seenBySecond.push(next.zoom));
+    link.share(first, camera(3));
+    expect(seenByFirst).toEqual([]);
+    expect(seenBySecond).toEqual([3]);
+    expect(link.lastCamera()?.zoom).toBe(3);
+  });
+
+  it("stops following when a map leaves", () => {
+    const link = createMapLink();
+    const seen: number[] = [];
+    const stop = link.follow({}, (next) => seen.push(next.zoom));
+    stop();
+    link.share({}, camera(5));
+    expect(seen).toEqual([]);
   });
 });

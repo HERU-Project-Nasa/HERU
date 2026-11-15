@@ -42,6 +42,7 @@ import {
   periodMonths,
   usesPoints,
 } from "@/fire-map/map-period";
+import { createMapLink, type MapLink } from "@/fire-map/map-link";
 import type { CellColumn, FireCell } from "@/fire-map/period-fires";
 import { SENSOR_NAMES } from "@/fire-map/sensor-picker";
 import { type MapFires, useMapFires } from "@/fire-map/use-map-fires";
@@ -327,6 +328,7 @@ function PeriodMap({
   bounds,
   areaName,
   harmonized,
+  link,
 }: {
   letter: string;
   range: DateRange;
@@ -336,6 +338,7 @@ function PeriodMap({
   bounds: [number, number, number, number] | null;
   areaName: string;
   harmonized: boolean;
+  link: MapLink | null;
 }) {
   const ready = fires.status === "ready" ? fires : null;
   const cells = ready?.mode === "cells" ? ready.cells : NO_CELLS;
@@ -374,6 +377,7 @@ function PeriodMap({
         renderTooltip={(tooltip) => (
           <CompareTooltip tooltip={tooltip} harmonized={harmonized} />
         )}
+        link={link}
       >
         {status && (
           <p
@@ -534,6 +538,11 @@ export function CompareDatesExplorer() {
   const completeDate = coverage?.completeDate ?? null;
   const requestedYear = Number(searchParams.get("year")) || null;
   const [chosenA, setChosenA] = useState<DateRange | null>(null);
+  const [together, setTogether] = useState(true);
+  const mapLink = useMemo(
+    () => (together ? createMapLink() : null),
+    [together],
+  );
   const [chosenBStart, setChosenBStart] = useState<string | null>(null);
 
   const seasonMonths = analysis.season?.months;
@@ -756,9 +765,33 @@ export function CompareDatesExplorer() {
         />
       </section>
 
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <p className="type-body-sm text-ink-muted">
+          {together
+            ? "Arraste, aproxime ou gire um mapa e o outro acompanha."
+            : "Cada mapa se move sozinho."}
+        </p>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={together}
+          onClick={() => setTogether(!together)}
+          className="type-body-sm inline-flex cursor-pointer items-center gap-3 rounded-full py-1 text-ink"
+        >
+          <span
+            aria-hidden="true"
+            className={`relative inline-flex h-6 w-10 shrink-0 items-center rounded-full border transition-colors duration-200 ease-standard ${together ? "border-selected bg-selected" : "border-line-strong bg-surface-raised"}`}
+          >
+            <span
+              className={`absolute left-0.5 size-[18px] rounded-full transition-transform duration-200 ease-standard ${together ? "translate-x-4 bg-ink-inverse" : "bg-ink-muted"}`}
+            />
+          </span>
+          Mover os mapas juntos
+        </button>
+      </div>
       <section
         aria-label="Mapas dos dois períodos"
-        className="mt-8 grid gap-6 lg:grid-cols-2"
+        className="mt-4 grid gap-6 lg:grid-cols-2"
       >
         <PeriodMap
           letter="A"
@@ -769,6 +802,7 @@ export function CompareDatesExplorer() {
           bounds={bounds}
           areaName={areaName}
           harmonized={harmonized}
+          link={mapLink}
         />
         <PeriodMap
           letter="B"
@@ -779,6 +813,7 @@ export function CompareDatesExplorer() {
           bounds={bounds}
           areaName={areaName}
           harmonized={harmonized}
+          link={mapLink}
         />
       </section>
       {breaks.length > 0 && (

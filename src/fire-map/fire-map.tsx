@@ -14,6 +14,7 @@ import { COUNTRY_BOUNDARIES_URL } from "@/country-outlines/country-outlines";
 import { HEAT_TOKENS } from "@/fire-calendar/calendar-cell-style";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
+import type { MapCamera, MapLink } from "./map-link";
 import type { MappedPoint } from "./use-map-fires";
 import type { AreaBounds, FireCell } from "./period-fires";
 
@@ -220,6 +221,7 @@ export function FireMap({
   cells,
   cellBreaks,
   renderTooltip,
+  link = null,
   children,
 }: {
   label: string;
@@ -230,6 +232,7 @@ export function FireMap({
   cells: FireCell[];
   cellBreaks: number[];
   renderTooltip: (tooltip: MapTooltip, pinned: boolean) => ReactNode;
+  link?: MapLink | null;
   children: ReactNode;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -544,6 +547,43 @@ export function FireMap({
       : 1200;
     showArea(map, bounds, duration);
   }, [map, areaKey, bounds]);
+
+  useEffect(() => {
+    if (!map || !link) {
+      return;
+    }
+    const member = {};
+    let following = false;
+    const camera = (): MapCamera => ({
+      center: map.getCenter().toArray(),
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch(),
+    });
+    const share = () => {
+      if (!following) {
+        link.share(member, camera());
+      }
+    };
+    const stopFollowing = link.follow(member, (next) => {
+      following = true;
+      map.jumpTo(next);
+      following = false;
+    });
+    const leader = link.lastCamera();
+    if (leader) {
+      following = true;
+      map.jumpTo(leader);
+      following = false;
+    } else {
+      link.share(member, camera());
+    }
+    map.on("move", share);
+    return () => {
+      map.off("move", share);
+      stopFollowing();
+    };
+  }, [map, link]);
 
   useEffect(() => {
     map?.getSource<GeoJSONSource>("points")?.setData(pointCollection(points));

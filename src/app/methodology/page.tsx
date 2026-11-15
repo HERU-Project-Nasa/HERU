@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Suspense } from "react";
 import { BeforeAfterChart } from "@/methodology/before-after-chart";
 import {
@@ -11,6 +12,7 @@ import { MethodologySection } from "@/methodology/methodology-sections";
 import { SectionContents } from "@/methodology/section-contents";
 import { SensorTimeline } from "@/methodology/sensor-timeline";
 import { ValidationChart } from "@/methodology/validation-chart";
+import { HERU_TEAM } from "@/team/heru-team";
 
 export const metadata: Metadata = {
   title: "Metodologia | HERU",
@@ -407,8 +409,43 @@ export default function MethodologyPage() {
                 Globo: Three.js, com as imagens Blue Marble e Black Marble do
                 NASA Earth Observatory.
               </li>
-              <li>Equipe HERU, NASA Space Apps 2026.</li>
             </ul>
+            <div className="flex flex-col gap-4 pt-4">
+              <h3 className="type-heading-sm text-ink">Equipe</h3>
+              <p className={PARAGRAPH}>
+                O HERU foi feito para o NASA Space Apps Challenge 2026, no
+                desafio <em>Harmonization of MODIS and VIIRS Hot Spots</em>.
+              </p>
+              <ul className="grid gap-4 sm:grid-cols-3">
+                {HERU_TEAM.map((member) => (
+                  <li key={member.name}>
+                    <a
+                      href={member.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${PANEL} group flex h-full items-center gap-4 p-4 transition-colors duration-200 ease-standard hover:border-line-strong hover:bg-surface-hover`}
+                    >
+                      <Image
+                        src={member.photo}
+                        alt=""
+                        width={64}
+                        height={64}
+                        className="size-16 shrink-0 rounded-full border border-line object-cover"
+                      />
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <span className="type-body font-semibold text-ink">
+                          {member.name}
+                        </span>
+                        <span className="type-body-sm text-link group-hover:underline">
+                          LinkedIn
+                          <span className="sr-only">, abre em nova aba</span>
+                        </span>
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </MethodologySection>
         </div>
       </div>
