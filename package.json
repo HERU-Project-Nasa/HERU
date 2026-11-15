@@ -10,23 +10,27 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src scripts",
+    "lint": "eslint src",
     "test": "vitest run",
-    "format": "prettier --write src scripts README.md",
-    "build:calendars": "node --max-old-space-size=8192 scripts/build-calendars.ts"
+    "format": "prettier --write src README.md"
   },
   "dependencies": {
     "maplibre-gl": "5.24.0",
+    "motion": "14.9.1",
     "next": "16.4.6",
+    "papaparse": "5.7.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "three": "0.187.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
     "@types/geojson": "7946.0.16",
     "@types/node": "24.19.2",
+    "@types/papaparse": "5.5.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/three": "0.187.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.6",
     "prettier": "3.10.1",
