@@ -6,6 +6,7 @@ import { type KeyboardEvent, useRef, useState } from "react";
 import { HeruLogo } from "@/brand/heru-logo";
 import { buttonClassName } from "@/button/button-class-name";
 import { MaterialSymbol } from "@/icons/material-symbols";
+import { BackgroundMusic } from "@/sound/background-music";
 
 const NAVIGATION = [
   { href: "/calendar", label: "Calendário" },
@@ -55,21 +56,24 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <button
-          ref={menuButtonRef}
-          type="button"
-          aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-          aria-expanded={menuOpen}
-          aria-controls="site-menu"
-          onClick={() => setMenuOpen(!menuOpen)}
-          className={`${buttonClassName({ variant: "ghost", size: "icon" })} lg:hidden`}
-        >
-          {menuOpen ? (
-            <MaterialSymbol name="close" className="size-5" />
-          ) : (
-            <MaterialSymbol name="menu" className="size-5" />
-          )}
-        </button>
+        <div className="flex items-center gap-1 justify-self-end">
+          <BackgroundMusic />
+          <button
+            ref={menuButtonRef}
+            type="button"
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            aria-controls="site-menu"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className={`${buttonClassName({ variant: "ghost", size: "icon" })} lg:hidden`}
+          >
+            {menuOpen ? (
+              <MaterialSymbol name="close" className="size-5" />
+            ) : (
+              <MaterialSymbol name="menu" className="size-5" />
+            )}
+          </button>
+        </div>
       </div>
       {menuOpen && (
         <nav

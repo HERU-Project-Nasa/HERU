@@ -1,10 +1,25 @@
+/*
+ * Escala de calor do projeto, do nível 1 (poucos focos) ao nível 6 (muitos).
+ * Poucos focos ficam claros e muitos focos ficam no vermelho mais escuro.
+ * Tudo que pinta por nível de focos (calendário, legenda, mapa, estações e
+ * calendário 3D) usa esta ordem, então mude aqui para mudar em todo lugar.
+ */
+export const HEAT_TOKENS = [
+  "heat-6",
+  "heat-5",
+  "heat-4",
+  "heat-3",
+  "heat-2",
+  "heat-1",
+] as const;
+
 export const HEAT_BACKGROUNDS = [
-  "bg-heat-1",
-  "bg-heat-2",
-  "bg-heat-3",
-  "bg-heat-4",
-  "bg-heat-5",
   "bg-heat-6",
+  "bg-heat-5",
+  "bg-heat-4",
+  "bg-heat-3",
+  "bg-heat-2",
+  "bg-heat-1",
 ];
 
 export const HATCH =

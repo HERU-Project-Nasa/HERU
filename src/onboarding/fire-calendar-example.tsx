@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { type CalendarBar, startCalendarBars } from "./calendar-bars-scene";
+import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
+import {
+  type CalendarBar,
+  startCalendarBars,
+} from "@/calendar-3d/calendar-bars-scene";
 import {
   ILLUSTRATIVE_CALENDAR,
   ILLUSTRATIVE_OUT_OF_PATTERN,
@@ -25,12 +29,12 @@ const MONTHS = [
 
 const HEAT_SCALE = [
   { limit: 1, label: "0", className: "border border-line bg-heat-0" },
-  { limit: 1_000, label: "< 1 mil", className: "bg-heat-6" },
-  { limit: 3_000, label: "1-3 mil", className: "bg-heat-5" },
-  { limit: 10_000, label: "3-10 mil", className: "bg-heat-4" },
-  { limit: 30_000, label: "10-30 mil", className: "bg-heat-3" },
-  { limit: 100_000, label: "30-100 mil", className: "bg-heat-2" },
-  { limit: Infinity, label: "≥ 100 mil", className: "bg-heat-1" },
+  { limit: 1_000, label: "< 1 mil", className: HEAT_BACKGROUNDS[0] },
+  { limit: 3_000, label: "1-3 mil", className: HEAT_BACKGROUNDS[1] },
+  { limit: 10_000, label: "3-10 mil", className: HEAT_BACKGROUNDS[2] },
+  { limit: 30_000, label: "10-30 mil", className: HEAT_BACKGROUNDS[3] },
+  { limit: 100_000, label: "30-100 mil", className: HEAT_BACKGROUNDS[4] },
+  { limit: Infinity, label: "≥ 100 mil", className: HEAT_BACKGROUNDS[5] },
 ];
 
 const OUT_OF_PATTERN_RING =
@@ -145,7 +149,7 @@ export function FireCalendarExample() {
           <li className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className={`relative h-4 w-7 rounded-xs bg-heat-1 ${OUT_OF_PATTERN_RING}`}
+              className={`relative h-4 w-7 rounded-xs ${HEAT_BACKGROUNDS[5]} ${OUT_OF_PATTERN_RING}`}
             >
               <OutOfPatternDot />
             </span>
@@ -154,7 +158,7 @@ export function FireCalendarExample() {
           <li className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className={`h-4 w-7 rounded-xs bg-heat-3 ${IN_PROGRESS_STRIPES}`}
+              className={`h-4 w-7 rounded-xs ${HEAT_BACKGROUNDS[3]} ${IN_PROGRESS_STRIPES}`}
             />
             Mês em andamento
           </li>

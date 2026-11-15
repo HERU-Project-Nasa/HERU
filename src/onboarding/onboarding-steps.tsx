@@ -109,7 +109,7 @@ export const ONBOARDING_STEPS: OnboardingStepContent[] = [
       <>
         <p className="type-body-lg text-ink">
           No calendário, cada linha é um ano e cada coluna, um mês. Quanto mais
-          clara a célula, mais focos de calor.
+          alto e mais vermelho o bloco, mais focos de calor.
         </p>
         <p className="type-body-lg text-ink">
           Os meses com contorno fugiram do padrão: tiveram muito mais focos do

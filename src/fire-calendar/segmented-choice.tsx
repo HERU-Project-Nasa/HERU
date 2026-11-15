@@ -35,7 +35,7 @@ export function SegmentedChoice<T extends string>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={moveWithArrows}
-      className="inline-flex h-8 items-center gap-0.5 rounded-sm border border-line-strong bg-surface p-px"
+      className="flex h-10 w-full items-center gap-0.5 rounded-md border border-line-strong bg-surface-ground/60 p-1 sm:inline-flex sm:w-auto"
     >
       {options.map((option) => {
         const checked = option.value === value;
@@ -47,7 +47,7 @@ export function SegmentedChoice<T extends string>({
             aria-checked={checked}
             tabIndex={checked ? 0 : -1}
             onClick={() => onChange(option.value)}
-            className={`type-chip h-7 cursor-pointer rounded-[3px] px-3 whitespace-nowrap transition-colors duration-120 ease-standard ${checked ? "bg-selected font-semibold text-ink-inverse hover:bg-selected-hover" : "text-ink hover:bg-surface-hover"}`}
+            className={`type-chip h-8 flex-1 cursor-pointer rounded-[5px] px-2.5 whitespace-nowrap transition-[color,background-color,box-shadow] duration-200 ease-standard sm:flex-none sm:px-3 ${checked ? "bg-selected font-semibold text-ink-inverse shadow-[0_2px_8px_rgba(0,0,0,0.35)] hover:bg-selected-hover" : "text-ink-muted hover:bg-surface-hover hover:text-ink"}`}
           >
             {option.label}
           </button>

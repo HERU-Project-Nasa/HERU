@@ -13,8 +13,15 @@ export type AreaOption = { value: string; label: string };
 
 export type YearRange = { first: number; last: number };
 
+export type CalendarView = "3d" | "grid";
+
+const VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
+  { value: "3d", label: "3D" },
+  { value: "grid", label: "Grade" },
+];
+
 const SELECT_CLASS_NAME =
-  "type-chip h-8 cursor-pointer appearance-none rounded-sm border border-line-strong bg-surface text-ink transition-colors duration-120 ease-standard hover:border-line-strong hover:bg-surface-hover";
+  "type-chip h-10 cursor-pointer appearance-none rounded-md border border-line-strong bg-surface-ground/60 text-ink transition-colors duration-200 ease-standard hover:border-ink";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -41,7 +48,7 @@ function YearSelect({
       aria-label={label}
       value={value}
       onChange={(event) => onChange(Number(event.target.value))}
-      className={`${SELECT_CLASS_NAME} w-[4.75rem] px-2.5`}
+      className={`${SELECT_CLASS_NAME} w-full min-w-[5rem] px-3 text-center sm:w-[5.25rem]`}
     >
       {years.map((year) => (
         <option key={year} value={year}>
@@ -69,6 +76,8 @@ export function CalendarFilters({
   onDownload,
   unitLine,
   notice,
+  view,
+  onViewChange,
 }: {
   areaOptions: AreaOption[];
   area: string;
@@ -86,25 +95,59 @@ export function CalendarFilters({
   onDownload: (() => void) | null;
   unitLine: string;
   notice: string | null;
+  view: CalendarView;
+  onViewChange: (view: CalendarView) => void;
 }) {
   return (
     <section
       aria-label="Filtros do calendário"
-      className="flex flex-col gap-4 rounded-md border border-line bg-surface px-5 py-4"
+      className="flex flex-col gap-5 rounded-lg border border-line bg-linear-to-b from-surface-hover/50 to-surface p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)] sm:p-5"
     >
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+        <p className="type-caption flex items-center gap-2 text-ink-muted">
+          <MaterialSymbol name="tune" className="size-[18px]" />
+          Ajustes do calendário
+        </p>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <SegmentedChoice
+            label="Visualização"
+            options={VIEW_OPTIONS}
+            value={view}
+            onChange={onViewChange}
+          />
+          <button
+            type="button"
+            onClick={onClear}
+            className="type-button inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent px-3 text-ink-muted transition-colors duration-200 ease-standard hover:bg-surface-hover hover:text-ink sm:flex-none"
+          >
+            <MaterialSymbol name="refresh" className="size-[18px]" />
+            Limpar
+          </button>
+          <button
+            type="button"
+            onClick={onDownload ?? undefined}
+            disabled={!onDownload}
+            className="type-button inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-line-strong bg-surface-raised px-4 text-ink transition-colors duration-200 ease-standard hover:border-ink disabled:cursor-not-allowed disabled:text-ink-disabled disabled:hover:border-line-strong sm:flex-none"
+          >
+            <MaterialSymbol name="download" className="size-[18px]" />
+            Baixar CSV
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_auto_auto_auto] xl:items-end">
         <Field label="Região">
-          <span className="relative inline-flex w-52 items-center">
+          <span className="relative flex w-full items-center">
             <MaterialSymbol
               name="location_on"
-              className="pointer-events-none absolute left-2.5 size-[18px]"
+              className="pointer-events-none absolute left-3 size-[18px] text-ink-muted"
             />
             <select
               aria-label="Região"
               value={area}
               disabled={areaOptions.length === 0}
               onChange={(event) => onAreaChange(event.target.value)}
-              className={`${SELECT_CLASS_NAME} w-full pr-8 pl-8 disabled:cursor-not-allowed`}
+              className={`${SELECT_CLASS_NAME} w-full pr-9 pl-9 disabled:cursor-not-allowed`}
             >
               {areaOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -114,7 +157,7 @@ export function CalendarFilters({
             </select>
             <MaterialSymbol
               name="keyboard_arrow_down"
-              className="pointer-events-none absolute right-2 size-[18px]"
+              className="pointer-events-none absolute right-3 size-[18px] text-ink-muted"
             />
           </span>
         </Field>
@@ -151,44 +194,35 @@ export function CalendarFilters({
             />
           </span>
         </Field>
-        <Field label="Meses">
-          <div role="group" aria-label="Meses" className="flex flex-wrap gap-1">
-            {MONTH_INITIALS.map((initial, index) => (
-              <button
-                key={MONTH_NAMES[index]}
-                type="button"
-                role="checkbox"
-                aria-checked={enabledMonths[index]}
-                aria-label={MONTH_NAMES[index]}
-                onClick={() => onToggleMonth(index)}
-                className={`type-chip size-8 cursor-pointer rounded-sm border tracking-normal transition-colors duration-120 ease-standard ${enabledMonths[index] ? "border-selected bg-selected font-semibold text-ink-inverse hover:border-selected-hover hover:bg-selected-hover" : "border-line-strong bg-surface text-ink hover:bg-surface-hover"}`}
-              >
-                {initial}
-              </button>
-            ))}
-          </div>
-        </Field>
-        <div className="flex gap-2 lg:ml-auto">
-          <button
-            type="button"
-            onClick={onClear}
-            className="type-button h-8 cursor-pointer rounded-sm border border-transparent px-3 text-ink transition-colors duration-120 ease-standard hover:bg-surface-hover"
-          >
-            Limpar
-          </button>
-          <button
-            type="button"
-            onClick={onDownload ?? undefined}
-            disabled={!onDownload}
-            className="type-button inline-flex h-8 cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface-raised px-3 text-ink transition-colors duration-120 ease-standard hover:border-ink disabled:cursor-not-allowed disabled:text-ink-disabled disabled:hover:border-line-strong"
-          >
-            <MaterialSymbol name="download" className="size-[18px]" />
-            Baixar
-          </button>
-        </div>
       </div>
+
+      <Field label="Meses">
+        <div
+          role="group"
+          aria-label="Meses"
+          className="grid grid-cols-6 gap-1.5 sm:grid-cols-12"
+        >
+          {MONTH_INITIALS.map((initial, index) => (
+            <button
+              key={MONTH_NAMES[index]}
+              type="button"
+              role="checkbox"
+              aria-checked={enabledMonths[index]}
+              aria-label={MONTH_NAMES[index]}
+              title={MONTH_NAMES[index]}
+              onClick={() => onToggleMonth(index)}
+              className={`type-chip flex h-9 cursor-pointer flex-col items-center justify-center rounded-md border tracking-normal transition-[color,background-color,border-color] duration-200 ease-standard ${enabledMonths[index] ? "border-selected bg-selected font-semibold text-ink-inverse hover:border-selected-hover hover:bg-selected-hover" : "border-line bg-surface-ground/60 text-ink-disabled line-through hover:border-line-strong hover:text-ink-muted"}`}
+            >
+              <span className="sm:hidden">
+                {MONTH_NAMES[index].slice(0, 3)}
+              </span>
+              <span className="hidden sm:inline">{initial}</span>
+            </button>
+          ))}
+        </div>
+      </Field>
       {notice && (
-        <p className="type-body-sm flex items-start gap-2 text-ink">
+        <p className="type-body-sm flex items-start gap-2 rounded-md border border-status-stale/30 bg-status-stale/10 px-3 py-2.5 text-ink">
           <MaterialSymbol
             name="schedule"
             className="mt-0.5 size-[18px] shrink-0 text-status-stale"
@@ -196,7 +230,7 @@ export function CalendarFilters({
           {notice}
         </p>
       )}
-      <p className="type-body-sm flex items-center gap-2 border-t border-line pt-3 text-ink-muted tabular-nums">
+      <p className="type-body-sm flex items-center gap-2 border-t border-line pt-4 text-ink-muted tabular-nums">
         <MaterialSymbol name="straighten" className="size-[18px] shrink-0" />
         {unitLine}
       </p>

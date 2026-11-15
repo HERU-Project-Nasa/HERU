@@ -1,5 +1,5 @@
 import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
-import { formatCount } from "@/fire-calendar/calendar-labels";
+import { formatCompact, formatCount } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
 import { MaterialSymbol } from "@/icons/material-symbols";
@@ -19,14 +19,17 @@ export type SeasonTotal = {
 };
 
 const SEASON_COLORS: Record<Season["id"], string> = {
-  summer: "text-season-summer",
-  autumn: "text-season-autumn",
-  winter: "text-season-winter",
-  spring: "text-season-spring",
+  summer: "text-season-summer bg-season-summer/15",
+  autumn: "text-season-autumn bg-season-autumn/20",
+  winter: "text-season-winter bg-season-winter/20",
+  spring: "text-season-spring bg-season-spring/15",
 };
 
+const ROUND_BUTTON_CLASS_NAME =
+  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-line-strong bg-surface-raised text-ink transition-colors duration-200 ease-standard hover:border-ink disabled:cursor-not-allowed disabled:border-line disabled:bg-surface disabled:text-ink-disabled";
+
 const DATE_INPUT_CLASS_NAME =
-  "type-chip h-10 rounded-sm border border-line-strong bg-surface px-3 text-ink [color-scheme:dark]";
+  "type-chip h-10 w-full min-w-0 rounded-sm border border-line-strong bg-surface px-3 text-ink transition-colors duration-120 ease-standard [color-scheme:dark] hover:border-ink";
 
 function SeasonCard({
   entry,
@@ -55,19 +58,38 @@ function SeasonCard({
           ? "Soma dos meses com dado. Ainda faltam meses."
           : undefined
       }
-      className={`relative flex min-w-0 cursor-pointer flex-col gap-1.5 rounded-sm border p-2.5 text-left transition-colors duration-120 ease-standard disabled:cursor-not-allowed disabled:opacity-40 ${selected ? "border-ink bg-surface-hover" : "border-line bg-surface hover:border-line-strong hover:bg-surface-hover"}`}
+      className={`group relative flex min-w-0 cursor-pointer flex-col gap-2.5 rounded-md border p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 ease-standard disabled:cursor-not-allowed disabled:opacity-40 motion-safe:enabled:hover:-translate-y-0.5 ${selected ? "border-ink bg-surface-hover shadow-[0_0_0_1px_var(--color-ink),0_12px_28px_rgba(0,0,0,0.45)]" : "border-line bg-surface hover:border-line-strong hover:bg-surface-hover"}`}
     >
-      <span className="type-body-sm flex items-center gap-1.5 font-semibold text-ink">
-        <MaterialSymbol
-          name={season.icon}
-          className={`size-4 shrink-0 ${SEASON_COLORS[season.id]}`}
-        />
-        {season.name}
+      <span className="flex items-center justify-between gap-2">
+        <span
+          className={`flex size-7 shrink-0 items-center justify-center rounded-full ${SEASON_COLORS[season.id]}`}
+        >
+          <MaterialSymbol name={season.icon} className="size-4" />
+        </span>
+        {current && (
+          <span className="rounded-full bg-ink px-1.5 text-[10px] leading-4 font-semibold tracking-[0.06em] text-ink-inverse uppercase">
+            agora
+          </span>
+        )}
       </span>
-      <span className="text-xs leading-4 text-ink-muted">
-        {season.monthsLabel}
+      <span className="flex min-w-0 flex-col">
+        <span className="type-body-sm font-semibold text-ink">
+          {season.name}
+        </span>
+        <span className="text-xs leading-4 text-ink-muted">
+          {season.monthsLabel}
+        </span>
       </span>
-      <span aria-hidden="true" className="block h-1 rounded-full bg-line">
+      <span className="flex items-baseline gap-1">
+        <span className="type-data text-ink tabular-nums">
+          {total === null ? "–" : formatCompact(total)}
+        </span>
+        <span className="text-[11px] leading-4 text-ink-muted">focos</span>
+      </span>
+      <span
+        aria-hidden="true"
+        className="block h-1.5 overflow-hidden rounded-full bg-line"
+      >
         {total !== null && total > 0 && (
           <span
             className={`block h-full rounded-full ${HEAT_BACKGROUNDS[heatLevel(total, breaks) - 1]}`}
@@ -75,12 +97,6 @@ function SeasonCard({
           />
         )}
       </span>
-      {current && (
-        <span
-          aria-hidden="true"
-          className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-ink"
-        />
-      )}
     </button>
   );
 }
@@ -146,14 +162,14 @@ export function MapFilters({
                 role="radio"
                 aria-checked={period.preset === option.value}
                 onClick={() => onPreset(option.value)}
-                className={`type-chip h-8 cursor-pointer rounded-sm border px-3 transition-colors duration-120 ease-standard ${period.preset === option.value ? "border-selected bg-selected font-semibold text-ink-inverse hover:bg-selected-hover" : "border-line-strong bg-surface text-ink hover:bg-surface-hover"}`}
+                className={`type-chip h-9 cursor-pointer rounded-full border px-4 transition-[color,background-color,border-color] duration-200 ease-standard ${period.preset === option.value ? "border-selected bg-selected font-semibold text-ink-inverse hover:bg-selected-hover" : "border-line bg-surface text-ink hover:border-ink hover:bg-surface-hover"}`}
               >
                 {option.label}
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <label className="flex flex-col gap-1.5">
+          <div className="flex w-full gap-3 sm:w-auto">
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-none">
               <span className="type-caption text-ink-muted">De</span>
               <input
                 type="date"
@@ -166,7 +182,7 @@ export function MapFilters({
                 className={DATE_INPUT_CLASS_NAME}
               />
             </label>
-            <label className="flex flex-col gap-1.5">
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-none">
               <span className="type-caption text-ink-muted">Até</span>
               <input
                 type="date"
@@ -194,28 +210,35 @@ export function MapFilters({
               Hemisfério {southern ? "sul" : "norte"} · meses inteiros · a barra
               mostra a quantidade de focos ·{" "}
               <span className="whitespace-nowrap">
-                <span
-                  aria-hidden="true"
-                  className="mr-1.5 inline-block size-1.5 rounded-full bg-ink align-middle"
-                />
+                <span className="mr-1 rounded-full bg-ink px-1.5 text-[10px] leading-4 text-ink-inverse">
+                  agora
+                </span>
                 em andamento
               </span>
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-lg border border-line bg-linear-to-b from-surface-hover/50 to-surface p-3 sm:gap-3 sm:p-4">
             <button
               type="button"
               aria-label="Anos anteriores"
               disabled={firstShown <= CALENDAR_FIRST_YEAR}
               onClick={() => onShiftSeasons(-1)}
-              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-line-strong bg-surface-raised text-ink disabled:cursor-not-allowed disabled:text-ink-disabled"
+              className={ROUND_BUTTON_CLASS_NAME}
             >
               <MaterialSymbol name="chevron_left" className="size-5" />
             </button>
-            <div className="grid min-w-0 flex-1 gap-4 lg:grid-cols-2">
+            <div className="grid min-w-0 flex-1 gap-5 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-line">
               {seasonYears.map(({ year, seasons }) => (
-                <div key={year} className="flex min-w-0 flex-col gap-2">
-                  <span className="type-caption text-ink-muted">{year}</span>
+                <div
+                  key={year}
+                  className="flex min-w-0 flex-col gap-3 lg:px-4 lg:first:pl-0 lg:last:pr-0"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="type-chip rounded-full border border-line-strong px-2.5 text-ink tabular-nums">
+                      {year}
+                    </span>
+                    <span aria-hidden="true" className="h-px flex-1 bg-line" />
+                  </span>
                   <div
                     role="group"
                     aria-label={`Estações de ${year}`}
@@ -240,7 +263,7 @@ export function MapFilters({
               aria-label="Próximos anos"
               disabled={lastShown >= Number(lastDataDate.slice(0, 4))}
               onClick={() => onShiftSeasons(1)}
-              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-line-strong bg-surface-raised text-ink disabled:cursor-not-allowed disabled:text-ink-disabled"
+              className={ROUND_BUTTON_CLASS_NAME}
             >
               <MaterialSymbol name="chevron_right" className="size-5" />
             </button>

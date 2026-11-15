@@ -76,14 +76,14 @@ export function HeatLegend({
       <ul className="flex flex-wrap gap-x-6 gap-y-2.5">
         <Mark
           label="Fora do padrão"
-          className="bg-heat-5"
+          className={HEAT_BACKGROUNDS[4]}
           style={{ boxShadow: OUTLIER_RING }}
         >
           <span className="absolute top-0.5 right-0.5 size-1 rounded-full bg-ink shadow-[0_0_0_1px_var(--color-surface-ground)]" />
         </Mark>
         <Mark
           label="Mês parcial"
-          className="bg-heat-4"
+          className={HEAT_BACKGROUNDS[3]}
           style={{ backgroundImage: PARTIAL_STRIPES }}
         />
         <Mark

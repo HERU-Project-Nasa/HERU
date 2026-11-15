@@ -1,4 +1,5 @@
 import { animate } from "motion/react";
+import { HEAT_TOKENS } from "@/fire-calendar/calendar-cell-style";
 import {
   AmbientLight,
   BoxGeometry,
@@ -34,6 +35,7 @@ export type CalendarBar = {
   outOfPattern: boolean;
   inProgress: boolean;
   label: string;
+  dimmed?: boolean;
 };
 
 export type CalendarLabels = {
@@ -46,8 +48,6 @@ const COLUMNS = 12;
 const FOOTPRINT = 0.78;
 const MIN_HEIGHT = 0.08;
 const MAX_HEIGHT = 4.2;
-const LOG_FLOOR = 3;
-const LOG_CEILING = 5.45;
 const GROW_SECONDS = 0.9;
 const ROW_DELAY = 0.06;
 const MONTH_DELAY = 0.04;
@@ -81,6 +81,28 @@ export function startCalendarBars(
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const rows = Math.max(...bars.map((bar) => bar.row)) + 1;
   const heatColors = readHeatColors();
+  const dimTarget = readToken("--color-surface", "#121215");
+  const positiveCounts = bars
+    .map((bar) => bar.count ?? 0)
+    .filter((count) => count > 0);
+  const logCeiling = Math.log10(Math.max(10, ...positiveCounts));
+  const logFloor = Math.min(
+    logCeiling - 1,
+    Math.log10(Math.max(1, Math.min(...positiveCounts, 10 ** logCeiling))) -
+      0.3,
+  );
+  const yearsAlongX =
+    rows > COLUMNS && container.clientWidth > container.clientHeight;
+  const boardWidth = yearsAlongX ? rows : COLUMNS;
+  const boardDepth = yearsAlongX ? COLUMNS : rows;
+  const cameraDistance =
+    CAMERA_DISTANCE *
+    Math.max(1, (boardDepth * 0.62 + boardWidth * 0.5) / 13.44) *
+    (yearsAlongX ? 1.12 : 1);
+  const colorOf = (bar: CalendarBar, target: Color) => {
+    target.copy(heatColors[bar.heat]);
+    return bar.dimmed ? target.lerp(dimTarget, 0.78) : target;
+  };
   const scene = new Scene();
   const camera = new PerspectiveCamera(30, 1, 0.1, 100);
   const board = new Group();
@@ -95,9 +117,13 @@ export function startCalendarBars(
   scene.add(rim);
 
   const positionOf = (bar: { row: number; month: number }) =>
-    new Vector3(bar.month - (COLUMNS - 1) / 2, 0, bar.row - (rows - 1) / 2);
+    new Vector3(
+      (yearsAlongX ? bar.row : bar.month) - (boardWidth - 1) / 2,
+      0,
+      (yearsAlongX ? bar.month : bar.row) - (boardDepth - 1) / 2,
+    );
 
-  const groundGeometry = new PlaneGeometry(COLUMNS + 1.2, rows + 1.2);
+  const groundGeometry = new PlaneGeometry(boardWidth + 1.2, boardDepth + 1.2);
   const groundMaterial = new MeshStandardMaterial({
     color: readToken("--color-surface-raised", "#252525"),
     roughness: 0.95,
@@ -109,23 +135,28 @@ export function startCalendarBars(
 
   const labelColor = readToken("--color-ink-muted", "#a8a8ae");
   const labelFont = getComputedStyle(container).fontFamily;
+  const monthTexts = labels.months.map((text) => text.toUpperCase());
+  const frontTexts = yearsAlongX
+    ? labels.years.map((year) => `’${year.slice(-2)}`)
+    : monthTexts;
+  const sideTexts = yearsAlongX ? monthTexts : labels.years;
   const textLabels = [
-    ...labels.months.map((text, month) => ({
-      text: text.toUpperCase(),
+    ...frontTexts.map((text, index) => ({
+      text,
       align: "center" as const,
       position: new Vector3(
-        month - (COLUMNS - 1) / 2,
+        index - (boardWidth - 1) / 2,
         0.01,
-        (rows - 1) / 2 + 1.05,
+        (boardDepth - 1) / 2 + 1.05,
       ),
     })),
-    ...labels.years.map((text, row) => ({
+    ...sideTexts.map((text, index) => ({
       text,
       align: "right" as const,
       position: new Vector3(
-        -(COLUMNS - 1) / 2 - 0.65,
+        -(boardWidth - 1) / 2 - (yearsAlongX ? 0.95 : 0.65),
         0.01,
-        row - (rows - 1) / 2,
+        index - (boardDepth - 1) / 2,
       ),
     })),
   ].map(({ text, align, position }) => {
@@ -168,24 +199,24 @@ export function startCalendarBars(
     solidBars.length,
   );
   solidBars.forEach((bar, index) => {
-    instanced.setColorAt(index, heatColors[bar.heat]);
+    instanced.setColorAt(index, colorOf(bar, new Color()));
   });
   board.add(instanced);
 
   const stripeTexture = createStripeTexture();
-  const partialBar = bars.find((bar) => bar.inProgress && bar.count !== null);
-  const partialMaterial = new MeshStandardMaterial({
-    color: partialBar ? heatColors[partialBar.heat] : 0xffffff,
-    map: stripeTexture,
-    roughness: 0.6,
-  });
-  const partialMesh = partialBar
-    ? new Mesh(barGeometry, partialMaterial)
-    : null;
-  if (partialMesh && partialBar) {
-    partialMesh.position.copy(positionOf(partialBar));
-    board.add(partialMesh);
-  }
+  const partials = bars
+    .filter((bar) => bar.inProgress && bar.count !== null)
+    .map((bar) => {
+      const material = new MeshStandardMaterial({
+        color: colorOf(bar, new Color()),
+        map: stripeTexture,
+        roughness: 0.6,
+      });
+      const mesh = new Mesh(barGeometry, material);
+      mesh.position.copy(positionOf(bar));
+      board.add(mesh);
+      return { bar, mesh, material };
+    });
 
   const edgesGeometry = new EdgesGeometry(barGeometry);
   const outlierMaterial = new LineBasicMaterial({
@@ -227,10 +258,7 @@ export function startCalendarBars(
       return MIN_HEIGHT;
     }
     const t = Math.min(
-      Math.max(
-        (Math.log10(bar.count) - LOG_FLOOR) / (LOG_CEILING - LOG_FLOOR),
-        0,
-      ),
+      Math.max((Math.log10(bar.count) - logFloor) / (logCeiling - logFloor), 0),
       1,
     );
     return MIN_HEIGHT + t ** 1.35 * (MAX_HEIGHT - MIN_HEIGHT);
@@ -282,11 +310,11 @@ export function startCalendarBars(
     const yawRadians = yaw * RADIANS_PER_DEGREE;
     const elevationRadians = elevation * RADIANS_PER_DEGREE;
     camera.position.set(
-      Math.sin(yawRadians) * Math.cos(elevationRadians) * CAMERA_DISTANCE,
-      Math.sin(elevationRadians) * CAMERA_DISTANCE,
-      Math.cos(yawRadians) * Math.cos(elevationRadians) * CAMERA_DISTANCE,
+      Math.sin(yawRadians) * Math.cos(elevationRadians) * cameraDistance,
+      Math.sin(elevationRadians) * cameraDistance,
+      Math.cos(yawRadians) * Math.cos(elevationRadians) * cameraDistance,
     );
-    camera.lookAt(0, 0.7, 0.4);
+    camera.lookAt(yearsAlongX ? -0.8 : 0, 0.7, 0.4);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
   };
@@ -302,7 +330,7 @@ export function startCalendarBars(
       matrix.makeScale(1, Math.max(targetHeight(bar) * grow(bar), 0.001), 1);
       matrix.setPosition(position);
       instanced.setMatrixAt(index, matrix);
-      highlight.copy(heatColors[bar.heat]);
+      colorOf(bar, highlight);
       if (index === hovered) {
         highlight.lerp(new Color(0xffffff), 0.35);
       }
@@ -312,11 +340,8 @@ export function startCalendarBars(
     if (instanced.instanceColor) {
       instanced.instanceColor.needsUpdate = true;
     }
-    if (partialMesh && partialBar) {
-      partialMesh.scale.y = Math.max(
-        targetHeight(partialBar) * grow(partialBar),
-        0.001,
-      );
+    for (const { bar, mesh } of partials) {
+      mesh.scale.y = Math.max(targetHeight(bar) * grow(bar), 0.001);
     }
     for (const { bar, lines } of outliers) {
       lines.scale.y = Math.max(targetHeight(bar) * grow(bar), 0.001) * 1.02;
@@ -452,13 +477,15 @@ export function startCalendarBars(
     for (const label of textLabels) {
       label.dispose();
     }
+    for (const { material } of partials) {
+      material.dispose();
+    }
     for (const disposable of [
       groundGeometry,
       groundMaterial,
       barGeometry,
       barMaterial,
       stripeTexture,
-      partialMaterial,
       edgesGeometry,
       outlierMaterial,
       emptyMaterial,
@@ -490,7 +517,10 @@ function readHeatColors(): Color[] {
   const colors = fallbacks.map((fallback, level) =>
     readToken(`--color-heat-${level}`, fallback),
   );
-  return [colors[0], ...colors.slice(1).reverse()];
+  return [
+    colors[0],
+    ...HEAT_TOKENS.map((token) => colors[Number(token.slice(-1))]),
+  ];
 }
 
 function createStripeTexture(): CanvasTexture {

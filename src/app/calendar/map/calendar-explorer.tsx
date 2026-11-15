@@ -8,9 +8,11 @@ import { areaFiltersHref, areaMapHref } from "@/area-filters/area-links";
 import { findContinent } from "@/area-filters/continents";
 import { buttonClassName } from "@/button/button-class-name";
 import { useCountryOutlines } from "@/country-outlines/country-outlines";
+import { Calendar3D } from "@/fire-calendar/calendar-3d";
 import {
   type AreaOption,
   CalendarFilters,
+  type CalendarView,
   type YearRange,
 } from "@/fire-calendar/calendar-filters";
 import { CalendarGrid } from "@/fire-calendar/calendar-grid";
@@ -37,6 +39,7 @@ import {
   currentMonthComparison,
 } from "@/fire-calendar/month-comparison";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
+import { FadeUp } from "@/motion/fade-up";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import {
@@ -78,7 +81,7 @@ function CalendarMessage({
   return (
     <div
       role={onRetry ? "alert" : "status"}
-      className="flex flex-col items-start gap-3 rounded-md border border-line bg-surface p-6"
+      className="flex flex-col items-start gap-3 rounded-lg border border-line bg-linear-to-b from-surface-hover/60 to-surface p-6"
     >
       <p className="type-heading-sm flex items-center gap-2 text-ink">
         <MaterialSymbol
@@ -126,6 +129,7 @@ export function CalendarExplorer() {
   const [passes, setPasses] = useState<CalendarPasses>("all");
   const [chosenRange, setChosenRange] = useState<YearRange | null>(null);
   const [enabledMonths, setEnabledMonths] = useState(ALL_MONTHS);
+  const [view, setView] = useState<CalendarView>("3d");
 
   const coverage = useMemo(
     () => (coverageFile.rows ? readCoverage(coverageFile.rows) : null),
@@ -290,120 +294,143 @@ export function CalendarExplorer() {
       <h1 className="sr-only">
         Mapa e calendário de focos de calor{areaName ? `, ${areaName}` : ""}
       </h1>
-      <section
-        aria-label="Filtros de pesquisa aplicados"
-        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-surface px-4 py-3"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="type-caption mr-2 text-ink-muted">
-            Filtros de pesquisa
-          </span>
-          {appliedChips.map((chip) => (
-            <span
-              key={chip.text}
-              className="type-chip flex h-8 items-center gap-1.5 rounded-sm bg-surface-raised px-2.5 text-ink"
-            >
-              <MaterialSymbol name={chip.icon} className="size-4" />
-              {chip.text}
-            </span>
-          ))}
-        </div>
-        <Link
-          href={areaFiltersHref(
-            area === WORLD_AREA ? null : area,
-            selectedYear,
-          )}
-          className={buttonClassName({ variant: "secondary", size: "sm" })}
+      <FadeUp>
+        <section
+          aria-label="Filtros de pesquisa aplicados"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-linear-to-b from-surface-hover/60 to-surface px-4 py-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]"
         >
-          <MaterialSymbol name="tune" className="size-[18px]" />
-          Editar
-        </Link>
-      </section>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="type-caption mr-2 flex items-center gap-2 text-ink-muted">
+              <span
+                aria-hidden="true"
+                className="size-1.5 rounded-full bg-data-burned"
+              />
+              Filtros de pesquisa
+            </span>
+            {appliedChips.map((chip) => (
+              <span
+                key={chip.text}
+                className="type-chip flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface-raised px-3 text-ink"
+              >
+                <MaterialSymbol name={chip.icon} className="size-4" />
+                {chip.text}
+              </span>
+            ))}
+          </div>
+          <Link
+            href={areaFiltersHref(
+              area === WORLD_AREA ? null : area,
+              selectedYear,
+            )}
+            className={buttonClassName({ variant: "secondary", size: "sm" })}
+          >
+            <MaterialSymbol name="tune" className="size-[18px]" />
+            Editar
+          </Link>
+        </section>
+      </FadeUp>
 
       {coverage && lastDataDate && selectedYear && (
-        <MapSection
-          area={area === WORLD_AREA ? null : area}
-          areaName={areaName}
-          year={selectedYear}
-          outline={area === WORLD_AREA ? null : (outlines?.[area] ?? null)}
-          coverage={coverage}
-          dailyRows={dailyFile.rows}
-          calendarYears={years}
-        />
+        <FadeUp delay={0.1} onScroll>
+          <MapSection
+            area={area === WORLD_AREA ? null : area}
+            areaName={areaName}
+            year={selectedYear}
+            outline={area === WORLD_AREA ? null : (outlines?.[area] ?? null)}
+            coverage={coverage}
+            dailyRows={dailyFile.rows}
+            calendarYears={years}
+          />
+        </FadeUp>
       )}
 
       {ready && (
-        <CalendarReports
-          areaName={areaName}
-          subtitle={`${yearNumbers[0]}-${yearNumbers.at(-1)} · ${SOURCE_SHORT_UNITS[source]}`}
-          analysis={analysis}
-          closedMonth={closedMonth}
-          currentMonth={currentMonth}
-          source={source}
-        />
+        <FadeUp onScroll>
+          <CalendarReports
+            areaName={areaName}
+            subtitle={`${yearNumbers[0]}-${yearNumbers.at(-1)} · ${SOURCE_SHORT_UNITS[source]}`}
+            analysis={analysis}
+            closedMonth={closedMonth}
+            currentMonth={currentMonth}
+            source={source}
+          />
+        </FadeUp>
       )}
 
-      <section
-        aria-labelledby="calendar-title"
-        className="mt-12 flex flex-col gap-4"
-      >
-        <div className="flex flex-col gap-1">
-          <h2 id="calendar-title" className="type-section-title text-ink">
-            Calendário de fogo
-          </h2>
-          <p className="type-body-sm text-ink-muted">
-            Cada linha é um ano e cada coluna, um mês. Os mesmos limites de cor
-            valem para o calendário inteiro.
-          </p>
-        </div>
-        <CalendarFilters
-          areaOptions={areaOptions}
-          area={area}
-          onAreaChange={changeArea}
-          source={source}
-          onSourceChange={setChosenSource}
-          passes={passes}
-          onPassesChange={setPasses}
-          years={yearNumbers}
-          yearRange={{ first: firstYear, last: lastYear }}
-          onYearRangeChange={setChosenRange}
-          enabledMonths={enabledMonths}
-          onToggleMonth={toggleMonth}
-          onClear={clearFilters}
-          onDownload={ready ? downloadCalendar : null}
-          unitLine={`${SOURCE_UNITS[source]} · ${PASSES_DESCRIPTIONS[passes]} · ${enabledMonthsLabel(enabledMonths)}`}
-          notice={
-            chosenSource === null && source === "modis"
-              ? "O valor harmonizado desta região ainda está em cálculo. Mostrando só MODIS até ele sair."
-              : null
-          }
-        />
-        {failedPaths.length > 0 ? (
-          <CalendarMessage
-            title="Não conseguimos carregar o calendário agora."
-            text="A fonte dos dados não respondeu. Seus filtros continuam salvos."
-            onRetry={() => failedPaths.forEach(reloadPipelineFile)}
-          />
-        ) : !ready ? (
-          <CalendarMessage
-            title="Carregando o calendário"
-            text="Lendo a série mensal da região."
-          />
-        ) : (
-          <div className="rounded-md border border-line bg-surface p-3 sm:p-6">
-            <CalendarGrid
-              areaName={areaName}
-              years={visibleYears}
-              allYears={years}
-              analysis={analysis}
-              enabledMonths={enabledMonths}
-              source={source}
-              lastDataDate={lastDataDate}
-            />
-            <HeatLegend breaks={analysis.breaks} states={states} />
+      <FadeUp onScroll>
+        <section
+          aria-labelledby="calendar-title"
+          className="mt-12 flex flex-col gap-4"
+        >
+          <div className="flex flex-col gap-1">
+            <h2 id="calendar-title" className="type-section-title text-ink">
+              Calendário de fogo
+            </h2>
+            <p className="type-body-sm text-ink-muted">
+              Cada linha é um ano e cada coluna, um mês. Os mesmos limites de
+              cor valem para o calendário inteiro.
+            </p>
           </div>
-        )}
-      </section>
+          <CalendarFilters
+            areaOptions={areaOptions}
+            area={area}
+            onAreaChange={changeArea}
+            source={source}
+            onSourceChange={setChosenSource}
+            passes={passes}
+            onPassesChange={setPasses}
+            years={yearNumbers}
+            yearRange={{ first: firstYear, last: lastYear }}
+            onYearRangeChange={setChosenRange}
+            enabledMonths={enabledMonths}
+            onToggleMonth={toggleMonth}
+            onClear={clearFilters}
+            onDownload={ready ? downloadCalendar : null}
+            view={view}
+            onViewChange={setView}
+            unitLine={`${SOURCE_UNITS[source]} · ${PASSES_DESCRIPTIONS[passes]} · ${enabledMonthsLabel(enabledMonths)}`}
+            notice={
+              chosenSource === null && source === "modis"
+                ? "O valor harmonizado desta região ainda está em cálculo. Mostrando só MODIS até ele sair."
+                : null
+            }
+          />
+          {failedPaths.length > 0 ? (
+            <CalendarMessage
+              title="Não conseguimos carregar o calendário agora."
+              text="A fonte dos dados não respondeu. Seus filtros continuam salvos."
+              onRetry={() => failedPaths.forEach(reloadPipelineFile)}
+            />
+          ) : !ready ? (
+            <CalendarMessage
+              title="Carregando o calendário"
+              text="Lendo a série mensal da região."
+            />
+          ) : (
+            <div className="rounded-lg border border-line bg-linear-to-b from-surface-hover/50 to-surface p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)] sm:p-6">
+              {view === "3d" ? (
+                <Calendar3D
+                  areaName={areaName}
+                  years={visibleYears}
+                  analysis={analysis}
+                  enabledMonths={enabledMonths}
+                />
+              ) : (
+                <CalendarGrid
+                  areaName={areaName}
+                  years={visibleYears}
+                  allYears={years}
+                  analysis={analysis}
+                  enabledMonths={enabledMonths}
+                  source={source}
+                  lastDataDate={lastDataDate}
+                />
+              )}
+              <HeatLegend breaks={analysis.breaks} states={states} />
+            </div>
+          )}
+        </section>
+      </FadeUp>
 
       <p className="type-body-sm mt-8 flex flex-wrap gap-x-4 gap-y-1 text-ink-muted">
         <span>

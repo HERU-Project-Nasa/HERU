@@ -1,6 +1,6 @@
 "use client";
 
-import type { Feature, FeatureCollection, Point, Polygon } from "geojson";
+import type { Feature, FeatureCollection, Point } from "geojson";
 import {
   type ExpressionSpecification,
   type GeoJSONSource,
@@ -10,6 +10,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { COUNTRY_BOUNDARIES_URL } from "@/country-outlines/country-outlines";
+import { HEAT_TOKENS } from "@/fire-calendar/calendar-cell-style";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import type { MappedPoint } from "./use-map-fires";
@@ -20,7 +21,6 @@ export type MapTooltip =
 
 type HoverPlace = { tooltip: MapTooltip; x: number; y: number };
 
-const CELL_HALF = 0.125;
 const TOOLTIP_WIDTH = 264;
 const FIT_PADDING = 120;
 const FIT_MAX_ZOOM = 6;
@@ -74,33 +74,107 @@ function pointCollection(points: MappedPoint[]): FeatureCollection<Point> {
 function cellCollection(
   cells: FireCell[],
   breaks: number[],
-): FeatureCollection<Polygon> {
+): FeatureCollection<Point> {
   return {
     type: "FeatureCollection",
-    features: cells.map((cell, index): Feature<Polygon> => {
-      const west = cell.longitude - CELL_HALF;
-      const east = cell.longitude + CELL_HALF;
-      const south = cell.latitude - CELL_HALF;
-      const north = cell.latitude + CELL_HALF;
-      return {
-        type: "Feature",
-        id: index,
-        properties: { index, level: heatLevel(cell.count, breaks) },
-        geometry: {
-          type: "Polygon",
-          coordinates: [
-            [
-              [west, south],
-              [east, south],
-              [east, north],
-              [west, north],
-              [west, south],
-            ],
-          ],
-        },
-      };
-    }),
+    features: cells.map((cell, index): Feature<Point> => ({
+      type: "Feature",
+      id: index,
+      properties: { index, level: heatLevel(cell.count, breaks) },
+      geometry: {
+        type: "Point",
+        coordinates: [cell.longitude, cell.latitude],
+      },
+    })),
   };
+}
+
+const LEVEL_SIZE: ExpressionSpecification = [
+  "+",
+  0.7,
+  ["*", 0.08, ["get", "level"]],
+];
+
+function dotRadius(scale: number): ExpressionSpecification {
+  return [
+    "interpolate",
+    ["exponential", 2],
+    ["zoom"],
+    2,
+    ["*", 0.9 * scale, LEVEL_SIZE],
+    5,
+    ["*", 2.6 * scale, LEVEL_SIZE],
+    7,
+    ["*", 8 * scale, LEVEL_SIZE],
+    10,
+    ["*", 40 * scale, LEVEL_SIZE],
+  ];
+}
+
+const SATELLITE_TILES =
+  "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg";
+
+type MapLook = "sketch" | "realistic";
+
+const MAP_LOOKS: { value: MapLook; label: string; icon: SymbolName }[] = [
+  { value: "sketch", label: "Esboço", icon: "map" },
+  { value: "realistic", label: "Realista", icon: "satellite_alt" },
+];
+
+function applyMapLook(map: MapLibreMap, look: MapLook) {
+  const realistic = look === "realistic";
+  map.setLayoutProperty(
+    "satellite",
+    "visibility",
+    realistic ? "visible" : "none",
+  );
+  map.setPaintProperty("land", "fill-opacity", realistic ? 0 : 1);
+  map.setPaintProperty("area-fill", "fill-opacity", realistic ? 0.28 : 1);
+  map.setPaintProperty(
+    "borders",
+    "line-color",
+    realistic ? "rgba(255, 255, 255, 0.35)" : themeColor("globe-border"),
+  );
+}
+
+function MapLookToggle({
+  look,
+  onChange,
+}: {
+  look: MapLook;
+  onChange: (look: MapLook) => void;
+}) {
+  return (
+    <div className="absolute right-4 bottom-4 z-10 flex flex-col items-end gap-1.5">
+      <div
+        role="radiogroup"
+        aria-label="Visual do mapa"
+        className="flex items-center gap-0.5 rounded-full border border-line-strong bg-surface/85 p-1 shadow-overlay backdrop-blur-md"
+      >
+        {MAP_LOOKS.map((option) => {
+          const checked = option.value === look;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              onClick={() => onChange(option.value)}
+              className={`type-chip flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 transition-colors duration-200 ease-standard ${checked ? "bg-selected font-semibold text-ink-inverse" : "text-ink hover:bg-surface-hover"}`}
+            >
+              <MaterialSymbol name={option.icon} className="size-4" />
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      {look === "realistic" && (
+        <span className="rounded-sm bg-surface-ground/70 px-1.5 py-0.5 text-[11px] leading-4 text-ink-muted">
+          Imagens: NASA GIBS, Blue Marble
+        </span>
+      )}
+    </div>
+  );
 }
 
 function ControlButton({
@@ -151,6 +225,7 @@ export function FireMap({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [globe, setGlobe] = useState(true);
+  const [look, setLook] = useState<MapLook>("sketch");
   const [fullscreen, setFullscreen] = useState(false);
   const [hover, setHover] = useState<HoverPlace | null>(null);
   const pointsRef = useRef(points);
@@ -162,7 +237,22 @@ export function FireMap({
   }, [points, cells]);
 
   useEffect(() => {
-    const heat = (level: number) => themeColor(`heat-${level}`);
+    const heat = (level: number) => themeColor(HEAT_TOKENS[level - 1]);
+    const heatColor: ExpressionSpecification = [
+      "match",
+      ["get", "level"],
+      1,
+      heat(1),
+      2,
+      heat(2),
+      3,
+      heat(3),
+      4,
+      heat(4),
+      5,
+      heat(5),
+      heat(6),
+    ];
     const instance = new MapLibreMap({
       container: canvasRef.current!,
       style: {
@@ -183,6 +273,12 @@ export function FireMap({
         },
         sources: {
           countries: { type: "geojson", data: COUNTRY_BOUNDARIES_URL },
+          satellite: {
+            type: "raster",
+            tiles: [SATELLITE_TILES],
+            tileSize: 256,
+            maxzoom: 8,
+          },
           cells: { type: "geojson", data: EMPTY },
           points: { type: "geojson", data: EMPTY },
         },
@@ -191,6 +287,13 @@ export function FireMap({
             id: "ocean",
             type: "background",
             paint: { "background-color": themeColor("globe-ocean") },
+          },
+          {
+            id: "satellite",
+            type: "raster",
+            source: "satellite",
+            layout: { visibility: "none" },
+            paint: { "raster-fade-duration": 300 },
           },
           {
             id: "land",
@@ -216,25 +319,25 @@ export function FireMap({
           },
           {
             id: "cells",
-            type: "fill",
+            type: "circle",
             source: "cells",
             paint: {
-              "fill-color": [
-                "match",
-                ["get", "level"],
-                1,
-                heat(1),
-                2,
-                heat(2),
-                3,
-                heat(3),
-                4,
-                heat(4),
-                5,
-                heat(5),
-                heat(6),
-              ] as ExpressionSpecification,
-              "fill-opacity": 0.9,
+              "circle-color": heatColor,
+              "circle-radius": dotRadius(2.6),
+              "circle-blur": 1,
+              "circle-opacity": 0.5,
+            },
+          },
+          {
+            id: "cells-core",
+            type: "circle",
+            source: "cells",
+            paint: {
+              "circle-color": heatColor,
+              "circle-radius": dotRadius(1),
+              "circle-stroke-color": heatColor,
+              "circle-stroke-width": dotRadius(0.45),
+              "circle-stroke-opacity": 0.3,
             },
           },
           {
@@ -390,6 +493,13 @@ export function FireMap({
     }
   };
 
+  const changeLook = (next: MapLook) => {
+    setLook(next);
+    if (map) {
+      applyMapLook(map, next);
+    }
+  };
+
   const toggleProjection = () => {
     map?.setProjection({ type: globe ? "mercator" : "globe" });
     setGlobe(!globe);
@@ -444,6 +554,7 @@ export function FireMap({
           onClick={toggleFullscreen}
         />
       </div>
+      <MapLookToggle look={look} onChange={changeLook} />
       {hover && (
         <div
           className="pointer-events-none absolute z-30"
