@@ -6,6 +6,7 @@ import { type KeyboardEvent, useRef, useState } from "react";
 import { HeruLogo } from "@/brand/heru-logo";
 import { buttonClassName } from "@/button/button-class-name";
 import { MaterialSymbol } from "@/icons/material-symbols";
+import { DataStatus } from "./data-status";
 
 const NAVIGATION = [
   { href: "/calendar", label: "Calendário" },
@@ -55,6 +56,9 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <div className="hidden justify-self-end lg:flex">
+          <DataStatus />
+        </div>
         <button
           ref={menuButtonRef}
           type="button"

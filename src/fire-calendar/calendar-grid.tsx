@@ -1,7 +1,13 @@
 "use client";
 
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { MaterialSymbol } from "@/icons/material-symbols";
+import {
+  ANOMALY_LEVELS,
+  anomalyLevel,
+  type CalendarMode,
+  TYPICAL_LEVEL,
+} from "./calendar-anomaly";
 import {
   HATCH,
   HEAT_BACKGROUNDS,
@@ -79,21 +85,19 @@ function seasonRuns(months: number[]): number[][] {
 
 function CellFace({
   cell,
-  level,
+  fill,
   outlier,
 }: {
   cell: CalendarCell;
-  level: number;
+  fill: string;
   outlier: boolean;
 }) {
   const background =
-    cell.state === "value"
-      ? HEAT_BACKGROUNDS[level - 1]
-      : cell.state === "zero"
-        ? "bg-heat-0 border border-line"
-        : cell.state === "future"
-          ? "border border-line/40"
-          : "border border-line";
+    cell.state === "value" || cell.state === "zero"
+      ? fill
+      : cell.state === "future"
+        ? "border border-line/40"
+        : "border border-line";
   const hatch =
     cell.state === "no-data" || cell.state === "computing"
       ? HATCH
@@ -187,6 +191,8 @@ export function CalendarGrid({
   enabledMonths,
   source,
   lastDataDate,
+  mode,
+  focusRequest,
 }: {
   areaName: string;
   years: CalendarYear[];
@@ -195,11 +201,35 @@ export function CalendarGrid({
   enabledMonths: boolean[];
   source: CalendarSource;
   lastDataDate: string;
+  mode: CalendarMode;
+  focusRequest: string | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipPlace | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const outlierKeys = new Set(analysis.outliers.map((cell) => cell.key));
+  const cellFill = (cell: CalendarCell) => {
+    const baseline = analysis.baselines[cell.month - 1];
+    if (mode === "anomaly") {
+      return ANOMALY_LEVELS[
+        baseline ? anomalyLevel(cell.value!, baseline.median) : TYPICAL_LEVEL
+      ].className;
+    }
+    return cell.state === "zero"
+      ? "border border-line bg-heat-0"
+      : HEAT_BACKGROUNDS[heatLevel(cell.value!, analysis.breaks) - 1];
+  };
+
+  useEffect(() => {
+    if (!focusRequest) {
+      return;
+    }
+    const target = containerRef.current?.querySelector<HTMLElement>(
+      `[data-key="${focusRequest.split("#")[0]}"]`,
+    );
+    target?.scrollIntoView({ block: "center" });
+    target?.focus({ preventScroll: true });
+  }, [focusRequest]);
   const openCells = years.flatMap((year) =>
     year.cells.filter((cell) => cell.state !== "future"),
   );
@@ -351,10 +381,10 @@ export function CalendarGrid({
                 >
                   <CellFace
                     cell={cell}
-                    level={
-                      cell.state === "value"
-                        ? heatLevel(cell.value!, analysis.breaks)
-                        : 0
+                    fill={
+                      cell.state === "value" || cell.state === "zero"
+                        ? cellFill(cell)
+                        : ""
                     }
                     outlier={outlier}
                   />
@@ -393,11 +423,13 @@ export function CalendarGrid({
               className={`block h-4 rounded-xs shadow-[inset_0_0_0_1px_var(--color-surface-ground)] sm:h-5 ${
                 !baseline
                   ? "border border-line"
-                  : baseline.median > 0
-                    ? HEAT_BACKGROUNDS[
-                        heatLevel(baseline.median, analysis.breaks) - 1
-                      ]
-                    : "bg-heat-0"
+                  : mode === "anomaly"
+                    ? ANOMALY_LEVELS[TYPICAL_LEVEL].className
+                    : baseline.median > 0
+                      ? HEAT_BACKGROUNDS[
+                          heatLevel(baseline.median, analysis.breaks) - 1
+                        ]
+                      : "bg-heat-0"
               } ${enabledMonths[index] ? "" : "opacity-20"}`}
               style={baseline ? undefined : { backgroundImage: HATCH }}
             />

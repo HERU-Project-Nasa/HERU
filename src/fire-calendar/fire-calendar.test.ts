@@ -149,16 +149,36 @@ describe("currentMonthComparison", () => {
   );
 
   it("stops at the last complete day", () => {
+    expect(coverage.completeDate).toBe("2026-11-13");
+    expect(coverage.completeDateFromPipeline).toBe(false);
     const comparison = currentMonthComparison(
       days,
       years,
       analysis,
       "modis",
       "all",
-      "2026-11-14",
+      coverage.completeDate!,
     );
     expect(comparison).toMatchObject({ throughDay: 13, value: 6 * 13 });
     expect(comparison?.typical).toBe(4.5 * 13);
+  });
+
+  it("uses the complete date published by the pipeline", () => {
+    const declared = readCoverage([
+      {
+        layer: "viirs_noaa20",
+        processing: "nrt",
+        first_date: "2026-08-01",
+        last_date: "2026-11-14",
+        rows: 1,
+        updated_at: "",
+        complete_date: "2026-11-12",
+      },
+    ]);
+    expect(declared).toMatchObject({
+      completeDate: "2026-11-12",
+      completeDateFromPipeline: true,
+    });
   });
 
   it("waits for the first complete day of a month", () => {
@@ -169,7 +189,7 @@ describe("currentMonthComparison", () => {
         analysis,
         "modis",
         "all",
-        "2026-11-01",
+        "2026-10-31",
       ),
     ).toBeNull();
   });

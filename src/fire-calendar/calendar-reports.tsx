@@ -16,7 +16,7 @@ import { CALENDAR_FIRST_YEAR, type CalendarSource } from "./calendar-matrix";
 import type { CalendarAnalysis } from "./calendar-statistics";
 import type { MonthComparison } from "./month-comparison";
 
-function ReportCard({
+export function ReportCard({
   eyebrow,
   icon,
   className,
@@ -40,7 +40,13 @@ function ReportCard({
   );
 }
 
-function DeltaBadge({ value, typical }: { value: number; typical: number }) {
+export function DeltaBadge({
+  value,
+  typical,
+}: {
+  value: number;
+  typical: number;
+}) {
   const { text, direction } = difference(value, typical);
   return (
     <span
@@ -57,7 +63,10 @@ function DeltaBadge({ value, typical }: { value: number; typical: number }) {
   );
 }
 
-function unavailableText(comparison: MonthComparison, source: CalendarSource) {
+export function unavailableText(
+  comparison: MonthComparison,
+  source: CalendarSource,
+) {
   const { cell } = comparison;
   if (cell.state === "computing" || (cell.partial && source === "harmonized")) {
     return computingReason(cell);
