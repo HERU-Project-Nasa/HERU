@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { inLocale } from "@/i18n/locale";
 import { readCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesDayRow, SeriesMonthRow } from "@/pipeline/series-row";
 import {
@@ -231,15 +232,17 @@ describe("chosen date range", () => {
       baselineYearCount: 2,
     });
     expect(recent.baselines[10]?.years).toBe(2);
-    expect(sinceLabel(recent)).toBe("desde 2024");
+    expect(sinceLabel(recent)).toBe("since 2024");
+    expect(inLocale("pt", () => sinceLabel(recent))).toBe("desde 2024");
     const past = analyzeCalendar(
       years,
       years.filter((year) => year.year >= 2010 && year.year <= 2015),
       everyMonth,
     );
     expect(past.lastBaselineYear).toBe(2015);
-    expect(sinceLabel(past)).toBe("de 2010 a 2015");
-    expect(baselineLabel(past)).toBe("de 2010 a 2015");
+    expect(sinceLabel(past)).toBe("from 2010 to 2015");
+    expect(baselineLabel(past)).toBe("from 2010 to 2015");
+    expect(inLocale("pt", () => baselineLabel(past))).toBe("de 2010 a 2015");
   });
 
   it("compares the map period with the same days of other years", () => {
@@ -298,8 +301,12 @@ describe("summaries for areas without fire", () => {
   const analysis = analyzeCalendar(years, years, Array(12).fill(true));
 
   it("tells a quiet area apart from missing data", () => {
-    expect(seasonSummary(analysis).title).toBe("Sem temporada");
+    expect(seasonSummary(analysis).title).toBe("No season");
     expect(recordSummary(analysis)).toEqual({
+      title: "2005",
+      text: "Had 1 hotspot. A typical year from 2003 to 2025 has none.",
+    });
+    expect(inLocale("pt", () => recordSummary(analysis))).toEqual({
       title: "2005",
       text: "Teve 1 foco. Um ano típico de 2003 a 2025 não tem nenhum.",
     });
@@ -311,26 +318,42 @@ describe("summaries for areas without fire", () => {
       [],
       Array(12).fill(true),
     );
-    expect(seasonSummary(empty).title).toBe("Ainda sem referência");
-    expect(recordSummary(empty).title).toBe("Ainda sem anos completos");
+    expect(seasonSummary(empty).title).toBe("No baseline yet");
+    expect(recordSummary(empty).title).toBe("No complete years yet");
+    expect(inLocale("pt", () => seasonSummary(empty).title)).toBe(
+      "Ainda sem referência",
+    );
   });
 });
 
 describe("labels", () => {
   it("describes the difference to the typical month", () => {
-    expect(difference(138, 100).text).toBe("38% acima do típico");
-    expect(difference(280, 100).text).toBe("2,8× o típico");
-    expect(difference(4, 12).text).toBe("8 focos abaixo do típico");
+    expect(difference(138, 100).text).toBe("38% above typical");
+    expect(difference(280, 100).text).toBe("2.8× typical");
+    expect(difference(4, 12).text).toBe("8 hotspots below typical");
+    inLocale("pt", () => {
+      expect(difference(138, 100).text).toBe("38% acima do típico");
+      expect(difference(280, 100).text).toBe("2,8× o típico");
+      expect(difference(4, 12).text).toBe("8 focos abaixo do típico");
+    });
   });
 
   it("writes one hotspot in the singular", () => {
-    expect(formatHotspots(1)).toBe("1 foco");
-    expect(formatHotspots(0.6)).toBe("1 foco");
-    expect(formatHotspots(1349)).toBe("1.349 focos");
+    expect(formatHotspots(1)).toBe("1 hotspot");
+    expect(formatHotspots(0.6)).toBe("1 hotspot");
+    expect(formatHotspots(1349)).toBe("1,349 hotspots");
+    inLocale("pt", () => {
+      expect(formatHotspots(1)).toBe("1 foco");
+      expect(formatHotspots(1349)).toBe("1.349 focos");
+    });
   });
 
   it("shares the unit across a heat range", () => {
-    expect(heatRangeLabel(1000, 3000)).toBe("1-3 mil");
-    expect(heatRangeLabel(null, 1000)).toBe("< 1 mil");
+    expect(heatRangeLabel(1000, 3000)).toBe("1K-3K");
+    expect(heatRangeLabel(null, 1000)).toBe("< 1K");
+    inLocale("pt", () => {
+      expect(heatRangeLabel(1000, 3000)).toBe("1-3 mil");
+      expect(heatRangeLabel(null, 1000)).toBe("< 1 mil");
+    });
   });
 });

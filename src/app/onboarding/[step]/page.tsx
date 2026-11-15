@@ -3,6 +3,7 @@ import Link from "next/link";
 import { buttonClassName } from "@/button/button-class-name";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { GlobeSlot } from "@/earth-globe/globe-slot";
+import { LocalizedText } from "@/i18n/localized-text";
 import { ONBOARDING_STEPS } from "@/onboarding/onboarding-steps";
 import { StepIndicator } from "@/onboarding/step-indicator";
 import { StepReveal } from "@/onboarding/step-reveal";
@@ -19,7 +20,7 @@ export async function generateMetadata({
 }: PageProps<"/onboarding/[step]">): Promise<Metadata> {
   const { step } = await params;
   return {
-    title: `Entenda o problema, ${step} de ${ONBOARDING_STEPS.length} | HERU`,
+    title: `Understand the problem, ${step} of ${ONBOARDING_STEPS.length} | HERU`,
   };
 }
 
@@ -58,7 +59,7 @@ export default async function OnboardingPage({
                 })}
               >
                 <MaterialSymbol name="arrow_back" className="size-[18px]" />
-                Voltar
+                <LocalizedText en="Back" pt="Voltar" />
               </Link>
             )}
             {step.nextLabel && (

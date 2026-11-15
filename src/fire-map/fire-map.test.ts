@@ -5,6 +5,7 @@ import {
   shapeCells,
 } from "@/country-outlines/country-outlines";
 import { buildCalendarYears } from "@/fire-calendar/calendar-matrix";
+import { inLocale } from "@/i18n/locale";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesMonthRow } from "@/pipeline/series-row";
 import {
@@ -121,8 +122,11 @@ describe("pipeline coverage", () => {
     expect(usesPoints(week, false)).toBe(true);
     expect(usesPoints(week, true)).toBe(false);
     expect(partialDaysLabel(week, coverage.completeDate)).toBe(
-      "14 nov ainda parcial",
+      "Nov 14 still partial",
     );
+    expect(
+      inLocale("pt", () => partialDaysLabel(week, coverage.completeDate)),
+    ).toBe("14 nov ainda parcial");
     expect(
       partialDaysLabel(presetPeriod("7d", "2026-11-13"), coverage.completeDate),
     ).toBeNull();
@@ -287,11 +291,19 @@ describe("grid cells of a small island", () => {
 describe("period chosen on the map", () => {
   it("names both years when the range crosses a year", () => {
     expect(dateRangeLabel("2025-01-01", "2026-05-20")).toBe(
-      "1 jan 2025-20 mai 2026",
+      "Jan 1, 2025 - May 20, 2026",
     );
     expect(dateRangeLabel("2026-10-16", "2026-11-14")).toBe(
-      "16 out-14 nov 2026",
+      "Oct 16-Nov 14, 2026",
     );
+    inLocale("pt", () => {
+      expect(dateRangeLabel("2025-01-01", "2026-05-20")).toBe(
+        "1 jan 2025-20 mai 2026",
+      );
+      expect(dateRangeLabel("2026-10-16", "2026-11-14")).toBe(
+        "16 out-14 nov 2026",
+      );
+    });
   });
 
   it("goes through the address and comes back the same", () => {

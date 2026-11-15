@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTr } from "@/i18n/locale";
 import { METHODOLOGY_SECTIONS } from "./methodology-sections";
 
 const ACTIVE_LINE = 0.3;
 
 export function SectionContents() {
+  const t = useTr();
   const [currentId, setCurrentId] = useState<string>(
     METHODOLOGY_SECTIONS[0].id,
   );
@@ -45,8 +47,13 @@ export function SectionContents() {
   }, []);
 
   return (
-    <nav aria-label="Nesta página" className="max-lg:hidden">
-      <p className="type-caption mb-2 text-ink-muted">Nesta página</p>
+    <nav
+      aria-label={t("On this page", "Nesta página")}
+      className="max-lg:hidden"
+    >
+      <p className="type-caption mb-2 text-ink-muted">
+        {t("On this page", "Nesta página")}
+      </p>
       <ol>
         {METHODOLOGY_SECTIONS.map(({ id, title, label }) => {
           const current = id === currentId;

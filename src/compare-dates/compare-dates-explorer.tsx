@@ -14,7 +14,9 @@ import {
   formatCount,
   formatHotspots,
   heatRangeLabel,
+  hotspotsWord,
   MONTH_NAMES,
+  ordinal,
   SOURCE_SHORT_UNITS,
   yearsLabel,
 } from "@/fire-calendar/calendar-labels";
@@ -46,6 +48,8 @@ import { createMapLink, type MapLink } from "@/fire-map/map-link";
 import type { CellColumn, FireCell } from "@/fire-map/period-fires";
 import { SENSOR_NAMES } from "@/fire-map/sensor-picker";
 import { type MapFires, useMapFires } from "@/fire-map/use-map-fires";
+import { localDateFormat } from "@/i18n/format";
+import { tr, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import type { PipelineCoverage } from "@/pipeline/pipeline-coverage";
 import {
@@ -77,7 +81,7 @@ const HARMONIZED_LAYERS: Partial<Record<HarmonizedSource, SeriesLayer>> = {
 const NO_CELLS: FireCell[] = [];
 const DATE_INPUT =
   "type-chip h-10 w-full min-w-0 rounded-sm border border-line-strong bg-surface px-3 text-ink [color-scheme:dark] disabled:opacity-60";
-const UTC_TIME = new Intl.DateTimeFormat("pt-BR", {
+const UTC_TIME = localDateFormat({
   dateStyle: "short",
   timeStyle: "short",
   timeZone: "UTC",
@@ -139,15 +143,21 @@ function sumOf(values: (number | null)[]): number | null {
 function changeText(value: number, reference: number) {
   if (reference === 0) {
     return {
-      text: value === 0 ? "igual" : "sem base",
+      text: value === 0 ? tr("same", "igual") : tr("no baseline", "sem base"),
       direction: "equal" as const,
     };
   }
   const percent = Math.round(((value - reference) / reference) * 100);
   return percent === 0
-    ? { text: "igual", direction: "equal" as const }
+    ? { text: tr("same", "igual"), direction: "equal" as const }
     : {
-        text: `${Math.abs(percent)}% ${percent > 0 ? "a mais" : "a menos"}`,
+        text:
+          percent > 0
+            ? tr(`${Math.abs(percent)}% more`, `${Math.abs(percent)}% a mais`)
+            : tr(
+                `${Math.abs(percent)}% fewer`,
+                `${Math.abs(percent)}% a menos`,
+              ),
         direction: percent > 0 ? ("above" as const) : ("below" as const),
       };
 }
@@ -204,21 +214,28 @@ function CompareTooltip({
   tooltip: MapTooltip;
   harmonized: boolean;
 }) {
+  const t = useTr();
   return (
     <div className="flex flex-col gap-1 rounded-md border border-line bg-surface-raised p-3 shadow-overlay">
       {tooltip.kind === "cell" ? (
         <>
           <p className="type-caption pr-8 text-ink-muted">
-            Célula de 0,25° · cerca de 28 km
+            {t("0.25° cell · about 28 km", "Célula de 0,25° · cerca de 28 km")}
           </p>
           <p className="type-heading-sm text-ink">
-            {formatHotspots(tooltip.cell.count)}
-            {harmonized && " equivalentes VIIRS"}
+            {harmonized
+              ? t(
+                  `${formatCount(tooltip.cell.count)} VIIRS-equivalent ${hotspotsWord(tooltip.cell.count)}`,
+                  `${formatHotspots(tooltip.cell.count)} equivalentes VIIRS`,
+                )
+              : formatHotspots(tooltip.cell.count)}
           </p>
         </>
       ) : (
         <>
-          <p className="type-caption pr-8 text-ink-muted">Foco de calor</p>
+          <p className="type-caption pr-8 text-ink-muted">
+            {t("Hotspot", "Foco de calor")}
+          </p>
           <p className="type-body-sm text-ink">
             {SENSOR_NAMES[tooltip.point.layer]} ·{" "}
             {UTC_TIME.format(new Date(tooltip.point.acquiredAt))} UTC
@@ -246,17 +263,18 @@ function RangeInputs({
   onChange: (range: DateRange) => void;
   shortcuts: { label: string; range: DateRange }[];
 }) {
+  const t = useTr();
   return (
     <fieldset className="flex min-w-0 flex-1 flex-col gap-3 rounded-md border border-line bg-surface p-4">
       <legend className="type-caption flex items-center gap-2 px-1 text-ink-muted">
         <span className="flex size-6 items-center justify-center rounded-full bg-ink text-xs font-semibold text-ink-inverse">
           {letter}
         </span>
-        Período {letter}
+        {t(`Period ${letter}`, `Período ${letter}`)}
       </legend>
       <div className="grid grid-cols-2 gap-3">
         <label className="flex min-w-0 flex-col gap-1.5">
-          <span className="type-caption text-ink-muted">De</span>
+          <span className="type-caption text-ink-muted">{t("From", "De")}</span>
           <input
             type="date"
             value={range.start}
@@ -280,7 +298,7 @@ function RangeInputs({
           />
         </label>
         <label className="flex min-w-0 flex-col gap-1.5">
-          <span className="type-caption text-ink-muted">Até</span>
+          <span className="type-caption text-ink-muted">{t("To", "Até")}</span>
           <input
             type="date"
             value={range.end}
@@ -297,11 +315,17 @@ function RangeInputs({
       </div>
       {lockedEnd && (
         <p className="type-body-sm text-ink-muted">
-          O fim acompanha a duração do período A.
+          {t(
+            "The end follows the length of period A.",
+            "O fim acompanha a duração do período A.",
+          )}
         </p>
       )}
       <div
-        aria-label={`Atalhos do período ${letter}`}
+        aria-label={t(
+          `Period ${letter} shortcuts`,
+          `Atalhos do período ${letter}`,
+        )}
         className="flex flex-wrap gap-2"
       >
         {shortcuts.map((shortcut) => (
@@ -340,19 +364,29 @@ function PeriodMap({
   harmonized: boolean;
   link: MapLink | null;
 }) {
+  const t = useTr();
   const ready = fires.status === "ready" ? fires : null;
   const cells = ready?.mode === "cells" ? ready.cells : NO_CELLS;
   const points = ready?.mode === "points" ? ready.points : [];
   const days = dayCount(range);
   const status =
     fires.status === "loading"
-      ? "Carregando os focos do período."
+      ? t("Loading the period's hotspots.", "Carregando os focos do período.")
       : fires.status === "error"
-        ? "Não conseguimos carregar os focos agora."
+        ? t(
+            "We could not load the hotspots right now.",
+            "Não conseguimos carregar os focos agora.",
+          )
         : ready?.mode === "points" && ready.missingDays === ready.totalDays
-          ? "Os pontos diários deste período não estão publicados."
+          ? t(
+              "The daily points for this period are not published.",
+              "Os pontos diários deste período não estão publicados.",
+            )
           : cells.length === 0 && points.length === 0
-            ? "Nenhum foco de calor neste período."
+            ? t(
+                "No hotspots in this period.",
+                "Nenhum foco de calor neste período.",
+              )
             : null;
   return (
     <figure className="flex min-w-0 flex-col gap-3">
@@ -364,11 +398,17 @@ function PeriodMap({
           {dateRangeLabel(range.start, range.end)}
         </span>
         <span className="type-body-sm text-ink-muted">
-          · {days} {days === 1 ? "dia" : "dias"}
+          ·{" "}
+          {days === 1
+            ? t(`${days} day`, `${days} dia`)
+            : t(`${days} days`, `${days} dias`)}
         </span>
       </figcaption>
       <FireMap
-        label={`Mapa de focos de ${areaName}, período ${letter}, ${dateRangeLabel(range.start, range.end)}`}
+        label={t(
+          `Hotspot map of ${areaName}, period ${letter}, ${dateRangeLabel(range.start, range.end)}`,
+          `Mapa de focos de ${areaName}, período ${letter}, ${dateRangeLabel(range.start, range.end)}`,
+        )}
         area={area}
         bounds={bounds}
         points={points}
@@ -422,6 +462,7 @@ function WeekChart({
   labelA: string;
   labelB: string;
 }) {
+  const t = useTr();
   const values = [...weeksA, ...weeksB].flatMap((value) =>
     value === null ? [] : [value],
   );
@@ -442,7 +483,9 @@ function WeekChart({
   return (
     <figure className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 sm:p-6">
       <figcaption className="flex flex-wrap items-baseline justify-between gap-3">
-        <span className="type-heading-sm text-ink">Semana a semana</span>
+        <span className="type-heading-sm text-ink">
+          {t("Week by week", "Semana a semana")}
+        </span>
         <span className="type-body-sm flex flex-wrap gap-x-5 gap-y-1 text-ink">
           <span className="flex items-center gap-2">
             <span aria-hidden="true" className="w-6 border-t-2 border-ink" />
@@ -461,7 +504,10 @@ function WeekChart({
         <svg
           viewBox="0 0 840 240"
           role="img"
-          aria-label={`Focos por semana: ${labelA} contra ${labelB}.`}
+          aria-label={t(
+            `Hotspots per week: ${labelA} vs. ${labelB}.`,
+            `Focos por semana: ${labelA} contra ${labelB}.`,
+          )}
           className="block w-full min-w-[560px] font-ui"
         >
           {[0, 0.5, 1].map((share) => (
@@ -512,14 +558,17 @@ function WeekChart({
         </svg>
       </div>
       <p className="type-body-sm text-ink-muted">
-        Cada ponto soma 7 dias a partir do início de cada período; o eixo de
-        baixo conta as semanas.
+        {t(
+          "Each point adds up 7 days from the start of each period; the bottom axis counts the weeks.",
+          "Cada ponto soma 7 dias a partir do início de cada período; o eixo de baixo conta as semanas.",
+        )}
       </p>
     </figure>
   );
 }
 
 export function CompareDatesExplorer() {
+  const t = useTr();
   const searchParams = useSearchParams();
   const calendar = useAreaCalendar(searchParams.get("area"));
   const outlines = useCountryOutlines();
@@ -663,13 +712,21 @@ export function CompareDatesExplorer() {
     ...(seasonShortcut
       ? [
           {
-            label: `Temporada crítica ${seasonShortcut.year}`,
+            label: t(
+              `Peak season ${seasonShortcut.year}`,
+              `Temporada crítica ${seasonShortcut.year}`,
+            ),
             range: seasonShortcut.range,
           },
         ]
       : []),
     ...(lastDaysRange
-      ? [{ label: `Últimos ${LAST_DAYS} dias`, range: lastDaysRange }]
+      ? [
+          {
+            label: t(`Last ${LAST_DAYS} days`, `Últimos ${LAST_DAYS} dias`),
+            range: lastDaysRange,
+          },
+        ]
       : []),
   ];
   const shiftedB = (years: number) => {
@@ -677,11 +734,17 @@ export function CompareDatesExplorer() {
     return { start, end: addDays(start, length - 1) };
   };
   const shortcutsB = [
-    { label: `Mesmo período em ${yearA - 1}`, range: shiftedB(-1) },
+    {
+      label: t(`Same period in ${yearA - 1}`, `Mesmo período em ${yearA - 1}`),
+      range: shiftedB(-1),
+    },
     ...(record && record.year !== yearA
       ? [
           {
-            label: `Ano recorde, ${record.year}`,
+            label: t(
+              `Record year, ${record.year}`,
+              `Ano recorde, ${record.year}`,
+            ),
             range: shiftedB(record.year - yearA),
           },
         ]
@@ -689,6 +752,10 @@ export function CompareDatesExplorer() {
   ];
   const valueA = comparisons?.a?.value ?? null;
   const valueB = comparisons?.b?.value ?? null;
+  const differenceA =
+    valueA !== null && comparisons?.a?.typical != null
+      ? difference(valueA, comparisons.a.typical)
+      : null;
   const weekly = (values: (number | null)[]) =>
     Array.from({ length: Math.ceil(values.length / WEEK) }, (_, week) =>
       sumOf(values.slice(week * WEEK, week * WEEK + WEEK)),
@@ -716,21 +783,25 @@ export function CompareDatesExplorer() {
         className="type-button inline-flex items-center gap-1.5 text-ink hover:underline"
       >
         <MaterialSymbol name="arrow_back" className="size-[18px]" />
-        Voltar ao mapa
+        {t("Back to map", "Voltar ao mapa")}
       </Link>
       <header className="mt-6 flex flex-col gap-2">
-        <p className="type-eyebrow text-ink-muted">Comparar datas</p>
+        <p className="type-eyebrow text-ink-muted">
+          {t("Compare dates", "Comparar datas")}
+        </p>
         <h1 className="type-heading-lg text-ink">
-          {areaName} em dois períodos
+          {t(`${areaName} in two periods`, `${areaName} em dois períodos`)}
         </h1>
         <p className="type-body max-w-[720px] text-ink-muted">
-          Mesma região, mesma escala de cor. Os dois períodos têm a mesma
-          duração e só contam dias completos.
+          {t(
+            "Same region, same color scale. Both periods have the same length and count only complete days.",
+            "Mesma região, mesma escala de cor. Os dois períodos têm a mesma duração e só contam dias completos.",
+          )}
         </p>
       </header>
 
       <section
-        aria-label="Períodos comparados"
+        aria-label={t("Compared periods", "Períodos comparados")}
         className="mt-8 flex flex-col items-stretch gap-3 lg:flex-row lg:items-center"
       >
         <RangeInputs
@@ -751,7 +822,7 @@ export function CompareDatesExplorer() {
           className={`${buttonClassName({ variant: "secondary", size: "md" })} self-center`}
         >
           <MaterialSymbol name="chevron_left" className="size-[18px]" />
-          Trocar A e B
+          {t("Swap A and B", "Trocar A e B")}
           <MaterialSymbol name="chevron_right" className="size-[18px]" />
         </button>
         <RangeInputs
@@ -768,8 +839,11 @@ export function CompareDatesExplorer() {
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <p className="type-body-sm text-ink-muted">
           {together
-            ? "Arraste, aproxime ou gire um mapa e o outro acompanha."
-            : "Cada mapa se move sozinho."}
+            ? t(
+                "Drag, zoom or rotate one map and the other follows.",
+                "Arraste, aproxime ou gire um mapa e o outro acompanha.",
+              )
+            : t("Each map moves on its own.", "Cada mapa se move sozinho.")}
         </p>
         <button
           type="button"
@@ -786,11 +860,11 @@ export function CompareDatesExplorer() {
               className={`absolute left-0.5 size-[18px] rounded-full transition-transform duration-200 ease-standard ${together ? "translate-x-4 bg-ink-inverse" : "bg-ink-muted"}`}
             />
           </span>
-          Mover os mapas juntos
+          {t("Move maps together", "Mover os mapas juntos")}
         </button>
       </div>
       <section
-        aria-label="Mapas dos dois períodos"
+        aria-label={t("Maps of both periods", "Mapas dos dois períodos")}
         className="mt-4 grid gap-6 lg:grid-cols-2"
       >
         <PeriodMap
@@ -819,7 +893,10 @@ export function CompareDatesExplorer() {
       {breaks.length > 0 && (
         <div className="mt-3 flex flex-col gap-1.5">
           <span className="type-caption text-ink-muted">
-            Focos por célula de 0,25°, a mesma escala nos dois mapas
+            {t(
+              "Hotspots per 0.25° cell, same scale on both maps",
+              "Focos por célula de 0,25°, a mesma escala nos dois mapas",
+            )}
           </span>
           <span className="grid max-w-xl grid-cols-6 gap-1">
             {HEAT_BACKGROUNDS.map((className, index) => (
@@ -840,7 +917,7 @@ export function CompareDatesExplorer() {
       )}
 
       <section
-        aria-label="Resumo da comparação"
+        aria-label={t("Comparison summary", "Resumo da comparação")}
         className="mt-10 grid gap-6 lg:grid-cols-3"
       >
         <SummaryCard eyebrow={labelA}>
@@ -848,7 +925,9 @@ export function CompareDatesExplorer() {
             <span className="type-stat-xl text-ink">
               {valueA === null ? "-" : formatCount(valueA)}
             </span>
-            <span className="type-body-sm text-ink-muted">focos</span>
+            <span className="type-body-sm text-ink-muted">
+              {t(hotspotsWord(valueA ?? 0), "focos")}
+            </span>
           </p>
           {valueA !== null && comparisons?.a?.typical != null ? (
             <DeltaBadge value={valueA} typical={comparisons.a.typical} />
@@ -860,7 +939,9 @@ export function CompareDatesExplorer() {
             <span className="type-stat-xl text-ink">
               {valueB === null ? "-" : formatCount(valueB)}
             </span>
-            <span className="type-body-sm text-ink-muted">focos</span>
+            <span className="type-body-sm text-ink-muted">
+              {t(hotspotsWord(valueB ?? 0), "focos")}
+            </span>
           </p>
           {valueB !== null && comparisons?.b?.typical != null ? (
             <DeltaBadge value={valueB} typical={comparisons.b.typical} />
@@ -868,12 +949,18 @@ export function CompareDatesExplorer() {
           <p className="type-body-sm text-ink-muted">
             {comparisons?.b?.rank && comparisons.b.rank.of > 1
               ? comparisons.b.rank.rank === 1
-                ? `O mais ativo nestas datas em ${yearsLabel(comparisons.b.rank.of)}.`
-                : `${comparisons.b.rank.rank}º mais ativo nestas datas em ${yearsLabel(comparisons.b.rank.of)}.`
+                ? t(
+                    `The busiest on these dates in ${yearsLabel(comparisons.b.rank.of)}.`,
+                    `O mais ativo nestas datas em ${yearsLabel(comparisons.b.rank.of)}.`,
+                  )
+                : t(
+                    `${ordinal(comparisons.b.rank.rank)} busiest on these dates in ${yearsLabel(comparisons.b.rank.of)}.`,
+                    `${comparisons.b.rank.rank}º mais ativo nestas datas em ${yearsLabel(comparisons.b.rank.of)}.`,
+                  )
               : unit}
           </p>
         </SummaryCard>
-        <SummaryCard eyebrow="Diferença">
+        <SummaryCard eyebrow={t("Difference", "Diferença")}>
           {valueA !== null && valueB !== null ? (
             <>
               <p className="type-stat-xl text-ink">
@@ -882,7 +969,10 @@ export function CompareDatesExplorer() {
                   : `${valueA >= valueB ? "+" : "-"}${Math.abs(Math.round(((valueA - valueB) / valueB) * 100))}%`}
               </p>
               <TrendBadge
-                text={`${formatCompact(Math.abs(valueA - valueB))} focos ${valueA >= valueB ? "a mais" : "a menos"}`}
+                text={t(
+                  `${formatCompact(Math.abs(valueA - valueB))} ${valueA >= valueB ? "more" : "fewer"} ${hotspotsWord(valueA - valueB)}`,
+                  `${formatCompact(Math.abs(valueA - valueB))} focos ${valueA >= valueB ? "a mais" : "a menos"}`,
+                )}
                 direction={
                   valueA > valueB
                     ? "above"
@@ -892,21 +982,32 @@ export function CompareDatesExplorer() {
                 }
               />
               <p className="type-body-sm text-ink-muted">
-                A em relação a B.
-                {comparisons?.a?.typical != null &&
-                  ` A ficou ${difference(valueA, comparisons.a.typical).text} para estas datas.`}
+                {t("A compared with B.", "A em relação a B.")}
+                {differenceA &&
+                  t(
+                    differenceA.direction === "equal"
+                      ? " A was typical for these dates."
+                      : ` A was ${differenceA.text} for these dates.`,
+                    ` A ficou ${differenceA.text} para estas datas.`,
+                  )}
               </p>
             </>
           ) : (
             <p className="type-body text-ink-muted">
-              Ainda faltam dados de algum dia de um dos períodos.
+              {t(
+                "Data is still missing for some day in one of the periods.",
+                "Ainda faltam dados de algum dia de um dos períodos.",
+              )}
             </p>
           )}
         </SummaryCard>
       </section>
 
       {comparisons && (
-        <section aria-label="Evolução" className="mt-10 flex flex-col gap-6">
+        <section
+          aria-label={t("Over time", "Evolução")}
+          className="mt-10 flex flex-col gap-6"
+        >
           <WeekChart
             weeksA={weekly(comparisons.daysA)}
             weeksB={weekly(comparisons.daysB)}
@@ -916,15 +1017,15 @@ export function CompareDatesExplorer() {
           <div className="relative overflow-x-auto rounded-md border border-line bg-surface">
             <table className="w-full min-w-[560px] border-collapse text-left">
               <caption className="type-heading-sm p-4 text-left text-ink sm:p-6">
-                Mês a mês
+                {t("Month by month", "Mês a mês")}
               </caption>
               <thead>
                 <tr className="border-t border-line">
                   {[
-                    "Mês",
+                    t("Month", "Mês"),
                     `A · ${yearA}`,
                     `B · ${yearB}`,
-                    "A em relação a B",
+                    t("A compared with B", "A em relação a B"),
                   ].map((column) => (
                     <th
                       key={column}

@@ -14,6 +14,7 @@ import {
   formatCount,
   formatHotspots,
   heatRangeLabel,
+  hotspotsWord,
 } from "@/fire-calendar/calendar-labels";
 import {
   CALENDAR_FIRST_YEAR,
@@ -21,6 +22,8 @@ import {
 } from "@/fire-calendar/calendar-matrix";
 import { isMeasured, logBreaks } from "@/fire-calendar/calendar-statistics";
 import { buttonClassName } from "@/button/button-class-name";
+import { localDateFormat, localNumberFormat } from "@/i18n/format";
+import { inLocale, localized, tr, useLocale, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import type { PipelineCoverage } from "@/pipeline/pipeline-coverage";
 import { usePipelineFile } from "@/pipeline/pipeline-files";
@@ -46,6 +49,7 @@ import {
   yearPeriodEnd,
 } from "./map-period";
 import {
+  andList,
   type LayerRow,
   type MapSensor,
   SENSOR_NAMES,
@@ -81,11 +85,21 @@ const CONFIDENCE_LEVELS: Record<string, number> = {
   h: 3,
 };
 
-const CONFIDENCE_TEXTS = [
-  "Baixa: sinal fraco, pode não ser fogo",
-  "Nominal: sinal típico de fogo",
-  "Alta: sinal forte de fogo",
-];
+const CONFIDENCE_TEXTS = localized(
+  [
+    { level: "Low", detail: "weak signal, may not be a real heat source" },
+    { level: "Nominal", detail: "typical heat source signal" },
+    { level: "High", detail: "strong heat source signal" },
+  ],
+  [
+    {
+      level: "Baixa",
+      detail: "sinal fraco, pode não ser uma fonte de calor real",
+    },
+    { level: "Nominal", detail: "sinal típico de fonte de calor" },
+    { level: "Alta", detail: "sinal forte de fonte de calor" },
+  ],
+);
 
 const PIXEL_SIZES: Record<SeriesLayer, { label: string; size: number }> = {
   modis: { label: "1 km", size: 24 },
@@ -109,7 +123,7 @@ const HARMONIZED_LAYERS: Partial<Record<HarmonizedSource, SeriesLayer>> = {
   viirs_noaa20_x_k20: "viirs_noaa20",
 };
 
-const FACTOR = new Intl.NumberFormat("pt-BR", {
+const FACTOR = localNumberFormat({
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
@@ -120,7 +134,7 @@ const HOUR_MS = 60 * MINUTE_MS;
 const NO_CELLS: FireCell[] = [];
 const NO_POINTS: MappedPoint[] = [];
 
-const LOCAL_TIME = new Intl.DateTimeFormat("pt-BR", {
+const LOCAL_TIME = localDateFormat({
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
@@ -128,13 +142,13 @@ const LOCAL_TIME = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
 });
 
-const UTC_TIME = new Intl.DateTimeFormat("pt-BR", {
+const UTC_TIME = localDateFormat({
   hour: "2-digit",
   minute: "2-digit",
   timeZone: "UTC",
 });
 
-const COORDINATE = new Intl.NumberFormat("pt-BR", {
+const COORDINATE = localNumberFormat({
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
@@ -153,19 +167,32 @@ function elapsedLabel(acquiredAt: string, minute: number): string {
     (minute * MINUTE_MS - Date.parse(acquiredAt)) / HOUR_MS,
   );
   if (hours < 1) {
-    return "há menos de 1 h";
+    return tr("less than 1 h ago", "há menos de 1 h");
   }
-  return hours < 48 ? `há ${hours} h` : `há ${Math.floor(hours / 24)} dias`;
+  if (hours < 48) {
+    return tr(`${hours} h ago`, `há ${hours} h`);
+  }
+  const days = Math.floor(hours / 24);
+  return tr(`${days} days ago`, `há ${days} dias`);
 }
 
 function sensorPhrase(point: MappedPoint): string {
   if (point.layer === "modis") {
-    return `O MODIS do satélite ${point.satellite}`;
+    return tr(
+      `MODIS on the ${point.satellite} satellite`,
+      `O MODIS do satélite ${point.satellite}`,
+    );
   }
   if (point.layer === "landsat") {
-    return `O ${SATELLITE_NAMES[point.satellite] ?? "Landsat"}`;
+    const name = SATELLITE_NAMES[point.satellite] ?? "Landsat";
+    return tr(name, `O ${name}`);
   }
-  return `O VIIRS do satélite ${SATELLITE_NAMES[point.satellite] ?? LAYER_NAMES[point.layer]}`;
+  const satellite =
+    SATELLITE_NAMES[point.satellite] ?? LAYER_NAMES[point.layer];
+  return tr(
+    `VIIRS on the ${satellite} satellite`,
+    `O VIIRS do satélite ${satellite}`,
+  );
 }
 
 function TooltipRow({ term, children }: { term: string; children: ReactNode }) {
@@ -180,19 +207,21 @@ function TooltipRow({ term, children }: { term: string; children: ReactNode }) {
 }
 
 function ConfidenceMeter({ confidence }: { confidence: string }) {
+  const t = useTr();
   const level = CONFIDENCE_LEVELS[confidence];
   if (!level) {
     return null;
   }
+  const text = CONFIDENCE_TEXTS[level - 1];
   return (
     <div className="flex flex-col gap-1.5">
       <div
         role="meter"
-        aria-label="Confiança da detecção"
+        aria-label={t("Detection confidence", "Confiança da detecção")}
         aria-valuemin={1}
         aria-valuemax={3}
         aria-valuenow={level}
-        aria-valuetext={CONFIDENCE_TEXTS[level - 1]}
+        aria-valuetext={`${text.level}: ${text.detail}`}
         className="grid grid-cols-3 gap-1"
       >
         {[1, 2, 3].map((step) => (
@@ -203,7 +232,10 @@ function ConfidenceMeter({ confidence }: { confidence: string }) {
         ))}
       </div>
       <p className="type-body-sm text-ink-muted">
-        Confiança {CONFIDENCE_TEXTS[level - 1].toLowerCase()}
+        {t(
+          `${text.level} confidence: ${text.detail}`,
+          `Confiança ${text.level.toLowerCase()}: ${text.detail}`,
+        )}
       </p>
     </div>
   );
@@ -218,6 +250,7 @@ function TooltipFooter({
   href: string;
   label: string;
 }) {
+  const t = useTr();
   return pinned ? (
     <a
       href={href}
@@ -227,7 +260,9 @@ function TooltipFooter({
       <MaterialSymbol name="arrow_forward" className="size-[18px]" />
     </a>
   ) : (
-    <p className="type-caption text-ink-disabled">Clique para fixar</p>
+    <p className="type-caption text-ink-disabled">
+      {t("Click to pin", "Clique para fixar")}
+    </p>
   );
 }
 
@@ -248,6 +283,7 @@ function FireTooltip({
   harmonized: boolean;
   factors: BlockFactors | null;
 }) {
+  const t = useTr();
   const minute = useSyncExternalStore(everyMinute, currentMinute, () => 0);
   if (tooltip.kind === "cell") {
     const { cell } = tooltip;
@@ -259,15 +295,21 @@ function FireTooltip({
             aria-hidden="true"
             className="size-2 rounded-full bg-data-burned"
           />
-          Célula de 0,25° · cerca de 28 km
+          {t("0.25° cell · about 28 km", "Célula de 0,25° · cerca de 28 km")}
         </p>
         <p className="type-heading-sm text-ink">
-          {formatHotspots(cell.count)}
-          {harmonized && " equivalentes VIIRS"}
+          {harmonized
+            ? t(
+                `${formatCount(cell.count)} VIIRS-equivalent ${hotspotsWord(cell.count)}`,
+                `${formatHotspots(cell.count)} equivalentes VIIRS`,
+              )
+            : formatHotspots(cell.count)}
         </p>
         <p className="type-body-sm text-ink">
-          Soma de todas as detecções neste quadrado em {cellMonths}. Cada
-          detecção é um pixel que o satélite viu mais quente que o entorno.
+          {t(
+            `Sum of all detections in this cell in ${cellMonths}. Each detection is a pixel the satellite saw as hotter than its surroundings.`,
+            `Soma de todas as detecções neste quadrado em ${cellMonths}. Cada detecção é um pixel que o satélite viu mais quente que o entorno.`,
+          )}
         </p>
         <div className="flex flex-col gap-1.5">
           <span className="block h-1.5 overflow-hidden rounded-full bg-line">
@@ -277,11 +319,14 @@ function FireTooltip({
             />
           </span>
           <span className="type-body-sm text-ink-muted">
-            {Math.round(share * 100)}% da célula mais quente do mapa
+            {t(
+              `${Math.round(share * 100)}% of the hottest cell on the map`,
+              `${Math.round(share * 100)}% da célula mais quente do mapa`,
+            )}
           </span>
         </div>
         <dl className="flex flex-col gap-1">
-          <TooltipRow term="Centro">
+          <TooltipRow term={t("Center", "Centro")}>
             {COORDINATE.format(cell.latitude)} ·{" "}
             {COORDINATE.format(cell.longitude)}
           </TooltipRow>
@@ -289,7 +334,7 @@ function FireTooltip({
         <TooltipFooter
           pinned={pinned}
           href="/methodology#filtragem"
-          label="Como contamos"
+          label={t("How we count", "Como contamos")}
         />
       </div>
     );
@@ -309,24 +354,26 @@ function FireTooltip({
               : "size-2 rounded-full bg-data-burned"
           }
         />
-        {point.active ? "Fogo ativo" : "Foco de calor"} ·{" "}
-        {elapsedLabel(point.acquiredAt, minute)}
+        {point.active
+          ? t("Active heat source", "Fonte de calor ativa")
+          : t("Hotspot", "Foco de calor")}{" "}
+        · {elapsedLabel(point.acquiredAt, minute)}
       </p>
       <p className="type-heading-sm pr-6 text-ink">{areaName}</p>
       <p className="type-body-sm text-ink">
-        {sensorPhrase(point)} viu um pixel de {pixel.label} mais quente que o
-        entorno{" "}
-        {point.daynight === "N"
-          ? "numa passagem noturna"
-          : "numa passagem de dia"}
-        .
+        {t(
+          `${sensorPhrase(point)} saw a ${pixel.label} pixel hotter than its surroundings ${point.daynight === "N" ? "during a nighttime overpass" : "during a daytime overpass"}.`,
+          `${sensorPhrase(point)} viu um pixel de ${pixel.label} mais quente que o entorno ${point.daynight === "N" ? "numa passagem noturna" : "numa passagem de dia"}.`,
+        )}
       </p>
       <ConfidenceMeter confidence={point.confidence} />
       <dl className="flex flex-col gap-1">
-        <TooltipRow term="No seu horário">
+        <TooltipRow term={t("Your local time", "No seu horário")}>
           {LOCAL_TIME.format(acquired)}
         </TooltipRow>
-        <TooltipRow term="Em UTC">{UTC_TIME.format(acquired)}</TooltipRow>
+        <TooltipRow term={t("UTC", "Em UTC")}>
+          {UTC_TIME.format(acquired)}
+        </TooltipRow>
         <TooltipRow term="Pixel">
           <span className="inline-flex items-center gap-2">
             <span
@@ -337,20 +384,27 @@ function FireTooltip({
                 height: Math.max(2, pixel.size),
               }}
             />
-            {pixel.label} de lado
+            {t(`${pixel.label} per side`, `${pixel.label} de lado`)}
           </span>
         </TooltipRow>
         {weight !== null && (
-          <TooltipRow term="Na série harmonizada">
+          <TooltipRow
+            term={t("In the harmonized series", "Na série harmonizada")}
+          >
             {point.layer === "viirs_snpp"
-              ? "1 foco, a régua"
-              : `${FACTOR.format(weight)} focos`}
+              ? t("1 hotspot, the reference scale", "1 foco, a régua")
+              : t(
+                  `${FACTOR.format(weight)} hotspots`,
+                  `${FACTOR.format(weight)} focos`,
+                )}
           </TooltipRow>
         )}
-        <TooltipRow term="Dado">
-          {point.provisional ? "Provisório (NRT)" : "Definitivo (SP)"}
+        <TooltipRow term={t("Data", "Dado")}>
+          {point.provisional
+            ? t("Preliminary (NRT)", "Provisório (NRT)")
+            : t("Final (SP)", "Definitivo (SP)")}
         </TooltipRow>
-        <TooltipRow term="Coordenadas">
+        <TooltipRow term={t("Coordinates", "Coordenadas")}>
           {COORDINATE.format(point.latitude)} ·{" "}
           {COORDINATE.format(point.longitude)}
         </TooltipRow>
@@ -358,7 +412,7 @@ function FireTooltip({
       <TooltipFooter
         pinned={pinned}
         href="/methodology#foco"
-        label="O que é um foco?"
+        label={t("What is a hotspot?", "O que é um foco?")}
       />
     </div>
   );
@@ -429,6 +483,8 @@ export function MapSection({
   period: MapPeriod;
   onPeriodChange: (period: MapPeriod | null) => void;
 }) {
+  const locale = useLocale();
+  const t = useTr();
   const lastDataDate = coverage.lastDataDate!;
   const referenceEnd = yearPeriodEnd(year, lastDataDate);
   const bounds = outline?.bounds ?? null;
@@ -536,16 +592,18 @@ export function MapSection({
     () =>
       area === null || calendarYears.length === 0
         ? null
-        : [firstSeasonYear, firstSeasonYear + 1].map((seasonYear) => ({
-            year: seasonYear,
-            seasons: seasonTotals(
-              seasonYear,
-              southern,
-              calendarYears,
-              lastDataDate,
-            ),
-          })),
-    [area, calendarYears, firstSeasonYear, southern, lastDataDate],
+        : inLocale(locale, () =>
+            [firstSeasonYear, firstSeasonYear + 1].map((seasonYear) => ({
+              year: seasonYear,
+              seasons: seasonTotals(
+                seasonYear,
+                southern,
+                calendarYears,
+                lastDataDate,
+              ),
+            })),
+          ),
+    [area, calendarYears, firstSeasonYear, southern, lastDataDate, locale],
   );
   const seasonBreaks = useMemo(
     () =>
@@ -602,10 +660,13 @@ export function MapSection({
     harmonized &&
     !points &&
     ready !== null
-      ? `O total harmonizado do ${SENSOR_NAMES[sensor]} sai em períodos de até 7 dias ou quando ele é a fonte da série. Use a contagem Bruta para ver o total deste período.`
+      ? t(
+          `The harmonized ${SENSOR_NAMES[sensor]} total is shown for periods of up to 7 days, or when it is the source of the series. Use the Raw count to see this period's total.`,
+          `O total harmonizado do ${SENSOR_NAMES[sensor]} sai em períodos de até 7 dias ou quando ele é a fonte da série. Use a contagem Bruta para ver o total deste período.`,
+        )
       : null;
   const activeCount = pointsComplete ? ready.activeCount : null;
-  const layers = [
+  const layers = andList([
     ...new Set(
       points
         ? pointLayers.map((layer) => LAYER_NAMES[layer])
@@ -615,24 +676,42 @@ export function MapSection({
               (month) => LAYER_NAMES[layerForMonth(month, coverage)],
             ),
     ),
-  ].join(" e ");
+  ]);
   const cellMonths = ready?.mode === "cells" ? monthsLabel(ready.months) : "";
 
   const status =
     fires.status === "loading"
-      ? "Carregando os focos do período."
+      ? t(
+          "Loading the hotspots for this period.",
+          "Carregando os focos do período.",
+        )
       : fires.status === "error"
-        ? "Não conseguimos carregar os focos agora."
+        ? t(
+            "We could not load the hotspots right now.",
+            "Não conseguimos carregar os focos agora.",
+          )
         : ready?.mode === "points" && ready.missingDays === ready.totalDays
-          ? "Os pontos diários deste período ainda não foram publicados pela pipeline. Escolha mais de 7 dias para ver a grade mensal."
+          ? t(
+              "The pipeline has not published the daily points for this period yet. Choose more than 7 days to see the monthly grid.",
+              "Os pontos diários deste período ainda não foram publicados pela pipeline. Escolha mais de 7 dias para ver a grade mensal.",
+            )
           : ready?.mode === "points" && ready.missingDays > 0
-            ? `Faltam os pontos de ${ready.missingDays} ${ready.missingDays === 1 ? "dia" : "dias"} deste período.`
+            ? t(
+                `Points are missing for ${ready.missingDays} ${ready.missingDays === 1 ? "day" : "days"} of this period.`,
+                `Faltam os pontos de ${ready.missingDays} ${ready.missingDays === 1 ? "dia" : "dias"} deste período.`,
+              )
             : ready?.mode === "cells" &&
                 ready.missingMonths === ready.months.length
-              ? "A grade mensal deste período ainda não foi publicada pela pipeline."
+              ? t(
+                  "The pipeline has not published the monthly grid for this period yet.",
+                  "A grade mensal deste período ainda não foi publicada pela pipeline.",
+                )
               : (ready?.mode === "points" && mappedPoints.length === 0) ||
                   (ready?.mode === "cells" && cells.length === 0)
-                ? "Nenhum foco de calor neste período."
+                ? t(
+                    "No hotspots in this period.",
+                    "Nenhum foco de calor neste período.",
+                  )
                 : null;
   const widen =
     ready !== null &&
@@ -641,9 +720,12 @@ export function MapSection({
     periodDates(period).length < 30;
   const statusDetail =
     fires.status === "error"
-      ? "A fonte dos dados não respondeu. Seus filtros continuam salvos."
+      ? t(
+          "The data source did not respond. Your filters are still saved.",
+          "A fonte dos dados não respondeu. Seus filtros continuam salvos.",
+        )
       : widen
-        ? "Tente ampliar para 30 dias."
+        ? t("Try widening it to 30 days.", "Tente ampliar para 30 dias.")
         : null;
 
   const closeSheet = () => {
@@ -671,11 +753,15 @@ export function MapSection({
         className="mt-8 flex w-full cursor-pointer items-center justify-between gap-3 rounded-md border border-line bg-surface px-4 py-3 text-left text-ink md:hidden"
       >
         <span className="flex min-w-0 flex-col">
-          <span className="type-button">Filtros do mapa</span>
+          <span className="type-button">
+            {t("Map filters", "Filtros do mapa")}
+          </span>
           <span className="type-body-sm truncate text-ink-muted">
             {periodLabel(period)} ·{" "}
-            {sensor === "auto" ? "Automático" : SENSOR_NAMES[sensor]} ·{" "}
-            {harmonized ? "Harmonizada" : "Bruta"}
+            {sensor === "auto"
+              ? t("Automatic", "Automático")
+              : SENSOR_NAMES[sensor]}{" "}
+            · {harmonized ? t("Harmonized", "Harmonizada") : t("Raw", "Bruta")}
           </span>
         </span>
         <MaterialSymbol name="tune" className="size-5 shrink-0" />
@@ -683,7 +769,7 @@ export function MapSection({
       <div
         role={sheetOpen ? "dialog" : undefined}
         aria-modal={sheetOpen ? true : undefined}
-        aria-label={sheetOpen ? "Filtros do mapa" : undefined}
+        aria-label={sheetOpen ? t("Map filters", "Filtros do mapa") : undefined}
         onKeyDown={(event) => {
           if (event.key === "Escape" && sheetOpen) {
             closeSheet();
@@ -698,7 +784,7 @@ export function MapSection({
             <button
               type="button"
               ref={sheetCloseRef}
-              aria-label="Fechar filtros"
+              aria-label={t("Close filters", "Fechar filtros")}
               onClick={closeSheet}
               className="flex size-11 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-surface-hover"
             >
@@ -722,7 +808,10 @@ export function MapSection({
             countLocked={
               canHarmonize
                 ? null
-                : `${SENSOR_NAMES[sensor as SeriesLayer]} não tem fator de harmonização na pipeline; cada ponto vale 1.`
+                : t(
+                    `${SENSOR_NAMES[sensor as SeriesLayer]} has no harmonization factor in the pipeline; each point counts as 1.`,
+                    `${SENSOR_NAMES[sensor as SeriesLayer]} não tem fator de harmonização na pipeline; cada ponto vale 1.`,
+                  )
             }
             sensorPicker={
               <SensorPicker
@@ -743,7 +832,7 @@ export function MapSection({
               onClick={clearMapFilters}
               className={buttonClassName({ variant: "secondary", size: "md" })}
             >
-              Limpar
+              {t("Clear", "Limpar")}
             </button>
             <button
               type="button"
@@ -751,8 +840,11 @@ export function MapSection({
               className={`${buttonClassName({ variant: "primary", size: "md" })} flex-1`}
             >
               {periodCount === null
-                ? "Ver no mapa"
-                : `Ver ${formatCount(periodCount)} ${harmonized ? "focos equivalentes" : Math.round(periodCount) === 1 ? "foco" : "focos"}`}
+                ? t("See on map", "Ver no mapa")
+                : t(
+                    `See ${formatCount(periodCount)} ${harmonized ? "equivalent " : ""}${hotspotsWord(periodCount)}`,
+                    `Ver ${formatCount(periodCount)} ${harmonized ? "focos equivalentes" : hotspotsWord(periodCount)}`,
+                  )}
             </button>
           </div>
         </div>
@@ -760,7 +852,10 @@ export function MapSection({
 
       <section aria-labelledby="map-title" className="mt-8">
         <FireMap
-          label={`Mapa de focos de calor de ${areaName}, ${periodLabel(period)}`}
+          label={t(
+            `Hotspot map of ${areaName}, ${periodLabel(period)}`,
+            `Mapa de focos de calor de ${areaName}, ${periodLabel(period)}`,
+          )}
           area={area}
           bounds={bounds}
           points={mappedPoints}
@@ -785,7 +880,11 @@ export function MapSection({
             <p className="type-caption text-ink-muted">
               {periodLabel(period)}
               {partialDays && ` · ${partialDays}`}
-              {ready?.mode === "cells" && ` · mapa por mês (${cellMonths})`}
+              {ready?.mode === "cells" &&
+                t(
+                  ` · monthly map (${cellMonths})`,
+                  ` · mapa por mês (${cellMonths})`,
+                )}
             </p>
             {status && (
               <div
@@ -818,7 +917,7 @@ export function MapSection({
                     })}
                   >
                     <MaterialSymbol name="refresh" className="size-[18px]" />
-                    Tentar de novo
+                    {t("Try again", "Tentar de novo")}
                   </button>
                 )}
                 {widen && (
@@ -830,7 +929,7 @@ export function MapSection({
                       size: "sm",
                     })}
                   >
-                    Ampliar para 30 dias
+                    {t("Widen to 30 days", "Ampliar para 30 dias")}
                     <MaterialSymbol
                       name="arrow_forward"
                       className="size-[18px]"
@@ -842,7 +941,7 @@ export function MapSection({
           </div>
           <MapLegend
             periodCount={periodCount}
-            layers={`${harmonized ? "Harmonizado" : "Bruto"} · ${layers}`}
+            layers={`${harmonized ? t("Harmonized", "Harmonizado") : t("Raw", "Bruto")} · ${layers}`}
             harmonized={harmonized}
             activeCount={activeCount}
             showActive={ready?.mode === "points"}
@@ -878,19 +977,26 @@ function MapLegend({
   country: boolean;
   countNote: string | null;
 }) {
+  const t = useTr();
   const [open, setOpen] = useState(
     () => window.matchMedia("(min-width: 768px)").matches,
   );
   return (
     <section
-      aria-label="Legenda do mapa"
+      aria-label={t("Map legend", "Legenda do mapa")}
       className="absolute bottom-4 left-4 z-10 w-[min(20rem,calc(100%-2rem))] rounded-md border border-line bg-surface/95 p-4 shadow-overlay"
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="type-caption text-ink-muted">Legenda</h3>
+        <h3 className="type-caption text-ink-muted">
+          {t("Legend", "Legenda")}
+        </h3>
         <button
           type="button"
-          aria-label={open ? "Recolher legenda" : "Abrir legenda"}
+          aria-label={
+            open
+              ? t("Collapse legend", "Recolher legenda")
+              : t("Expand legend", "Abrir legenda")
+          }
           aria-expanded={open}
           onClick={() => setOpen(!open)}
           className="flex size-8 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-surface-hover"
@@ -911,7 +1017,7 @@ function MapLegend({
               />
               <span className="flex flex-col">
                 <span className="type-body-sm font-semibold text-ink">
-                  Focos no período
+                  {t("Hotspots in the period", "Focos no período")}
                 </span>
                 <span className="text-xs leading-4 text-ink-muted">
                   {layers}
@@ -934,10 +1040,13 @@ function MapLegend({
                 />
                 <span className="flex flex-col">
                   <span className="type-body-sm font-semibold text-ink">
-                    Fogo ativo
+                    {t("Active heat source", "Fonte de calor ativa")}
                   </span>
                   <span className="text-xs leading-4 text-ink-muted">
-                    Detectado nas últimas 24 h do período
+                    {t(
+                      "Detected in the last 24 h of the period",
+                      "Detectado nas últimas 24 h do período",
+                    )}
                   </span>
                 </span>
               </dt>
@@ -949,10 +1058,15 @@ function MapLegend({
           {cellBreaks && (
             <div className="flex flex-col gap-1.5">
               <span className="text-xs leading-4 text-ink-muted">
-                {harmonized ? "Focos equivalentes VIIRS" : "Focos"} por célula
-                de 0,25° (cerca de 28 km) em {cellMonths}.
+                {t(
+                  `${harmonized ? "VIIRS-equivalent hotspots" : "Hotspots"} per 0.25° cell (about 28 km) in ${cellMonths}.`,
+                  `${harmonized ? "Focos equivalentes VIIRS" : "Focos"} por célula de 0,25° (cerca de 28 km) em ${cellMonths}.`,
+                )}
                 {country &&
-                  " Entra todo quadrado que toca o país, para nenhum foco dele ficar de fora. Na fronteira, o quadrado pode trazer focos do vizinho; o total acima não muda, porque é contado foco a foco."}
+                  t(
+                    " Every cell that touches the country is included, so none of its hotspots is left out. At the border, a cell may bring in hotspots from a neighbor; the total above does not change, because it is counted hotspot by hotspot.",
+                    " Entra todo quadrado que toca o país, para nenhum foco dele ficar de fora. Na fronteira, o quadrado pode trazer focos do vizinho; o total acima não muda, porque é contado foco a foco.",
+                  )}
               </span>
               <span className="grid grid-cols-6 gap-1">
                 {(cellBreaks.length === 0 ? [4] : [1, 2, 3, 4, 5, 6]).map(

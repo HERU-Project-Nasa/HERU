@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
+import { localized, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { reloadPipelineFile } from "@/pipeline/pipeline-files";
 import { CALENDAR_MODES, type CalendarMode } from "./calendar-anomaly";
@@ -28,6 +29,7 @@ function CalendarMessage({
   text: string;
   onRetry?: () => void;
 }) {
+  const t = useTr();
   return (
     <div
       role={onRetry ? "alert" : "status"}
@@ -48,7 +50,7 @@ function CalendarMessage({
           className="type-button inline-flex h-10 cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface-raised px-4 text-ink transition-colors duration-120 ease-standard hover:border-ink"
         >
           <MaterialSymbol name="refresh" className="size-[18px]" />
-          Tentar de novo
+          {t("Try again", "Tentar de novo")}
         </button>
       )}
     </div>
@@ -70,10 +72,16 @@ type YearSpan = "recent" | "all" | "custom";
 
 const RECENT_YEARS = 10;
 
-const YEAR_SPANS: { value: YearSpan; label: string }[] = [
-  { value: "recent", label: "Últimos 10 anos" },
-  { value: "all", label: "Todos os anos" },
-];
+const YEAR_SPANS: { value: YearSpan; label: string }[] = localized(
+  [
+    { value: "recent", label: "Last 10 years" },
+    { value: "all", label: "All years" },
+  ],
+  [
+    { value: "recent", label: "Últimos 10 anos" },
+    { value: "all", label: "Todos os anos" },
+  ],
+);
 
 export function CalendarSection({
   calendar,
@@ -96,6 +104,7 @@ export function CalendarSection({
   onSelectMonth?: (key: string) => void;
   selectionAction?: ReactNode;
 }) {
+  const t = useTr();
   const [mode, setMode] = useState(initialMode);
   const latestYear = calendar.years.at(-1)?.year ?? null;
   const yearSpan: YearSpan =
@@ -170,7 +179,7 @@ export function CalendarSection({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <SegmentedChoice
-            label="Modo do calendário"
+            label={t("Calendar mode", "Modo do calendário")}
             options={CALENDAR_MODES}
             value={mode}
             onChange={setMode}
@@ -178,7 +187,7 @@ export function CalendarSection({
           {latestYear !== null && (
             <div className="md:hidden">
               <SegmentedChoice
-                label="Anos exibidos"
+                label={t("Years shown", "Anos exibidos")}
                 options={YEAR_SPANS}
                 value={yearSpan}
                 onChange={(span) =>
@@ -216,20 +225,32 @@ export function CalendarSection({
         unitLine={`${SOURCE_UNITS[source]} · ${PASSES_DESCRIPTIONS[passes]} · ${enabledMonthsLabel(enabledMonths)}`}
         notice={
           !calendar.sourceChosen && source === "modis"
-            ? "O valor harmonizado desta região ainda está em cálculo. Mostrando só MODIS até ele sair."
+            ? t(
+                "The harmonized value for this region is still being computed. Showing MODIS only until it is out.",
+                "O valor harmonizado desta região ainda está em cálculo. Mostrando só MODIS até ele sair.",
+              )
             : null
         }
       />
       {failedPaths.length > 0 ? (
         <CalendarMessage
-          title="Não conseguimos carregar o calendário agora."
-          text="A fonte dos dados não respondeu. Seus filtros continuam salvos."
+          title={t(
+            "We could not load the calendar right now.",
+            "Não conseguimos carregar o calendário agora.",
+          )}
+          text={t(
+            "The data source did not respond. Your filters are still saved.",
+            "A fonte dos dados não respondeu. Seus filtros continuam salvos.",
+          )}
           onRetry={() => failedPaths.forEach(reloadPipelineFile)}
         />
       ) : !ready || !lastDataDate ? (
         <CalendarMessage
-          title="Carregando o calendário"
-          text="Lendo a série mensal da região."
+          title={t("Loading the calendar", "Carregando o calendário")}
+          text={t(
+            "Reading the region's monthly series.",
+            "Lendo a série mensal da região.",
+          )}
         />
       ) : (
         <div className="rounded-lg border border-line bg-linear-to-b from-surface-hover/50 to-surface p-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)] sm:p-6">
@@ -264,15 +285,22 @@ export function CalendarSection({
 }
 
 export function DataFootnote({ updatedAt }: { updatedAt: string | null }) {
+  const t = useTr();
   return (
     <p className="type-body-sm mt-8 flex flex-wrap gap-x-4 gap-y-1 text-ink-muted">
       <span>
-        Dados: NASA FIRMS, MODIS (desde 2003) e VIIRS (desde 2012), harmonizados
-        para equivalente VIIRS.
-        {updatedAt && ` Atualizado em ${formatUpdatedAt(updatedAt)}.`}
+        {t(
+          "Data: NASA FIRMS, MODIS (since 2003) and VIIRS (since 2012), harmonized to VIIRS-equivalent.",
+          "Dados: NASA FIRMS, MODIS (desde 2003) e VIIRS (desde 2012), harmonizados para equivalente VIIRS.",
+        )}
+        {updatedAt &&
+          t(
+            ` Updated ${formatUpdatedAt(updatedAt)}.`,
+            ` Atualizado em ${formatUpdatedAt(updatedAt)}.`,
+          )}
       </span>
       <Link href="/methodology" className="text-link hover:underline">
-        Como harmonizamos
+        {t("How we harmonize", "Como harmonizamos")}
       </Link>
     </p>
   );

@@ -2,19 +2,21 @@
 
 import { useSyncExternalStore } from "react";
 import { formatUpdatedAt } from "@/fire-calendar/calendar-labels";
+import { localDateFormat } from "@/i18n/format";
+import { useTr } from "@/i18n/locale";
 import { useBatchPolling } from "@/pipeline/pipeline-files";
 
 const MINUTE_MS = 60 * 1000;
 const STALE_AFTER_MS = 2 * 60 * MINUTE_MS;
 
-const SHORT_DATE_TIME = new Intl.DateTimeFormat("pt-BR", {
+const SHORT_DATE_TIME = localDateFormat({
   day: "2-digit",
   month: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
 });
 
-const SHORT_DAY = new Intl.DateTimeFormat("pt-BR", {
+const SHORT_DAY = localDateFormat({
   day: "2-digit",
   month: "2-digit",
 });
@@ -35,6 +37,7 @@ function currentMinute(): number {
 }
 
 export function DataStatus() {
+  const t = useTr();
   const latest = useBatchPolling();
   const minute = useSyncExternalStore(everyMinute, currentMinute, () => 0);
   const updatedAt = latest.rows?.[0]?.updated_at ?? null;
@@ -48,23 +51,35 @@ export function DataStatus() {
       : "live";
   const text =
     status === "error"
-      ? "Fonte fora do ar"
+      ? t("Source offline", "Fonte fora do ar")
       : status === "stale"
-        ? `Dados até ${SHORT_DATE_TIME.format(new Date(updatedAt!))}`
-        : "Dados atualizados";
+        ? t(
+            `Data through ${SHORT_DATE_TIME.format(new Date(updatedAt!))}`,
+            `Dados até ${SHORT_DATE_TIME.format(new Date(updatedAt!))}`,
+          )
+        : t("Data up to date", "Dados atualizados");
   const shortText =
     status === "error"
-      ? "Fora do ar"
+      ? t("Offline", "Fora do ar")
       : status === "stale"
-        ? `Até ${SHORT_DAY.format(new Date(updatedAt!))}`
-        : "Atualizado";
+        ? t(
+            `Through ${SHORT_DAY.format(new Date(updatedAt!))}`,
+            `Até ${SHORT_DAY.format(new Date(updatedAt!))}`,
+          )
+        : t("Up to date", "Atualizado");
   return (
     <div
       role="status"
       title={
         updatedAt
-          ? `Último lote publicado em ${formatUpdatedAt(updatedAt)}`
-          : "Não foi possível falar com a fonte dos dados"
+          ? t(
+              `Last batch published on ${formatUpdatedAt(updatedAt)}`,
+              `Último lote publicado em ${formatUpdatedAt(updatedAt)}`,
+            )
+          : t(
+              "Could not reach the data source",
+              "Não foi possível falar com a fonte dos dados",
+            )
       }
       className="type-caption inline-flex h-8 items-center gap-2 rounded-sm bg-surface-raised px-2.5 whitespace-nowrap text-ink lg:px-3"
     >

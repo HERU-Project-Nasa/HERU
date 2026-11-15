@@ -6,7 +6,13 @@ import {
   startCalendarBars,
 } from "@/calendar-3d/calendar-bars-scene";
 import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
-import { formatCount, heatRangeLabel } from "@/fire-calendar/calendar-labels";
+import {
+  formatHotspots,
+  heatRangeLabel,
+  MONTH_ABBREVIATIONS,
+  MONTH_NAMES,
+  monthTitle,
+} from "@/fire-calendar/calendar-labels";
 import {
   buildCalendarYears,
   type CalendarCell,
@@ -17,6 +23,7 @@ import {
   heatLevel,
   isMeasured,
 } from "@/fire-calendar/calendar-statistics";
+import { inLocale, tr, useLocale, useTr } from "@/i18n/locale";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
 import { usePipelineFile } from "@/pipeline/pipeline-files";
 import { type SeriesMonthRow, seriesPath } from "@/pipeline/series-row";
@@ -25,24 +32,10 @@ const EXAMPLE_AREA = "USA";
 const EXAMPLE_YEARS = 12;
 const ALL_MONTHS = Array(12).fill(true);
 
-const MONTHS = [
-  ["janeiro", "jan"],
-  ["fevereiro", "fev"],
-  ["março", "mar"],
-  ["abril", "abr"],
-  ["maio", "mai"],
-  ["junho", "jun"],
-  ["julho", "jul"],
-  ["agosto", "ago"],
-  ["setembro", "set"],
-  ["outubro", "out"],
-  ["novembro", "nov"],
-  ["dezembro", "dez"],
-];
-
 type CalendarExample = {
   years: CalendarYear[];
   bars: CalendarBar[];
+  months: string[];
   scale: { label: string; className: string }[];
 };
 
@@ -86,18 +79,17 @@ function buildExample(
   const limits = analysis.breaks;
   const scale = [
     { label: "0", className: "border border-line bg-heat-0" },
-    ...HEAT_BACKGROUNDS.map((className, index) => ({
-      className,
-      label:
-        limits.length === 0
-          ? "> 0"
-          : heatRangeLabel(
-              index === 0 ? null : limits[index - 1],
-              index === HEAT_BACKGROUNDS.length - 1 ? null : limits[index],
-            ),
-    })),
+    ...(limits.length === 0
+      ? [{ label: heatRangeLabel(null, null), className: HEAT_BACKGROUNDS[3] }]
+      : HEAT_BACKGROUNDS.map((className, index) => ({
+          className,
+          label: heatRangeLabel(
+            index === 0 ? null : limits[index - 1],
+            index === HEAT_BACKGROUNDS.length - 1 ? null : limits[index],
+          ),
+        }))),
   ];
-  return { years, bars, scale };
+  return { years, bars, months: [...MONTH_ABBREVIATIONS], scale };
 }
 
 const OUT_OF_PATTERN_RING =
@@ -105,6 +97,8 @@ const OUT_OF_PATTERN_RING =
 const IN_PROGRESS_STRIPES =
   "bg-[repeating-linear-gradient(135deg,rgba(10,10,11,0)_0_4px,rgba(10,10,11,0.55)_4px_6px)]";
 export function FireCalendarExample() {
+  const locale = useLocale();
+  const t = useTr();
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
@@ -113,8 +107,8 @@ export function FireCalendarExample() {
     seriesPath("monthly", EXAMPLE_AREA),
   ).rows;
   const example = useMemo(
-    () => buildExample(coverageRows, monthlyRows),
-    [coverageRows, monthlyRows],
+    () => inLocale(locale, () => buildExample(coverageRows, monthlyRows)),
+    [coverageRows, monthlyRows, locale],
   );
 
   useEffect(() => {
@@ -126,7 +120,7 @@ export function FireCalendarExample() {
       canvasRef.current!,
       example.bars,
       {
-        months: MONTHS.map(([, abbreviation]) => abbreviation),
+        months: example.months,
         years: example.years.map(({ year }) => String(year)),
         tooltip: tooltipRef.current!,
       },
@@ -140,11 +134,14 @@ export function FireCalendarExample() {
     <figure className="rounded-xl border border-line bg-surface px-5 py-6 sm:px-10 sm:py-8">
       <figcaption>
         <p className="type-heading-sm min-h-6 text-ink">
-          Estados Unidos
+          {t("United States", "Estados Unidos")}
           {firstYear && lastYear ? `, ${firstYear}-${lastYear}` : ""}
         </p>
         <p className="type-caption mt-1 text-ink-muted">
-          Focos por mês · equivalente VIIRS
+          {t(
+            "Hotspots per month · VIIRS equivalent",
+            "Focos por mês · equivalente VIIRS",
+          )}
         </p>
       </figcaption>
       <div
@@ -161,17 +158,20 @@ export function FireCalendarExample() {
           className="type-body-sm pointer-events-none absolute top-0 left-0 rounded-sm border border-line bg-surface-ground/90 px-2.5 py-1.5 whitespace-nowrap text-ink opacity-0 backdrop-blur-sm transition-opacity duration-150"
         />
         <span className="type-caption pointer-events-none absolute right-0 bottom-0 text-ink-disabled normal-case tracking-normal">
-          arraste para girar
+          {t("drag to rotate", "arraste para girar")}
         </span>
       </div>
       <div
         role="table"
-        aria-label="Calendário de fogo, focos por mês"
+        aria-label={t(
+          "Heat source calendar, hotspots per month",
+          "Calendário de fontes de calor, focos por mês",
+        )}
         className="sr-only"
       >
         <div role="row">
-          <span role="columnheader">Ano</span>
-          {MONTHS.map(([name]) => (
+          <span role="columnheader">{t("Year", "Ano")}</span>
+          {MONTH_NAMES.map((name) => (
             <span key={name} role="columnheader">
               {name}
             </span>
@@ -192,10 +192,15 @@ export function FireCalendarExample() {
       </div>
       <div className="mt-6 flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <span className="type-caption text-ink-muted">Focos por mês</span>
+          <span className="type-caption text-ink-muted">
+            {t("Hotspots per month", "Focos por mês")}
+          </span>
           <ul className="grid grid-cols-4 gap-1 sm:grid-cols-7">
             {(example?.scale ?? []).map((step) => (
-              <li key={step.label} className="flex min-w-0 flex-col gap-1.5">
+              <li
+                key={step.className}
+                className="flex min-w-0 flex-col gap-1.5"
+              >
                 <span
                   aria-hidden="true"
                   className={`h-3 rounded-xs ${step.className}`}
@@ -215,21 +220,21 @@ export function FireCalendarExample() {
             >
               <OutOfPatternDot />
             </span>
-            Fora do padrão
+            {t("Unusual", "Fora do padrão")}
           </li>
           <li className="flex items-center gap-2">
             <span
               aria-hidden="true"
               className={`h-4 w-7 rounded-xs ${HEAT_BACKGROUNDS[3]} ${IN_PROGRESS_STRIPES}`}
             />
-            Mês em andamento
+            {t("Current month", "Mês em andamento")}
           </li>
           <li className="flex items-center gap-2">
             <span
               aria-hidden="true"
               className="h-4 w-7 rounded-xs border border-dashed border-line"
             />
-            Sem dados ainda
+            {t("No data yet", "Sem dados ainda")}
           </li>
         </ul>
       </div>
@@ -238,11 +243,18 @@ export function FireCalendarExample() {
 }
 
 function cellLabel(cell: CalendarCell, outOfPattern: boolean): string {
-  const monthName = `${MONTHS[cell.month - 1][0]} de ${cell.year}`;
+  const monthName = monthTitle(cell);
   if (!isMeasured(cell)) {
-    return `${monthName}: sem dados ainda`;
+    return tr(`${monthName}: no data yet`, `${monthName}: sem dados ainda`);
   }
-  return `${monthName}: ${formatCount(cell.value ?? 0)} focos${outOfPattern ? ", fora do padrão" : ""}${cell.partial ? ", parcial" : ""}${cell.provisional ? ", preliminar" : ""}`;
+  const notes = [
+    outOfPattern ? tr("unusual", "fora do padrão") : null,
+    cell.partial ? tr("partial", "parcial") : null,
+    cell.provisional ? tr("preliminary", "preliminar") : null,
+  ].filter(Boolean);
+  return [`${monthName}: ${formatHotspots(cell.value ?? 0)}`, ...notes].join(
+    ", ",
+  );
 }
 
 function OutOfPatternDot() {

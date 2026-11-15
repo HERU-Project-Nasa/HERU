@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { compareLabels } from "@/i18n/format";
+import { inLocale, tr, useLocale } from "@/i18n/locale";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
 import {
   type CoverageRow,
@@ -73,6 +75,7 @@ function failed(paths: [string, PipelineFile<unknown>][]): string[] {
 }
 
 export function useAreaCalendar(requestedArea: string | null): AreaCalendar {
+  const locale = useLocale();
   const latest = usePipelineFile<LatestBatchRow>(LATEST_PATH);
   const coverageFile = usePipelineFile<CoverageRow>(COVERAGE_PATH);
   const countriesFile = usePipelineFile<CountryRow>(COUNTRIES_PATH);
@@ -146,18 +149,20 @@ export function useAreaCalendar(requestedArea: string | null): AreaCalendar {
 
   const areaOptions = useMemo<AreaOption[]>(
     () =>
-      countries
-        ? [
-            { value: WORLD_AREA, label: "Mundo" },
-            ...countries
-              .map((country) => ({
-                value: country.iso3,
-                label: countryName(country),
-              }))
-              .sort((a, b) => a.label.localeCompare(b.label, "pt-BR")),
-          ]
-        : [],
-    [countries],
+      inLocale(locale, () =>
+        countries
+          ? [
+              { value: WORLD_AREA, label: tr("World", "Mundo") },
+              ...countries
+                .map((country) => ({
+                  value: country.iso3,
+                  label: countryName(country),
+                }))
+                .sort((a, b) => compareLabels(a.label, b.label)),
+            ]
+          : [],
+      ),
+    [countries, locale],
   );
 
   return {

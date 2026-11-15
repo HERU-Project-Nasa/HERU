@@ -1,18 +1,41 @@
+import { localized } from "@/i18n/locale";
+
 export type CalendarMode = "count" | "anomaly";
 
-export const CALENDAR_MODES: { value: CalendarMode; label: string }[] = [
-  { value: "count", label: "Contagem" },
-  { value: "anomaly", label: "Anomalia" },
-];
+export const CALENDAR_MODES: { value: CalendarMode; label: string }[] =
+  localized(
+    [
+      { value: "count", label: "Count" },
+      { value: "anomaly", label: "Anomaly" },
+    ],
+    [
+      { value: "count", label: "Contagem" },
+      { value: "anomaly", label: "Anomalia" },
+    ],
+  );
 
-export const ANOMALY_LEVELS = [
-  { below: 0.5, className: "bg-delta-below", label: "< 0,5×" },
-  { below: 0.8, className: "bg-viirs", label: "0,5-0,8×" },
-  { below: 1.25, className: "border border-line bg-heat-0", label: "típico" },
-  { below: 2, className: "bg-heat-2", label: "1,25-2×" },
-  { below: 3, className: "bg-heat-3", label: "2-3×" },
-  { below: Infinity, className: "bg-delta-above", label: "> 3×" },
-];
+export const ANOMALY_LEVELS = localized(
+  [
+    { below: 0.5, className: "bg-delta-below", label: "< 0.5×" },
+    { below: 0.8, className: "bg-viirs", label: "0.5-0.8×" },
+    {
+      below: 1.25,
+      className: "border border-line bg-heat-0",
+      label: "typical",
+    },
+    { below: 2, className: "bg-heat-2", label: "1.25-2×" },
+    { below: 3, className: "bg-heat-3", label: "2-3×" },
+    { below: Infinity, className: "bg-delta-above", label: "> 3×" },
+  ],
+  [
+    { below: 0.5, className: "bg-delta-below", label: "< 0,5×" },
+    { below: 0.8, className: "bg-viirs", label: "0,5-0,8×" },
+    { below: 1.25, className: "border border-line bg-heat-0", label: "típico" },
+    { below: 2, className: "bg-heat-2", label: "1,25-2×" },
+    { below: 3, className: "bg-heat-3", label: "2-3×" },
+    { below: Infinity, className: "bg-delta-above", label: "> 3×" },
+  ],
+);
 
 export const TYPICAL_LEVEL = 2;
 

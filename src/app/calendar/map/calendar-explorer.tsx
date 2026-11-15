@@ -40,6 +40,7 @@ import {
 } from "@/fire-map/map-period";
 import { periodReport as buildPeriodReport } from "@/fire-map/period-report";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
+import { inLocale, useLocale, useTr } from "@/i18n/locale";
 import { FadeUp } from "@/motion/fade-up";
 import { WORLD_AREA } from "@/pipeline/series-row";
 import { ReportEvidence } from "@/report-evidence/report-evidence";
@@ -55,6 +56,8 @@ const MapSection = dynamic(
 );
 
 export function CalendarExplorer() {
+  const locale = useLocale();
+  const t = useTr();
   const router = useRouter();
   const searchParams = useSearchParams();
   const calendar = useAreaCalendar(searchParams.get("area"));
@@ -107,17 +110,29 @@ export function CalendarExplorer() {
   const periodReport = useMemo<PeriodReport | null>(
     () =>
       period && dailyRows && completeDate && ready
-        ? buildPeriodReport(
-            dailyRows,
-            years,
-            analysis,
-            source,
-            passes,
-            period,
-            completeDate,
+        ? inLocale(locale, () =>
+            buildPeriodReport(
+              dailyRows,
+              years,
+              analysis,
+              source,
+              passes,
+              period,
+              completeDate,
+            ),
           )
         : null,
-    [period, dailyRows, completeDate, ready, years, analysis, source, passes],
+    [
+      period,
+      dailyRows,
+      completeDate,
+      ready,
+      years,
+      analysis,
+      source,
+      passes,
+      locale,
+    ],
   );
   const appliedChips: { icon: SymbolName; text: string }[] = [
     ...(selectedYear
@@ -137,11 +152,15 @@ export function CalendarExplorer() {
   return (
     <main className="mx-auto max-w-[1328px] px-4 pt-6 pb-24 sm:px-8 lg:px-16 lg:pt-8">
       <h1 className="sr-only">
-        Mapa e calendário de focos de calor{areaName ? `, ${areaName}` : ""}
+        {t("Hotspot map and calendar", "Mapa e calendário de focos de calor")}
+        {areaName ? `, ${areaName}` : ""}
       </h1>
       <FadeUp>
         <section
-          aria-label="Filtros de pesquisa aplicados"
+          aria-label={t(
+            "Applied search filters",
+            "Filtros de pesquisa aplicados",
+          )}
           className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-linear-to-b from-surface-hover/60 to-surface px-4 py-3 shadow-[0_12px_32px_rgba(0,0,0,0.35)]"
         >
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -150,7 +169,7 @@ export function CalendarExplorer() {
                 aria-hidden="true"
                 className="size-1.5 rounded-full bg-data-burned"
               />
-              Filtros de pesquisa
+              {t("Search filters", "Filtros de pesquisa")}
             </span>
             {appliedChips.map((chip) => (
               <span
@@ -167,7 +186,7 @@ export function CalendarExplorer() {
             className={buttonClassName({ variant: "secondary", size: "sm" })}
           >
             <MaterialSymbol name="tune" className="size-[18px]" />
-            Editar
+            {t("Edit", "Editar")}
           </Link>
         </section>
       </FadeUp>
@@ -191,14 +210,14 @@ export function CalendarExplorer() {
               className={buttonClassName({ variant: "secondary", size: "md" })}
             >
               <MaterialSymbol name="date_range" className="size-[18px]" />
-              Comparar datas
+              {t("Compare dates", "Comparar datas")}
             </Link>
             <Link
               href={compareRegionsHref(world ? [] : [area], selectedYear)}
               className={buttonClassName({ variant: "secondary", size: "md" })}
             >
               <MaterialSymbol name="public" className="size-[18px]" />
-              Comparar regiões
+              {t("Compare regions", "Comparar regiões")}
             </Link>
           </div>
         </FadeUp>
@@ -238,8 +257,11 @@ export function CalendarExplorer() {
           onAreaChange={(next) =>
             router.replace(areaMapHref(next, selectedYear), { scroll: false })
           }
-          title="Calendário de fogo"
-          description="Cada linha é um ano e cada coluna, um mês. Os mesmos limites de cor valem para o calendário inteiro."
+          title={t("Heat source calendar", "Calendário de fontes de calor")}
+          description={t(
+            "Each row is a year and each column a month. The same color thresholds apply to the whole calendar.",
+            "Cada linha é um ano e cada coluna, um mês. Os mesmos limites de cor valem para o calendário inteiro.",
+          )}
           initialMode="count"
           focusRequest={focusRequest}
           selectedMonth={selectedMonth}
@@ -254,7 +276,7 @@ export function CalendarExplorer() {
             selectedMonth ? (
               <p className="type-body-sm flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-surface-hover px-4 py-3 text-ink">
                 <span>
-                  Mês escolhido:{" "}
+                  {t("Selected month:", "Mês escolhido:")}{" "}
                   <strong className="font-semibold">
                     {monthTitle({
                       year: Number(selectedMonth.slice(0, 4)),
@@ -274,7 +296,10 @@ export function CalendarExplorer() {
                     size: "sm",
                   })}
                 >
-                  Ver as anomalias deste mês
+                  {t(
+                    "See this month's anomalies",
+                    "Ver as anomalias deste mês",
+                  )}
                   <MaterialSymbol
                     name="arrow_forward"
                     className="size-[18px]"
@@ -283,7 +308,10 @@ export function CalendarExplorer() {
               </p>
             ) : (
               <p className="type-body-sm text-ink-muted">
-                Na visão em grade, clique num mês para ver as anomalias dele.
+                {t(
+                  "In the grid view, click a month to see its anomalies.",
+                  "Na visão em grade, clique num mês para ver as anomalias dele.",
+                )}
               </p>
             )
           }

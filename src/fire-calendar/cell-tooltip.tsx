@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import {
   computingReason,
@@ -50,20 +51,25 @@ export function CellTooltip({
   source: CalendarSource;
   lastDataDate: string;
 }) {
+  const t = useTr();
   const baseline = analysis.baselines[cell.month - 1];
   const measured = cell.state === "value" || cell.state === "zero";
   const typical = baseline ? (
-    <Detail term="Típico do mês">
+    <Detail term={t("Typical for the month", "Típico do mês")}>
       {formatCount(baseline.median)}
       {baseline.years < analysis.baselineYearCount && (
         <span className="block text-ink-muted">
-          referência carregando ({baseline.years} de{" "}
-          {analysis.baselineYearCount} anos)
+          {t(
+            `baseline loading (${baseline.years} of ${analysis.baselineYearCount} years)`,
+            `referência carregando (${baseline.years} de ${analysis.baselineYearCount} anos)`,
+          )}
         </span>
       )}
     </Detail>
   ) : (
-    <Detail term="Típico do mês">ainda sem referência</Detail>
+    <Detail term={t("Typical for the month", "Típico do mês")}>
+      {t("no baseline yet", "ainda sem referência")}
+    </Detail>
   );
 
   return (
@@ -86,15 +92,19 @@ export function CellTooltip({
           <dl className="flex flex-col gap-1">
             {typical}
             {baseline && cell.state === "value" && (
-              <Detail term="Diferença">
+              <Detail term={t("Difference", "Diferença")}>
                 {difference(cell.value!, baseline.median).text}
               </Detail>
             )}
             {rank && rankLabel(rank, cell.month) && (
-              <Detail term="Posição">{rankLabel(rank, cell.month)}</Detail>
+              <Detail term={t("Rank", "Posição")}>
+                {rankLabel(rank, cell.month)}
+              </Detail>
             )}
             {cell.origin && (
-              <Detail term="Origem">{ORIGIN_LABELS[cell.origin]}</Detail>
+              <Detail term={t("Origin", "Origem")}>
+                {ORIGIN_LABELS[cell.origin]}
+              </Detail>
             )}
           </dl>
         </>
@@ -109,7 +119,10 @@ export function CellTooltip({
           {cell.state === "computing"
             ? computingReason(cell)
             : cell.state === "loading"
-              ? "Carregando o histórico. Este mês chega na próxima atualização."
+              ? t(
+                  "Loading the history. This month arrives in the next update.",
+                  "Carregando o histórico. Este mês chega na próxima atualização.",
+                )
               : noDataReason(source, cell)}
         </p>
       )}
@@ -118,13 +131,18 @@ export function CellTooltip({
           {outlier && (
             <Badge>
               <MaterialSymbol name="flag" className="size-3.5 text-alert" />
-              Fora do padrão
+              {t("Unusual", "Fora do padrão")}
             </Badge>
           )}
           {cell.partial && (
-            <Badge>Parcial, até {formatDayMonth(lastDataDate)}</Badge>
+            <Badge>
+              {t(
+                `Partial, through ${formatDayMonth(lastDataDate)}`,
+                `Parcial, até ${formatDayMonth(lastDataDate)}`,
+              )}
+            </Badge>
           )}
-          {cell.provisional && <Badge>Preliminar</Badge>}
+          {cell.provisional && <Badge>{t("Preliminary", "Preliminar")}</Badge>}
         </p>
       )}
     </div>

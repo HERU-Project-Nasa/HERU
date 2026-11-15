@@ -10,6 +10,7 @@ import {
 } from "motion/react";
 import { useEffect, useRef } from "react";
 import { HeruLogo } from "@/brand/heru-logo";
+import { useTr } from "@/i18n/locale";
 import { StarField } from "@/star-field/star-field";
 
 export const LOADING_MINIMUM_SECONDS = 2;
@@ -45,6 +46,7 @@ export function LoadingScreen({
 }
 
 function LoadingProgress({ progress }: { progress: number }) {
+  const t = useTr();
   const barRef = useRef<HTMLDivElement>(null);
   const elapsed = useMotionValue(0);
   const downloaded = useMotionValue(0);
@@ -77,13 +79,13 @@ function LoadingProgress({ progress }: { progress: number }) {
   return (
     <div className="relative flex w-56 flex-col gap-3">
       <div className="type-caption flex justify-between text-ink-muted">
-        <span>Carregando a Terra</span>
+        <span>{t("Loading Earth", "Carregando a Terra")}</span>
         <m.span className="text-ink tabular-nums">{percent}</m.span>
       </div>
       <div
         ref={barRef}
         role="progressbar"
-        aria-label="Carregando a Terra"
+        aria-label={t("Loading Earth", "Carregando a Terra")}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={0}

@@ -1,3 +1,5 @@
+import { currentLocale, intlLocale, type Locale } from "@/i18n/locale";
+
 export type CountryRow = {
   iso3: string;
   name: string;
@@ -213,11 +215,21 @@ const ALPHA2_BY_ALPHA3: Record<string, string> = {
   ZWE: "ZW",
 };
 
-const PORTUGUESE_REGION_NAMES = new Intl.DisplayNames(["pt-BR"], {
-  type: "region",
-});
+const REGION_NAMES = new Map<Locale, Intl.DisplayNames>();
 
+/** Region names in the active language, one DisplayNames per language. */
+function regionNames(): Intl.DisplayNames {
+  const locale = currentLocale();
+  let names = REGION_NAMES.get(locale);
+  if (!names) {
+    names = new Intl.DisplayNames([intlLocale(locale)], { type: "region" });
+    REGION_NAMES.set(locale, names);
+  }
+  return names;
+}
+
+/** The country name in the active language, or the pipeline name. */
 export function countryName(country: CountryRow): string {
   const alpha2 = ALPHA2_BY_ALPHA3[country.iso3];
-  return (alpha2 && PORTUGUESE_REGION_NAMES.of(alpha2)) || country.name;
+  return (alpha2 && regionNames().of(alpha2)) || country.name;
 }

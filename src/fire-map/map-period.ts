@@ -1,8 +1,10 @@
+import { MONTH_ABBREVIATIONS } from "@/fire-calendar/calendar-labels";
 import {
   lastDayOfMonth,
   VIIRS_FIRST_MONTH,
   viirsLayerFor,
 } from "@/fire-calendar/calendar-matrix";
+import { localized, tr } from "@/i18n/locale";
 import type { SymbolName } from "@/icons/material-symbols";
 import type { PipelineCoverage } from "@/pipeline/pipeline-coverage";
 import type { SeriesLayer } from "@/pipeline/series-row";
@@ -36,37 +38,41 @@ export const PERIOD_PRESETS: {
   label: string;
   days: number;
   hours: number | null;
-}[] = [
-  { value: "24h", label: "24 h", days: 2, hours: 24 },
-  { value: "48h", label: "48 h", days: 3, hours: 48 },
-  { value: "7d", label: "7 dias", days: 7, hours: null },
-  { value: "14d", label: "14 dias", days: 14, hours: null },
-  { value: "30d", label: "30 dias", days: 30, hours: null },
-];
+}[] = localized(
+  [
+    { value: "24h", label: "24 h", days: 2, hours: 24 },
+    { value: "48h", label: "48 h", days: 3, hours: 48 },
+    { value: "7d", label: "7 days", days: 7, hours: null },
+    { value: "14d", label: "14 days", days: 14, hours: null },
+    { value: "30d", label: "30 days", days: 30, hours: null },
+  ],
+  [
+    { value: "24h", label: "24 h", days: 2, hours: 24 },
+    { value: "48h", label: "48 h", days: 3, hours: 48 },
+    { value: "7d", label: "7 dias", days: 7, hours: null },
+    { value: "14d", label: "14 dias", days: 14, hours: null },
+    { value: "30d", label: "30 dias", days: 30, hours: null },
+  ],
+);
 
-const SEASON_LOOKS: Record<SeasonId, { name: string; icon: SymbolName }> = {
-  summer: { name: "Verão", icon: "sunny" },
-  autumn: { name: "Outono", icon: "eco" },
-  winter: { name: "Inverno", icon: "ac_unit" },
-  spring: { name: "Primavera", icon: "local_florist" },
-};
+const SEASON_LOOKS: Record<SeasonId, { name: string; icon: SymbolName }> =
+  localized(
+    {
+      summer: { name: "Summer", icon: "sunny" },
+      autumn: { name: "Autumn", icon: "eco" },
+      winter: { name: "Winter", icon: "ac_unit" },
+      spring: { name: "Spring", icon: "local_florist" },
+    },
+    {
+      summer: { name: "Verão", icon: "sunny" },
+      autumn: { name: "Outono", icon: "eco" },
+      winter: { name: "Inverno", icon: "ac_unit" },
+      spring: { name: "Primavera", icon: "local_florist" },
+    },
+  );
 
 const SOUTHERN_ORDER: SeasonId[] = ["summer", "autumn", "winter", "spring"];
 const NORTHERN_ORDER: SeasonId[] = ["winter", "spring", "summer", "autumn"];
-const MONTH_ABBREVIATIONS = [
-  "jan",
-  "fev",
-  "mar",
-  "abr",
-  "mai",
-  "jun",
-  "jul",
-  "ago",
-  "set",
-  "out",
-  "nov",
-  "dez",
-];
 
 export function addDays(date: string, days: number): string {
   const moved = new Date(`${date}T00:00:00Z`);
@@ -106,12 +112,15 @@ export function yearPeriodEnd(year: number, lastDataDate: string): string {
 
 export function periodName(period: MapPeriod): string {
   if (period.hours) {
-    return `Últimas ${period.hours} h`;
+    return tr(`Last ${period.hours} h`, `Últimas ${period.hours} h`);
   }
   if (period.preset) {
-    return `Últimos ${periodDates(period).length} dias`;
+    const days = periodDates(period).length;
+    return tr(`Last ${days} days`, `Últimos ${days} dias`);
   }
-  return period.seasonKey ? "Estação escolhida" : "Período escolhido";
+  return period.seasonKey
+    ? tr("Selected season", "Estação escolhida")
+    : tr("Selected period", "Período escolhido");
 }
 
 export function usesPoints(period: MapPeriod, world: boolean): boolean {
@@ -130,25 +139,54 @@ export function layerForMonth(
     : (viirsLayerFor(month, coverage) ?? "modis");
 }
 
+/** "Nov 14" in English, "14 nov" in Portuguese. */
 function dayLabel(date: string): string {
-  return `${Number(date.slice(8, 10))} ${MONTH_ABBREVIATIONS[Number(date.slice(5, 7)) - 1]}`;
+  const day = Number(date.slice(8, 10));
+  const month = MONTH_ABBREVIATIONS[Number(date.slice(5, 7)) - 1];
+  return tr(`${month} ${day}`, `${day} ${month}`);
+}
+
+/** "Nov 14, 2026" in English, "14 nov 2026" in Portuguese. */
+function dayYearLabel(date: string): string {
+  return tr(
+    `${dayLabel(date)}, ${date.slice(0, 4)}`,
+    `${dayLabel(date)} ${date.slice(0, 4)}`,
+  );
 }
 
 export function periodLabel(period: MapPeriod): string {
   if (period.hours) {
-    return `Últimas ${period.hours} h até ${dayLabel(period.end)} ${period.end.slice(0, 4)}`;
+    return tr(
+      `Last ${period.hours} h up to ${dayYearLabel(period.end)}`,
+      `Últimas ${period.hours} h até ${dayYearLabel(period.end)}`,
+    );
   }
   const days = periodDates(period).length;
-  return `${dateRangeLabel(period.start, period.end)} · ${days} ${days === 1 ? "dia" : "dias"}`;
+  const range = dateRangeLabel(period.start, period.end);
+  return tr(
+    `${range} · ${days} ${days === 1 ? "day" : "days"}`,
+    `${range} · ${days} ${days === 1 ? "dia" : "dias"}`,
+  );
 }
 
 export function dateRangeLabel(start: string, end: string): string {
   if (start.slice(0, 4) !== end.slice(0, 4)) {
-    return `${dayLabel(start)} ${start.slice(0, 4)}-${dayLabel(end)} ${end.slice(0, 4)}`;
+    return tr(
+      `${dayYearLabel(start)} - ${dayYearLabel(end)}`,
+      `${dayYearLabel(start)}-${dayYearLabel(end)}`,
+    );
   }
+  const sameMonth = start.slice(0, 7) === end.slice(0, 7);
   const range =
-    start === end ? dayLabel(end) : `${dayLabel(start)}-${dayLabel(end)}`;
-  return `${range} ${end.slice(0, 4)}`;
+    start === end
+      ? dayLabel(end)
+      : tr(
+          sameMonth
+            ? `${dayLabel(start)}-${Number(end.slice(8, 10))}`
+            : `${dayLabel(start)}-${dayLabel(end)}`,
+          `${dayLabel(start)}-${dayLabel(end)}`,
+        );
+  return tr(`${range}, ${end.slice(0, 4)}`, `${range} ${end.slice(0, 4)}`);
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -214,9 +252,14 @@ export function partialDaysLabel(
   }
   const first =
     period.start > completeDate ? period.start : addDays(completeDate, 1);
-  return first === period.end
-    ? `${dayLabel(first)} ainda parcial`
-    : `${dayLabel(first)}-${dayLabel(period.end)} ainda parciais`;
+  if (first === period.end) {
+    return tr(
+      `${dayLabel(first)} still partial`,
+      `${dayLabel(first)} ainda parcial`,
+    );
+  }
+  const range = `${dayLabel(first)}-${dayLabel(period.end)}`;
+  return tr(`${range} still partial`, `${range} ainda parciais`);
 }
 
 export function monthsLabel(months: string[]): string {
@@ -225,8 +268,11 @@ export function monthsLabel(months: string[]): string {
       `${MONTH_ABBREVIATIONS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`,
   );
   return names.length > 2
-    ? `${names[0]} a ${names[names.length - 1]}`
-    : names.join(" e ");
+    ? tr(
+        `${names[0]}-${names[names.length - 1]}`,
+        `${names[0]} a ${names[names.length - 1]}`,
+      )
+    : names.join(tr(" and ", " e "));
 }
 
 export function seasonsOf(year: number, southern: boolean): Season[] {
