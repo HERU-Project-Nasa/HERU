@@ -12,6 +12,8 @@ import {
 } from "@/country-outlines/country-outlines";
 import { formatCount, formatDayMonth } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
+import { compareLabels } from "@/i18n/format";
+import { inLocale, localized, useLocale, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { FadeUp } from "@/motion/fade-up";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
@@ -26,10 +28,16 @@ import {
 
 const VISIBLE_COUNTRIES = 8;
 
-const TOTAL_UNITS: Record<YearTotalColumn, string> = {
-  harmonized: "focos equivalentes VIIRS",
-  modis: "focos MODIS",
-};
+const TOTAL_UNITS: Record<YearTotalColumn, string> = localized(
+  {
+    harmonized: "VIIRS-equivalent hotspots",
+    modis: "MODIS hotspots",
+  },
+  {
+    harmonized: "focos equivalentes VIIRS",
+    modis: "focos MODIS",
+  },
+);
 
 type CountryChoice = CountryRow & { label: string; total: number | null };
 
@@ -94,6 +102,7 @@ function ContinentCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useTr();
   return (
     <button
       type="button"
@@ -117,14 +126,19 @@ function ContinentCard({
       </span>
       <span className="type-heading-sm">
         {countryCount}{" "}
-        {countryCount === 1 ? "país disponível" : "países disponíveis"}
+        {countryCount === 1
+          ? t("country available", "país disponível")
+          : t("countries available", "países disponíveis")}
       </span>
       <span
         className={`type-body-sm tabular-nums ${selected ? "" : "text-ink-muted"}`}
       >
         {total === null
-          ? "Somando os focos"
-          : `${formatCount(total)} ${unit} em ${year}`}
+          ? t("Adding up the hotspots", "Somando os focos")
+          : t(
+              `${formatCount(total)} ${unit} in ${year}`,
+              `${formatCount(total)} ${unit} em ${year}`,
+            )}
       </span>
     </button>
   );
@@ -145,6 +159,7 @@ function CountryCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useTr();
   return (
     <button
       type="button"
@@ -177,7 +192,7 @@ function CountryCard({
       </span>
       <span className="flex items-baseline justify-between gap-2">
         <span className={`type-body-sm ${selected ? "" : "text-ink-muted"}`}>
-          Focos em {year}
+          {t(`Hotspots in ${year}`, `Focos em ${year}`)}
         </span>
         <span className="type-data">
           {country.total === null ? "-" : formatCount(country.total)}
@@ -205,7 +220,7 @@ function CountryCard({
             className={`type-body-sm flex items-center gap-1 ${selected ? "" : "text-ink-muted"}`}
           >
             <MaterialSymbol name="location_on" className="size-4" />
-            Território
+            {t("Area", "Território")}
           </span>
           <span className="type-body-sm tabular-nums">
             {formatArea(country.area_km2)}
@@ -218,6 +233,8 @@ function CountryCard({
 }
 
 export function AreaFilters() {
+  const locale = useLocale();
+  const t = useTr();
   const router = useRouter();
   const searchParams = useSearchParams();
   const coverageFile = usePipelineFile<CoverageRow>("meta/coverage.csv");
@@ -259,22 +276,26 @@ export function AreaFilters() {
   const { column, totals, pending } = useCountryYearTotals(countries, year);
   const boundaryAreas = useMemo(
     () =>
-      (countries ?? [])
-        .filter((country) => country.area_source === "cgaz")
-        .map(countryName)
-        .sort((a, b) => a.localeCompare(b, "pt-BR")),
-    [countries],
+      inLocale(locale, () =>
+        (countries ?? [])
+          .filter((country) => country.area_source === "cgaz")
+          .map(countryName)
+          .sort(compareLabels),
+      ),
+    [countries, locale],
   );
-  const unit = column ? TOTAL_UNITS[column] : "focos";
+  const unit = column ? TOTAL_UNITS[column] : t("hotspots", "focos");
 
   const choices = useMemo<CountryChoice[]>(
     () =>
-      (countries ?? []).map((country) => ({
-        ...country,
-        label: countryName(country),
-        total: totals.get(country.iso3) ?? null,
-      })),
-    [countries, totals],
+      inLocale(locale, () =>
+        (countries ?? []).map((country) => ({
+          ...country,
+          label: countryName(country),
+          total: totals.get(country.iso3) ?? null,
+        })),
+      ),
+    [countries, totals, locale],
   );
 
   const searchText = SEARCH_FORM(search.trim());
@@ -286,8 +307,7 @@ export function AreaFilters() {
       : choices.filter((choice) => choice.continent === continentId)
   ).sort(
     (a, b) =>
-      (b.total ?? -1) - (a.total ?? -1) ||
-      a.label.localeCompare(b.label, "pt-BR"),
+      (b.total ?? -1) - (a.total ?? -1) || compareLabels(a.label, b.label),
   );
   const shown =
     showAll || searchText ? listed : listed.slice(0, VISIBLE_COUNTRIES);
@@ -332,12 +352,16 @@ export function AreaFilters() {
             aria-hidden="true"
             className="size-1.5 rounded-full bg-data-burned"
           />
-          Calendário
+          {t("Calendar", "Calendário")}
         </p>
-        <h1 className="type-heading-lg text-ink">Escolha o ano e a região</h1>
+        <h1 className="type-heading-lg text-ink">
+          {t("Choose the year and region", "Escolha o ano e a região")}
+        </h1>
         <p className="type-body max-w-[560px] text-ink-muted">
-          Comece pelo ano, depois o continente e o país. Você pode mudar tudo no
-          mapa.
+          {t(
+            "Start with the year, then the continent and the country. You can change everything on the map.",
+            "Comece pelo ano, depois o continente e o país. Você pode mudar tudo no mapa.",
+          )}
         </p>
       </FadeUp>
 
@@ -347,23 +371,26 @@ export function AreaFilters() {
       >
         <FadeUp delay={0.08}>
           <h2 id="search-filters-title" className="type-section-title text-ink">
-            Filtros de pesquisa
+            {t("Search filters", "Filtros de pesquisa")}
           </h2>
         </FadeUp>
 
         <FadeUp delay={0.14} className="flex flex-col gap-4">
           <GroupHeader
             step={1}
-            title="Ano"
+            title={t("Year", "Ano")}
             aside={
               lastYear && lastDataDate
-                ? `${CALENDAR_FIRST_YEAR}-${lastYear} · ${lastYear} vai até ${formatDayMonth(lastDataDate)}`
+                ? t(
+                    `${CALENDAR_FIRST_YEAR}-${lastYear} · ${lastYear} runs through ${formatDayMonth(lastDataDate)}`,
+                    `${CALENDAR_FIRST_YEAR}-${lastYear} · ${lastYear} vai até ${formatDayMonth(lastDataDate)}`,
+                  )
                 : undefined
             }
           />
           <div
             role="radiogroup"
-            aria-label="Ano"
+            aria-label={t("Year", "Ano")}
             className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-12"
           >
             {years.map((option) => (
@@ -384,8 +411,12 @@ export function AreaFilters() {
         <FadeUp delay={0.2} className="flex flex-col gap-4">
           <GroupHeader
             step={2}
-            title="Continente"
-            aside={year ? `Focos de calor em ${year}` : undefined}
+            title={t("Continent", "Continente")}
+            aside={
+              year
+                ? t(`Hotspots in ${year}`, `Focos de calor em ${year}`)
+                : undefined
+            }
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CONTINENTS.map((option) => (
@@ -408,7 +439,7 @@ export function AreaFilters() {
 
         <FadeUp delay={0.26} className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-3">
-            <StepTitle step={3} title="País" />
+            <StepTitle step={3} title={t("Country", "País")} />
             <label className="relative flex w-full items-center sm:w-64">
               <MaterialSymbol
                 name="search"
@@ -418,8 +449,8 @@ export function AreaFilters() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar país"
-                aria-label="Buscar país"
+                placeholder={t("Search country", "Buscar país")}
+                aria-label={t("Search country", "Buscar país")}
                 className="type-body-sm h-10 w-full rounded-sm border border-line-strong bg-surface pr-3 pl-9 text-ink transition-colors duration-200 ease-standard placeholder:text-ink-muted hover:border-ink focus:border-ink"
               />
             </label>
@@ -427,15 +458,27 @@ export function AreaFilters() {
           {!continentId && !searchText ? (
             <p className="type-body-sm flex items-center gap-2 rounded-md border border-dashed border-line px-4 py-5 text-ink-muted">
               <MaterialSymbol name="info" className="size-[18px] shrink-0" />
-              Escolha um continente para ver os países, ou busque pelo nome.
+              {t(
+                "Choose a continent to see its countries, or search by name.",
+                "Escolha um continente para ver os países, ou busque pelo nome.",
+              )}
             </p>
           ) : (
             <>
               <p className="type-body-sm text-ink-muted">
                 {searchText
-                  ? `${listed.length} ${listed.length === 1 ? "país encontrado" : "países encontrados"}`
-                  : `${listed.length} países em ${continent?.name ?? ""}`}{" "}
-                · ordenados por focos em {year}
+                  ? t(
+                      `${listed.length} ${listed.length === 1 ? "country found" : "countries found"}`,
+                      `${listed.length} ${listed.length === 1 ? "país encontrado" : "países encontrados"}`,
+                    )
+                  : t(
+                      `${listed.length} ${listed.length === 1 ? "country" : "countries"} in ${continent?.name ?? ""}`,
+                      `${listed.length} países em ${continent?.name ?? ""}`,
+                    )}
+                {t(
+                  ` · sorted by hotspots in ${year}`,
+                  ` · ordenados por focos em ${year}`,
+                )}
               </p>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {shown.map((choice) => (
@@ -456,7 +499,12 @@ export function AreaFilters() {
                   onClick={() => setShowAll(true)}
                   className={`${buttonClassName({ variant: "secondary", size: "md" })} self-center`}
                 >
-                  Ver os outros {listed.length - shown.length} países
+                  {listed.length - shown.length === 1
+                    ? t("See 1 more country", "Ver os outros 1 países")
+                    : t(
+                        `See the other ${listed.length - shown.length} countries`,
+                        `Ver os outros ${listed.length - shown.length} países`,
+                      )}
                   <MaterialSymbol
                     name="keyboard_arrow_down"
                     className="size-[18px]"
@@ -464,11 +512,19 @@ export function AreaFilters() {
                 </button>
               )}
               <p className="type-body-sm text-ink-muted">
-                Território: área de terra do Banco Mundial.
+                {t(
+                  "Area: World Bank land area.",
+                  "Território: área de terra do Banco Mundial.",
+                )}
                 {boundaryAreas.length > 0 &&
-                  ` * ${boundaryAreas.join(", ")}: o Banco Mundial não tem a área, então ela vem das fronteiras (CGAZ) e inclui lagos e rios.`}{" "}
-                Os focos são os números da pipeline, sem arredondamento além do
-                número inteiro.
+                  t(
+                    ` * ${boundaryAreas.join(", ")}: the World Bank has no figure, so the area comes from the boundaries (CGAZ) and includes lakes and rivers.`,
+                    ` * ${boundaryAreas.join(", ")}: o Banco Mundial não tem a área, então ela vem das fronteiras (CGAZ) e inclui lagos e rios.`,
+                  )}{" "}
+                {t(
+                  "Hotspot counts are the pipeline's numbers, with no rounding beyond whole numbers.",
+                  "Os focos são os números da pipeline, sem arredondamento além do número inteiro.",
+                )}
               </p>
             </>
           )}
@@ -487,10 +543,12 @@ export function AreaFilters() {
               aria-hidden="true"
               className={`size-1.5 rounded-full ${area ? "bg-status-live" : "bg-ink-disabled"}`}
             />
-            Sua escolha
+            {t("Your choice", "Sua escolha")}
           </span>
           <span className="type-heading-sm truncate text-ink">
-            {summary.length ? summary.join(" · ") : "Nada escolhido ainda"}
+            {summary.length
+              ? summary.join(" · ")
+              : t("Nothing chosen yet", "Nada escolhido ainda")}
           </span>
         </div>
         <div className="flex w-full gap-3 sm:w-auto">
@@ -499,7 +557,7 @@ export function AreaFilters() {
             onClick={clearFilters}
             className={`${buttonClassName({ variant: "secondary", size: "md" })} flex-1 sm:flex-none`}
           >
-            Limpar filtros
+            {t("Clear filters", "Limpar filtros")}
           </button>
           <button
             type="button"
@@ -507,7 +565,7 @@ export function AreaFilters() {
             onClick={() => area && router.push(areaMapHref(area.iso3, year))}
             className={`${buttonClassName({ variant: "primary", size: "md" })} flex-1 disabled:cursor-not-allowed disabled:border-line disabled:bg-surface-raised disabled:text-ink-disabled sm:flex-none`}
           >
-            Pesquisar
+            {t("Search", "Pesquisar")}
             <MaterialSymbol name="arrow_forward" className="size-[18px]" />
           </button>
         </div>

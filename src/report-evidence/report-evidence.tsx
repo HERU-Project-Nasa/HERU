@@ -9,9 +9,12 @@ import {
   formatCount,
   formatHotspots,
   formatRatio,
+  hotspotsWord,
   MONTH_NAMES,
   monthRangeLabel,
+  monthsLabel,
   monthTitle,
+  ordinal,
   PASSES_DESCRIPTIONS,
   sinceLabel,
   SOURCE_SHORT_UNITS,
@@ -33,6 +36,7 @@ import {
 } from "@/fire-calendar/calendar-statistics";
 import type { YearValue } from "@/fire-calendar/month-comparison";
 import type { AreaCalendar } from "@/fire-calendar/use-area-calendar";
+import { inLocale, tr, useLocale, useTr } from "@/i18n/locale";
 import type { SymbolName } from "@/icons/material-symbols";
 import {
   bandVerdict,
@@ -67,10 +71,6 @@ function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
-function hotspotsUnit(value: number): string {
-  return Math.round(value) === 1 ? "foco" : "focos";
-}
-
 function usualBand(
   history: YearValue[],
   firstYear: number,
@@ -92,6 +92,7 @@ function DifferenceChip({
   value: number;
   typical: number;
 }) {
+  useLocale();
   const { text, direction } = difference(value, typical);
   return (
     <EvidenceChip
@@ -116,6 +117,7 @@ function VerdictChip({
   value: number;
   band: [number, number] | null;
 }) {
+  useLocale();
   const verdict = bandVerdict(value, band);
   if (!verdict) {
     return null;
@@ -131,15 +133,16 @@ function VerdictChip({
 }
 
 function TypicalStat({ typical, years }: { typical: number; years: number }) {
+  const t = useTr();
   return (
     <EvidenceStat
-      label="Típico"
+      label={t("Typical", "Típico")}
       value={typical}
       format={formatCount}
-      unit={hotspotsUnit(typical)}
+      unit={hotspotsWord(typical)}
     >
       <p className="type-body-sm text-ink-muted">
-        Mediana de {yearsLabel(years)}
+        {t(`Median of ${yearsLabel(years)}`, `Mediana de ${yearsLabel(years)}`)}
       </p>
     </EvidenceStat>
   );
@@ -172,7 +175,7 @@ function seasonEvidence(calendar: AreaCalendar): Evidence | null {
     (cell) => cell.state === "future" || cell.partial,
   );
   const comparedLabel = compared
-    ? `${compared.year}${ongoing ? ", até agora" : ""}`
+    ? `${compared.year}${ongoing ? tr(", so far", ", até agora") : ""}`
     : "";
   const comparedShares =
     compared && comparedTotal > 0
@@ -196,15 +199,24 @@ function seasonEvidence(calendar: AreaCalendar): Evidence | null {
     .join(", ");
 
   return {
-    eyebrow: `Temporada crítica · ${areaName}`,
+    eyebrow: tr(`Peak season · ${areaName}`, `Temporada crítica · ${areaName}`),
     icon: "event",
-    title: `${capitalized(range)} concentra ${shareLabel(season.share)} dos focos de um ano típico.`,
-    lead: `${count === 1 ? "É o mês" : `São ${count} meses seguidos`}: o menor trecho do ano que reúne pelo menos ${shareLabel(SEASON_SHARE)} dos focos de um ano típico.`,
+    title: tr(
+      `${capitalized(range)} holds ${shareLabel(season.share)} of a typical year's hotspots.`,
+      `${capitalized(range)} concentra ${shareLabel(season.share)} dos focos de um ano típico.`,
+    ),
+    lead: tr(
+      `${count === 1 ? "A single month" : `${count} months in a row`}: the shortest stretch of the year that holds at least ${shareLabel(SEASON_SHARE)} of a typical year's hotspots.`,
+      `${count === 1 ? "É o mês" : `São ${count} meses seguidos`}: o menor trecho do ano que reúne pelo menos ${shareLabel(SEASON_SHARE)} dos focos de um ano típico.`,
+    ),
     summary:
       comparedShare !== null && points !== null ? (
         <>
           <EvidenceChip icon="calendar_month">
-            Em {comparedLabel}: {shareLabel(comparedShare)} dos focos do ano
+            {tr(
+              `In ${comparedLabel}: ${shareLabel(comparedShare)} of the year's hotspots`,
+              `Em ${comparedLabel}: ${shareLabel(comparedShare)} dos focos do ano`,
+            )}
           </EvidenceChip>
           <EvidenceChip
             tone={points > 0 ? "above" : points < 0 ? "below" : "neutral"}
@@ -217,12 +229,18 @@ function seasonEvidence(calendar: AreaCalendar): Evidence | null {
             }
           >
             {points === 0
-              ? "igual ao típico"
-              : `${Math.abs(points)} p.p. ${points > 0 ? "acima" : "abaixo"} do típico`}
+              ? tr("same as typical", "igual ao típico")
+              : tr(
+                  `${Math.abs(points)} pp ${points > 0 ? "above" : "below"} typical`,
+                  `${Math.abs(points)} p.p. ${points > 0 ? "acima" : "abaixo"} do típico`,
+                )}
           </EvidenceChip>
         </>
       ) : null,
-    note: `${capitalized(SOURCE_SHORT_UNITS[source])} · mediana ${baselineLabel(analysis)}`,
+    note: tr(
+      `${capitalized(SOURCE_SHORT_UNITS[source])} · median ${baselineLabel(analysis)}`,
+      `${capitalized(SOURCE_SHORT_UNITS[source])} · mediana ${baselineLabel(analysis)}`,
+    ),
     csv: [
       `mes,mediana,participacao_tipica${compared ? `,focos_${compared.year},participacao_${compared.year}` : ""}`,
       ...medians.map((value, month) => {
@@ -244,22 +262,31 @@ function seasonEvidence(calendar: AreaCalendar): Evidence | null {
           compare={
             comparedShares
               ? {
-                  label: `${capitalized(comparedLabel)}: parte de cada mês`,
+                  label: tr(
+                    `${capitalized(comparedLabel)}: share of each month`,
+                    `${capitalized(comparedLabel)}: parte de cada mês`,
+                  ),
                   shares: comparedShares,
                 }
               : null
           }
-          label={`Participação de cada mês nos focos de um ano típico em ${areaName}. ${capitalized(shares)}, somando ${shareLabel(season.share)}.`}
+          label={tr(
+            `Each month's share of a typical year's hotspots in ${areaName}. ${capitalized(shares)}, adding up to ${shareLabel(season.share)}.`,
+            `Participação de cada mês nos focos de um ano típico em ${areaName}. ${capitalized(shares)}, somando ${shareLabel(season.share)}.`,
+          )}
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <EvidenceStat
-            label="Ano típico"
+            label={tr("Typical year", "Ano típico")}
             value={season.share * 100}
             format={(value) => shareLabel(value / 100)}
-            unit="dos focos do ano"
+            unit={tr("of the year's hotspots", "dos focos do ano")}
           >
             <p className="type-body-sm text-ink-muted">
-              {capitalized(`mediana ${baselineLabel(analysis)}`)}
+              {tr(
+                `Median ${baselineLabel(analysis)}`,
+                capitalized(`mediana ${baselineLabel(analysis)}`),
+              )}
             </p>
           </EvidenceStat>
           {comparedShare !== null && (
@@ -267,10 +294,13 @@ function seasonEvidence(calendar: AreaCalendar): Evidence | null {
               label={comparedLabel}
               value={comparedShare * 100}
               format={(value) => shareLabel(value / 100)}
-              unit="dos focos do ano"
+              unit={tr("of the year's hotspots", "dos focos do ano")}
             >
               <p className="type-body-sm text-ink-muted">
-                Nos mesmos meses: {range}
+                {tr(
+                  `In the same months: ${range}`,
+                  `Nos mesmos meses: ${range}`,
+                )}
               </p>
             </EvidenceStat>
           )}
@@ -307,17 +337,29 @@ function recordEvidence(calendar: AreaCalendar): Evidence | null {
   const typical = median(totals);
   const allMonths = enabledMonths.every(Boolean);
   return {
-    eyebrow: `Ano recorde · ${areaName}`,
+    eyebrow: tr(`Record year · ${areaName}`, `Ano recorde · ${areaName}`),
     icon: "bar_chart",
     title:
       record.ratio !== null
-        ? `${record.year} teve ${formatRatio(record.ratio)}× os focos de um ano típico.`
-        : `${record.year} teve ${formatHotspots(record.total)}.`,
-    lead: `Somamos ${allMonths ? "os 12 meses" : `os meses escolhidos (${enabledMonthsLabel(enabledMonths)})`} de cada ano completo ${baselineLabel(analysis)}. O ano típico é a mediana desses ${yearsLabel(totals.length)}.`,
+        ? tr(
+            `${record.year} had ${formatRatio(record.ratio)}× the hotspots of a typical year.`,
+            `${record.year} teve ${formatRatio(record.ratio)}× os focos de um ano típico.`,
+          )
+        : tr(
+            `${record.year} had ${formatHotspots(record.total)}.`,
+            `${record.year} teve ${formatHotspots(record.total)}.`,
+          ),
+    lead: tr(
+      `We add up ${allMonths ? "all 12 months" : `the chosen months (${enabledMonthsLabel(enabledMonths)})`} of each complete year ${baselineLabel(analysis)}. The typical year is the median of these ${yearsLabel(totals.length)}.`,
+      `Somamos ${allMonths ? "os 12 meses" : `os meses escolhidos (${enabledMonthsLabel(enabledMonths)})`} de cada ano completo ${baselineLabel(analysis)}. O ano típico é a mediana desses ${yearsLabel(totals.length)}.`,
+    ),
     summary: (
       <>
         <EvidenceChip icon="flag">
-          Maior total em {yearsLabel(totals.length)}
+          {tr(
+            `Highest total in ${yearsLabel(totals.length)}`,
+            `Maior total em ${yearsLabel(totals.length)}`,
+          )}
         </EvidenceChip>
         {typical ? (
           <DifferenceChip value={record.total} typical={typical} />
@@ -337,23 +379,32 @@ function recordEvidence(calendar: AreaCalendar): Evidence | null {
         <YearBars
           points={complete}
           highlight={record.year}
-          highlightLabel={`${record.year}, o recorde`}
+          highlightLabel={tr(
+            `${record.year}, the record`,
+            `${record.year}, o recorde`,
+          )}
           typical={typical}
           band={null}
-          label={`Focos por ano em ${areaName}, ${baselineLabel(analysis)}. O recorde é ${record.year}, com ${formatHotspots(record.total)}${typical !== null ? `; o ano típico tem ${formatHotspots(typical)}` : ""}.`}
+          label={tr(
+            `Hotspots per year in ${areaName}, ${baselineLabel(analysis)}. The record is ${record.year}, with ${formatHotspots(record.total)}${typical !== null ? `; the typical year has ${formatHotspots(typical)}` : ""}.`,
+            `Focos por ano em ${areaName}, ${baselineLabel(analysis)}. O recorde é ${record.year}, com ${formatHotspots(record.total)}${typical !== null ? `; o ano típico tem ${formatHotspots(typical)}` : ""}.`,
+          )}
           valueLabel={formatCount}
           labelEveryBar={false}
         />
         <div className="grid gap-4 sm:grid-cols-2">
           {typical !== null && (
             <EvidenceStat
-              label="Ano típico"
+              label={tr("Typical year", "Ano típico")}
               value={typical}
               format={formatCount}
-              unit={hotspotsUnit(typical)}
+              unit={hotspotsWord(typical)}
             >
               <p className="type-body-sm text-ink-muted">
-                {capitalized(`mediana ${baselineLabel(analysis)}`)}
+                {tr(
+                  `Median ${baselineLabel(analysis)}`,
+                  capitalized(`mediana ${baselineLabel(analysis)}`),
+                )}
               </p>
             </EvidenceStat>
           )}
@@ -361,11 +412,14 @@ function recordEvidence(calendar: AreaCalendar): Evidence | null {
             label={String(record.year)}
             value={record.total}
             format={formatCount}
-            unit={hotspotsUnit(record.total)}
+            unit={hotspotsWord(record.total)}
           >
             {!typical && (
               <p className="type-body-sm text-ink-muted">
-                O ano típico não tem focos.
+                {tr(
+                  "The typical year has no hotspots.",
+                  "O ano típico não tem focos.",
+                )}
               </p>
             )}
           </EvidenceStat>
@@ -403,24 +457,42 @@ function outlierEvidence(calendar: AreaCalendar): Evidence | null {
         ratio: typical ? cell.value! / typical : null,
       };
     });
-  const criteria = [
-    "Passa do percentil 90 do mesmo mês: mais focos que 9 em cada 10 anos",
-    "Tem pelo menos o dobro da mediana do mesmo mês",
-    `Tem no mínimo ${OUTLIER_MINIMUM} focos`,
-  ];
+  const criteria = tr(
+    [
+      "Goes above the 90th percentile of the same month: more hotspots than in 9 out of 10 years",
+      "Has at least twice the median of the same month",
+      `Has at least ${OUTLIER_MINIMUM} hotspots`,
+    ],
+    [
+      "Passa do percentil 90 do mesmo mês: mais focos que 9 em cada 10 anos",
+      "Tem pelo menos o dobro da mediana do mesmo mês",
+      `Tem no mínimo ${OUTLIER_MINIMUM} focos`,
+    ],
+  );
   return {
-    eyebrow: `Fora do padrão · ${areaName}`,
+    eyebrow: tr(`Unusual months · ${areaName}`, `Fora do padrão · ${areaName}`),
     icon: "flag",
-    title: `${outliers.length} ${outliers.length === 1 ? "mês ficou" : "meses ficaram"} fora do padrão ${sinceLabel(analysis)}.`,
-    lead: "Um mês fica fora do padrão quando cumpre as três condições, sempre comparado com o mesmo mês dos outros anos:",
+    title: tr(
+      `${outliers.length} unusual ${outliers.length === 1 ? "month" : "months"} ${sinceLabel(analysis)}.`,
+      `${outliers.length} ${outliers.length === 1 ? "mês ficou" : "meses ficaram"} fora do padrão ${sinceLabel(analysis)}.`,
+    ),
+    lead: tr(
+      "A month is unusual when it meets all three conditions, always compared with the same month in the other years:",
+      "Um mês fica fora do padrão quando cumpre as três condições, sempre comparado com o mesmo mês dos outros anos:",
+    ),
     summary: (
       <>
         <EvidenceChip icon="schedule">
-          Mais recente: {monthTitle(latest)}
+          {tr(
+            `Latest: ${monthTitle(latest)}`,
+            `Mais recente: ${monthTitle(latest)}`,
+          )}
         </EvidenceChip>
         <EvidenceChip icon="bar_chart">
-          Ano com mais: {busiest.year}, {busiest.value}{" "}
-          {busiest.value === 1 ? "mês" : "meses"}
+          {tr(
+            `Year with the most: ${busiest.year}, ${monthsLabel(busiest.value)}`,
+            `Ano com mais: ${busiest.year}, ${busiest.value} ${busiest.value === 1 ? "mês" : "meses"}`,
+          )}
         </EvidenceChip>
       </>
     ),
@@ -450,15 +522,24 @@ function outlierEvidence(calendar: AreaCalendar): Evidence | null {
         </ol>
         <div className="flex flex-col gap-2">
           <p className="type-eyebrow text-ink-muted">
-            Meses fora do padrão em cada ano
+            {tr(
+              "Unusual months in each year",
+              "Meses fora do padrão em cada ano",
+            )}
           </p>
           <YearBars
             points={counts}
             highlight={latest.year}
-            highlightLabel={`${latest.year}: ano do mais recente`}
+            highlightLabel={tr(
+              `${latest.year}: year of the latest`,
+              `${latest.year}: ano do mais recente`,
+            )}
             typical={null}
             band={null}
-            label={`Meses fora do padrão por ano em ${areaName}, ${sinceLabel(analysis)}. O ano com mais foi ${busiest.year}, com ${busiest.value}.`}
+            label={tr(
+              `Unusual months per year in ${areaName}, ${sinceLabel(analysis)}. The year with the most was ${busiest.year}, with ${busiest.value}.`,
+              `Meses fora do padrão por ano em ${areaName}, ${sinceLabel(analysis)}. O ano com mais foi ${busiest.year}, com ${busiest.value}.`,
+            )}
             valueLabel={String}
             labelEveryBar
           />
@@ -467,12 +548,18 @@ function outlierEvidence(calendar: AreaCalendar): Evidence | null {
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="type-eyebrow text-ink-muted">
               {recent.length === 1
-                ? "O caso"
-                : `Os ${recent.length} mais recentes`}
+                ? tr("The case", "O caso")
+                : tr(
+                    `The ${recent.length} most recent`,
+                    `Os ${recent.length} mais recentes`,
+                  )}
             </p>
             <p className="type-body-sm flex items-center gap-1.5 text-ink-muted">
               <span aria-hidden="true" className="h-3 w-px bg-ink" />
-              linha fina: o típico do mês (1×)
+              {tr(
+                "thin line: typical for the month (1×)",
+                "linha fina: o típico do mês (1×)",
+              )}
             </p>
           </div>
           <RatioList rows={recent} />
@@ -528,7 +615,7 @@ function comparisonBody({
           label={label}
           value={value}
           format={formatCount}
-          unit={hotspotsUnit(value)}
+          unit={hotspotsWord(value)}
         >
           <p className="type-body-sm text-ink-muted">
             {capitalized(difference(value, typical).text)}
@@ -556,27 +643,49 @@ function monthEvidence(
     analysis.lastBaselineYear,
   );
   const monthName = MONTH_NAMES[cell.month - 1];
-  const days = throughDay ? `de 1 a ${throughDay} de ${monthName}` : null;
+  const days = throughDay
+    ? tr(`${monthName} 1-${throughDay}`, `de 1 a ${throughDay} de ${monthName}`)
+    : null;
+  // CSV column names stay in Portuguese in every language.
+  const csvDays = throughDay
+    ? inLocale(
+        "pt",
+        () => `de 1 a ${throughDay} de ${MONTH_NAMES[cell.month - 1]}`,
+      )
+    : null;
   const name = capitalized(monthTitle(cell));
   return {
-    eyebrow: `${kind === "closed-month" ? "Último mês fechado" : "Mês corrente"} · ${areaName}`,
+    eyebrow: `${
+      kind === "closed-month"
+        ? tr("Last full month", "Último mês fechado")
+        : tr("Current month", "Mês corrente")
+    } · ${areaName}`,
     icon: "calendar_month",
-    title: `${name} teve ${formatHotspots(value)}${throughDay ? ` de 1 a ${throughDay}` : ""}, ${difference(value, typical).text}.`,
-    lead: `Comparamos com ${days ? `os mesmos dias, ${days},` : `${monthName}`} de cada ano. O típico é a mediana ${baselineLabel(analysis)}.`,
+    title: tr(
+      `${name} had ${formatHotspots(value)}${throughDay ? ` through the ${ordinal(throughDay)}` : ""}, ${difference(value, typical).text}.`,
+      `${name} teve ${formatHotspots(value)}${throughDay ? ` de 1 a ${throughDay}` : ""}, ${difference(value, typical).text}.`,
+    ),
+    lead: tr(
+      `We compare it with ${days ? `the same days, ${days},` : `${monthName}`} of each year. Typical is the median ${baselineLabel(analysis)}.`,
+      `Comparamos com ${days ? `os mesmos dias, ${days},` : `${monthName}`} de cada ano. O típico é a mediana ${baselineLabel(analysis)}.`,
+    ),
     summary: (
       <>
         <DifferenceChip value={value} typical={typical} />
         <VerdictChip value={value} band={band} />
         {rank && rank.of > 1 && (
           <EvidenceChip icon="bar_chart">
-            {rank.rank}º {monthName} mais ativo em {yearsLabel(rank.of)}
+            {tr(
+              `${ordinal(rank.rank)} busiest ${monthName} in ${yearsLabel(rank.of)}`,
+              `${ordinal(rank.rank)} ${monthName} mais ativo em ${yearsLabel(rank.of)}`,
+            )}
           </EvidenceChip>
         )}
       </>
     ),
     note: `${capitalized(SOURCE_SHORT_UNITS[source])} · ${PASSES_DESCRIPTIONS[calendar.passes]}`,
     csv: [
-      days ? `ano,focos_${days.replaceAll(" ", "_")}` : "ano,focos",
+      csvDays ? `ano,focos_${csvDays.replaceAll(" ", "_")}` : "ano,focos",
       ...history.map((point) => `${point.year},${csvValue(point.value)}`),
     ],
     showKey: cell.key,
@@ -588,8 +697,16 @@ function monthEvidence(
       typical,
       band,
       baselineYears: comparison.baselineYears,
-      label: throughDay ? `1 a ${throughDay} de ${monthTitle(cell)}` : name,
-      chartLabel: `Focos ${days ? `${days}` : `em ${monthName}`} de cada ano em ${areaName}, de ${history[0]?.year} a ${cell.year}. ${cell.year} tem ${formatHotspots(value)}; o típico é ${formatHotspots(typical)}.`,
+      label: throughDay
+        ? tr(
+            `${monthName} 1-${throughDay}, ${cell.year}`,
+            `1 a ${throughDay} de ${monthTitle(cell)}`,
+          )
+        : name,
+      chartLabel: tr(
+        `Hotspots ${days ? `on ${days}` : `in ${monthName}`} of each year in ${areaName}, from ${history[0]?.year} to ${cell.year}. ${cell.year} has ${formatHotspots(value)}; typical is ${formatHotspots(typical)}.`,
+        `Focos ${days ? `${days}` : `em ${monthName}`} de cada ano em ${areaName}, de ${history[0]?.year} a ${cell.year}. ${cell.year} tem ${formatHotspots(value)}; o típico é ${formatHotspots(typical)}.`,
+      ),
     }),
   };
 }
@@ -616,14 +733,20 @@ function periodEvidence(
     eyebrow: `${eyebrow} · ${areaName}`,
     icon: "date_range",
     title: `${dates}: ${formatHotspots(value)}, ${difference(value, typical).text}.`,
-    lead: `Somamos os mesmos dias em cada ano e comparamos com a mediana ${baselineLabel(analysis)}.${note ? ` ${note}` : ""}`,
+    lead: tr(
+      `We add up the same days in each year and compare with the median ${baselineLabel(analysis)}.${note ? ` ${note}` : ""}`,
+      `Somamos os mesmos dias em cada ano e comparamos com a mediana ${baselineLabel(analysis)}.${note ? ` ${note}` : ""}`,
+    ),
     summary: (
       <>
         <DifferenceChip value={value} typical={typical} />
         <VerdictChip value={value} band={band} />
         {rank && rank.of > 1 && (
           <EvidenceChip icon="bar_chart">
-            {rank.rank}º mais ativo nestas datas em {yearsLabel(rank.of)}
+            {tr(
+              `${ordinal(rank.rank)} busiest for these dates in ${yearsLabel(rank.of)}`,
+              `${ordinal(rank.rank)} mais ativo nestas datas em ${yearsLabel(rank.of)}`,
+            )}
           </EvidenceChip>
         )}
       </>
@@ -643,7 +766,10 @@ function periodEvidence(
       band,
       baselineYears: comparison.baselineYears,
       label: dates,
-      chartLabel: `Focos nas mesmas datas de cada ano em ${areaName}, de ${history[0]?.year} a ${history.at(-1)?.year}. ${startYear} tem ${formatHotspots(value)}; o típico é ${formatHotspots(typical)}.`,
+      chartLabel: tr(
+        `Hotspots on the same dates of each year in ${areaName}, from ${history[0]?.year} to ${history.at(-1)?.year}. ${startYear} has ${formatHotspots(value)}; typical is ${formatHotspots(typical)}.`,
+        `Focos nas mesmas datas de cada ano em ${areaName}, de ${history[0]?.year} a ${history.at(-1)?.year}. ${startYear} tem ${formatHotspots(value)}; o típico é ${formatHotspots(typical)}.`,
+      ),
     }),
   };
 }
@@ -680,6 +806,7 @@ export function ReportEvidence({
   onClose: () => void;
   onShow: (key: string) => void;
 }) {
+  useLocale();
   const evidence = evidenceFor(kind, calendar, period);
   if (!evidence) {
     return null;

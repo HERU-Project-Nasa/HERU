@@ -6,6 +6,7 @@ import {
   formatCount,
   MONTH_ABBREVIATIONS,
 } from "@/fire-calendar/calendar-labels";
+import { useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
 import { usePipelineFile } from "@/pipeline/pipeline-files";
@@ -69,6 +70,7 @@ function monthLabel(month: string): string {
 }
 
 export function ValidationChart() {
+  const t = useTr();
   const [area] = useMethodologyArea();
   const figureRef = useRef<HTMLElement>(null);
   const reveal = useChartReveal(figureRef);
@@ -76,7 +78,11 @@ export function ValidationChart() {
   const countries = usePipelineFile<CountryRow>("meta/countries.csv").rows;
   const country = countries?.find((candidate) => candidate.iso3 === area);
   const areaName =
-    area === WORLD_AREA ? "Mundo" : country ? countryName(country) : "";
+    area === WORLD_AREA
+      ? t("World", "Mundo")
+      : country
+        ? countryName(country)
+        : "";
 
   if (!file.rows) {
     return file.error ? null : (
@@ -96,8 +102,11 @@ export function ValidationChart() {
   if (rows.length === 0) {
     return (
       <p className="type-body-sm flex items-start gap-2 text-ink-muted">
-        <MaterialSymbol name="info" className="mt-0.5 size-4 shrink-0" />A
-        pipeline não publicou a validação mês a mês desta região.
+        <MaterialSymbol name="info" className="mt-0.5 size-4 shrink-0" />
+        {t(
+          "The pipeline has not published the month-by-month validation for this region.",
+          "A pipeline não publicou a validação mês a mês desta região.",
+        )}
       </p>
     );
   }
@@ -125,7 +134,7 @@ export function ValidationChart() {
   const lines = [
     {
       values: observed,
-      label: "S-NPP observado",
+      label: t("S-NPP observed", "S-NPP observado"),
       className: "stroke-ink",
       swatch: "fill-ink",
       width: 2.5,
@@ -150,20 +159,26 @@ export function ValidationChart() {
     >
       <figcaption className="flex flex-col gap-1">
         <span className="type-heading-sm text-ink">
-          Observado e reconstruído · {areaName}
+          {t(
+            `Observed and reconstructed · ${areaName}`,
+            `Observado e reconstruído · ${areaName}`,
+          )}
         </span>
         <span className="type-body-sm text-ink-muted">
-          Focos por mês, de {MONTH_ABBREVIATIONS[Number(first.slice(5)) - 1]}{" "}
-          {first.slice(0, 4)} a {MONTH_ABBREVIATIONS[Number(last.slice(5)) - 1]}{" "}
-          {last.slice(0, 4)}. A linha tracejada é o que o MODIS × k diria; a
-          contínua, o que o S-NPP viu. A faixa entre elas é o erro.
+          {t(
+            `Hotspots per month, ${monthLabel(first)} to ${monthLabel(last)}. The dashed line is what MODIS × k would say; the solid line is what S-NPP saw. The band between them is the error.`,
+            `Focos por mês, de ${monthLabel(first)} a ${monthLabel(last)}. A linha tracejada é o que o MODIS × k diria; a contínua, o que o S-NPP viu. A faixa entre elas é o erro.`,
+          )}
         </span>
       </figcaption>
       <div className="relative overflow-x-auto">
         <svg
           viewBox="0 0 840 290"
           role="img"
-          aria-label={`Focos por mês em ${areaName}, de ${first} a ${last}: o S-NPP observado e o reconstruído a partir do MODIS vezes k.`}
+          aria-label={t(
+            `Hotspots per month in ${areaName}, ${monthLabel(first)} to ${monthLabel(last)}: S-NPP as observed and as reconstructed from MODIS times k.`,
+            `Focos por mês em ${areaName}, de ${first} a ${last}: o S-NPP observado e o reconstruído a partir do MODIS vezes k.`,
+          )}
           className="block w-full min-w-[640px] touch-pan-y font-ui"
         >
           <defs>
@@ -224,7 +239,7 @@ export function ValidationChart() {
             {gap && <polygon points={gap} className="fill-delta-above/12" />}
             {lines.map((line) => (
               <polyline
-                key={line.label}
+                key={line.className}
                 points={polyline(line.values, x, y)}
                 fill="none"
                 strokeWidth={line.width}
@@ -239,7 +254,7 @@ export function ValidationChart() {
               const lastValue = line.values.at(-1);
               return lastValue === null || lastValue === undefined ? null : (
                 <text
-                  key={line.label}
+                  key={line.className}
                   x={RIGHT + 10}
                   y={y(lastValue) + 4 + (index === 0 ? -8 : 8)}
                   fontSize="13"

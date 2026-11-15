@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 
 export function StepIndicator({
@@ -8,11 +11,12 @@ export function StepIndicator({
   stepNumber: number;
   stepCount: number;
 }) {
+  const t = useTr();
   return (
     <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-between px-6 pb-6 lg:px-16 lg:pb-10">
       <div className="flex items-center gap-3 sm:gap-4">
         <p className="type-caption whitespace-nowrap text-ink-muted tabular-nums">
-          {stepNumber} de {stepCount}
+          {t(`${stepNumber} of ${stepCount}`, `${stepNumber} de ${stepCount}`)}
         </p>
         <div aria-hidden="true" className="flex gap-1 sm:gap-1.5">
           {Array.from({ length: stepCount }, (_, index) => (
@@ -27,7 +31,7 @@ export function StepIndicator({
         href="/calendar"
         className="type-button inline-flex h-10 items-center gap-1.5 whitespace-nowrap text-ink-muted transition-colors duration-120 ease-standard hover:text-ink"
       >
-        Pular introdução
+        {t("Skip intro", "Pular introdução")}
         <MaterialSymbol name="arrow_forward" className="size-[18px]" />
       </Link>
     </div>

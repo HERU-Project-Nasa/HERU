@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { useTr } from "@/i18n/locale";
 import {
   BASELINE,
   HARMONIZED_Y,
@@ -26,6 +27,7 @@ const YEAR_TICKS: [x: number, year: number][] = [
 const RAW_POINTS = toPoints(RAW_Y);
 
 export function HarmonizedSeriesFigure() {
+  const t = useTr();
   const clipId = `raw-clip-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -67,10 +69,16 @@ export function HarmonizedSeriesFigure() {
     <figure className="rounded-xl border border-line bg-surface px-6 py-8 sm:px-10">
       <figcaption>
         <p className="type-heading-sm text-ink">
-          Focos de calor nos Estados Unidos
+          {t(
+            "Hotspots in the United States",
+            "Focos de calor nos Estados Unidos",
+          )}
         </p>
         <p className="type-caption mt-1 text-ink-muted">
-          Focos por ano, 2003-2016 · série do HERU
+          {t(
+            "Hotspots per year, 2003-2016 · HERU series",
+            "Focos por ano, 2003-2016 · série do HERU",
+          )}
         </p>
       </figcaption>
       <ul className="type-body-sm my-5 flex flex-wrap gap-x-6 gap-y-2 text-ink">
@@ -79,14 +87,17 @@ export function HarmonizedSeriesFigure() {
             aria-hidden="true"
             className="w-7 border-t-2 border-dashed border-ink-muted"
           />
-          Contagem bruta: MODIS até 2011, VIIRS depois
+          {t(
+            "Raw count: MODIS through 2011, VIIRS after",
+            "Contagem bruta: MODIS até 2011, VIIRS depois",
+          )}
         </li>
         <li className="flex items-center gap-2.5">
           <span
             aria-hidden="true"
             className="w-7 border-t-[2.5px] border-data-burned"
           />
-          Harmonizada: equivalente VIIRS
+          {t("Harmonized: VIIRS equivalent", "Harmonizada: equivalente VIIRS")}
         </li>
       </ul>
       <div ref={containerRef} className="relative">
@@ -98,7 +109,10 @@ export function HarmonizedSeriesFigure() {
         <svg
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           role="img"
-          aria-label="Gráfico de linhas animado, focos de calor nos Estados Unidos de 2003 a 2016. A contagem bruta salta em 2012, quando o VIIRS entra. Depois de harmonizada, a série sobe para a mesma escala e segue sem salto."
+          aria-label={t(
+            "Animated line chart of hotspots in the United States from 2003 to 2016. The raw count jumps in 2012, when VIIRS joins. Once harmonized, the series rises to the same scale and continues with no jump.",
+            "Gráfico de linhas animado, focos de calor nos Estados Unidos de 2003 a 2016. A contagem bruta salta em 2012, quando o VIIRS entra. Depois de harmonizada, a série sobe para a mesma escala e segue sem salto.",
+          )}
           className="relative block w-full overflow-visible font-ui"
         >
           <defs>
@@ -138,7 +152,7 @@ export function HarmonizedSeriesFigure() {
               letterSpacing="1.2"
               className="fill-ink"
             >
-              VIIRS ENTRA
+              {t("VIIRS JOINS", "VIIRS ENTRA")}
             </text>
           </g>
           <polyline

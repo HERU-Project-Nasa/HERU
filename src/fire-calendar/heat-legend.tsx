@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { ANOMALY_LEVELS, type CalendarMode } from "./calendar-anomaly";
 import {
@@ -37,14 +38,18 @@ function Mark({
 }
 
 function AnomalyScale() {
+  const t = useTr();
   return (
     <div className="flex flex-col gap-2">
       <span className="type-caption text-ink-muted">
-        Mês contra a mediana do mesmo mês
+        {t(
+          "Month against the median of the same month",
+          "Mês contra a mediana do mesmo mês",
+        )}
       </span>
       <div className="grid grid-cols-3 gap-x-1 gap-y-3 sm:min-w-[420px] sm:grid-cols-6">
         {ANOMALY_LEVELS.map((level) => (
-          <span key={level.label} className="flex min-w-0 flex-col gap-1.5">
+          <span key={level.className} className="flex min-w-0 flex-col gap-1.5">
             <span
               aria-hidden="true"
               className={`block h-3 w-full rounded-xs ${level.className}`}
@@ -58,10 +63,10 @@ function AnomalyScale() {
       <span className="flex justify-between text-xs leading-4 sm:min-w-[420px]">
         <span className="flex items-center gap-0.5 text-delta-below">
           <MaterialSymbol name="arrow_downward" className="size-3.5" />
-          abaixo
+          {t("below", "abaixo")}
         </span>
         <span className="flex items-center gap-0.5 text-delta-above">
-          acima
+          {t("above", "acima")}
           <MaterialSymbol name="arrow_upward" className="size-3.5" />
         </span>
       </span>
@@ -78,6 +83,7 @@ export function HeatLegend({
   states: Set<CellState>;
   mode: CalendarMode;
 }) {
+  const t = useTr();
   const levels =
     breaks.length === 0
       ? states.has("value")
@@ -97,7 +103,9 @@ export function HeatLegend({
         <AnomalyScale />
       ) : (
         <div className="flex flex-col gap-2">
-          <span className="type-caption text-ink-muted">Focos por mês</span>
+          <span className="type-caption text-ink-muted">
+            {t("Hotspots per month", "Focos por mês")}
+          </span>
           <div className="grid grid-cols-4 gap-x-1 gap-y-3 sm:min-w-[420px] sm:grid-cols-7">
             {[{ level: 0, label: "0" }, ...levels].map(({ level, label }) => (
               <span key={level} className="flex min-w-0 flex-col gap-1.5">
@@ -115,25 +123,25 @@ export function HeatLegend({
       )}
       <ul className="flex flex-wrap gap-x-6 gap-y-2.5">
         <Mark
-          label="Fora do padrão"
+          label={t("Unusual", "Fora do padrão")}
           className={HEAT_BACKGROUNDS[4]}
           style={{ boxShadow: OUTLIER_RING }}
         >
           <span className="absolute top-0.5 right-0.5 size-1 rounded-full bg-ink shadow-[0_0_0_1px_var(--color-surface-ground)]" />
         </Mark>
         <Mark
-          label="Mês parcial"
+          label={t("Partial month", "Mês parcial")}
           className={HEAT_BACKGROUNDS[3]}
           style={{ backgroundImage: PARTIAL_STRIPES }}
         />
         <Mark
-          label="Sem dados"
+          label={t("No data", "Sem dados")}
           className="border border-line"
           style={{ backgroundImage: HATCH }}
         />
         {states.has("computing") && (
           <Mark
-            label="Em cálculo"
+            label={t("Being computed", "Em cálculo")}
             className="border border-line"
             style={{ backgroundImage: HATCH }}
           >
@@ -142,7 +150,7 @@ export function HeatLegend({
         )}
         {states.has("loading") && (
           <Mark
-            label="Carregando"
+            label={t("Loading", "Carregando")}
             className="border border-line text-[10px] leading-none text-ink-muted"
             style={{ backgroundImage: LIGHT_HATCH }}
           >

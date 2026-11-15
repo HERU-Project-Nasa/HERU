@@ -7,6 +7,7 @@ import {
   formatRatio,
 } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
+import { useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
@@ -66,6 +67,7 @@ function segments(
 }
 
 export function BeforeAfterChart() {
+  const t = useTr();
   const [area] = useMethodologyArea();
   const figureRef = useRef<HTMLElement>(null);
   const reveal = useChartReveal(figureRef);
@@ -79,7 +81,11 @@ export function BeforeAfterChart() {
     : null;
   const country = countries?.find((candidate) => candidate.iso3 === area);
   const areaName =
-    area === WORLD_AREA ? "Mundo" : country ? countryName(country) : "";
+    area === WORLD_AREA
+      ? t("World", "Mundo")
+      : country
+        ? countryName(country)
+        : "";
 
   if (!yearly.rows || !lastDataDate) {
     return (
@@ -132,7 +138,7 @@ export function BeforeAfterChart() {
   const lines = [
     {
       points: modis,
-      label: "Só MODIS",
+      label: t("MODIS only", "Só MODIS"),
       className: "stroke-ink-muted",
       swatch: "fill-ink-muted",
       width: 1.5,
@@ -141,7 +147,7 @@ export function BeforeAfterChart() {
     },
     {
       points: raw,
-      label: "Soma bruta",
+      label: t("Raw sum", "Soma bruta"),
       className: "stroke-delta-above",
       swatch: "fill-delta-above",
       width: 2,
@@ -150,7 +156,7 @@ export function BeforeAfterChart() {
     },
     {
       points: harmonized,
-      label: "Harmonizada",
+      label: t("Harmonized", "Harmonizada"),
       className: "stroke-ink",
       swatch: "fill-ink",
       width: 3,
@@ -167,24 +173,40 @@ export function BeforeAfterChart() {
       <figcaption className="flex flex-wrap items-baseline justify-between gap-3">
         <span className="flex flex-col gap-1">
           <span className="type-heading-sm text-ink">
-            Antes e depois da harmonização · {areaName}
+            {t(
+              `Before and after harmonization · ${areaName}`,
+              `Antes e depois da harmonização · ${areaName}`,
+            )}
           </span>
           {k && (
             <span className="type-body-sm text-ink-muted">
-              {area === WORLD_AREA ? "No mundo" : "Nesta área"}, 1 foco MODIS ≈{" "}
-              {k} focos VIIRS.
+              {area === WORLD_AREA
+                ? t(
+                    `Worldwide, 1 MODIS hotspot ≈ ${k} VIIRS hotspots.`,
+                    `No mundo, 1 foco MODIS ≈ ${k} focos VIIRS.`,
+                  )
+                : t(
+                    `In this area, 1 MODIS hotspot ≈ ${k} VIIRS hotspots.`,
+                    `Nesta área, 1 foco MODIS ≈ ${k} focos VIIRS.`,
+                  )}
             </span>
           )}
         </span>
         <span className="type-body-sm text-ink-muted">
-          Focos por ano, de {CALENDAR_FIRST_YEAR} a {lastYear}
+          {t(
+            `Hotspots per year, ${CALENDAR_FIRST_YEAR} to ${lastYear}`,
+            `Focos por ano, de ${CALENDAR_FIRST_YEAR} a ${lastYear}`,
+          )}
         </span>
       </figcaption>
       <div className="overflow-x-auto">
         <svg
           viewBox="0 0 840 320"
           role="img"
-          aria-label={`Focos por ano em ${areaName}, de ${CALENDAR_FIRST_YEAR} a ${lastYear}: só MODIS, soma bruta de MODIS até 2011 e VIIRS S-NPP depois, e série harmonizada.${jump ? ` A soma bruta muda ${formatRatio(jump)} vezes em 2012.` : ""}`}
+          aria-label={t(
+            `Hotspots per year in ${areaName}, ${CALENDAR_FIRST_YEAR} to ${lastYear}: MODIS only, the raw sum of MODIS through 2011 and VIIRS S-NPP after that, and the harmonized series.${jump ? ` The raw sum changes ${formatRatio(jump)} times in 2012.` : ""}`,
+            `Focos por ano em ${areaName}, de ${CALENDAR_FIRST_YEAR} a ${lastYear}: só MODIS, soma bruta de MODIS até 2011 e VIIRS S-NPP depois, e série harmonizada.${jump ? ` A soma bruta muda ${formatRatio(jump)} vezes em 2012.` : ""}`,
+          )}
           className="block w-full min-w-[640px] touch-pan-y font-ui"
         >
           <defs>
@@ -215,7 +237,7 @@ export function BeforeAfterChart() {
               textAnchor="middle"
               className="fill-viirs-adjusted"
             >
-              ANOS DE CALIBRAÇÃO
+              {t("CALIBRATION YEARS", "ANOS DE CALIBRAÇÃO")}
             </text>
           </FadeInSvg>
           {ticks.map((tick) => (
@@ -255,7 +277,10 @@ export function BeforeAfterChart() {
                 fontWeight="600"
                 className="fill-ink"
               >
-                2012: a soma bruta muda {formatRatio(jump)}×
+                {t(
+                  `2012: the raw sum changes ${formatRatio(jump)}×`,
+                  `2012: a soma bruta muda ${formatRatio(jump)}×`,
+                )}
               </text>
               <text
                 x={x(VIIRS_FIRST_YEAR) + 8}
@@ -263,7 +288,10 @@ export function BeforeAfterChart() {
                 fontSize="12"
                 className="fill-ink-muted"
               >
-                o VIIRS entra; as fontes de calor não mudam
+                {t(
+                  "VIIRS comes in; the heat sources do not change",
+                  "o VIIRS entra; as fontes de calor não mudam",
+                )}
               </text>
             </FadeInSvg>
           )}
@@ -271,7 +299,7 @@ export function BeforeAfterChart() {
             {lines.map((line) =>
               segments(line.points, x, y).map((points) => (
                 <polyline
-                  key={`${line.label}-${points.slice(0, 12)}`}
+                  key={`${line.className}-${points.slice(0, 12)}`}
                   points={points}
                   fill="none"
                   strokeWidth={line.width}
@@ -289,7 +317,7 @@ export function BeforeAfterChart() {
                 .find((point) => point.value !== null);
               return last ? (
                 <text
-                  key={line.label}
+                  key={line.className}
                   x={x(last.year) + 10}
                   y={y(last.value!) + 4}
                   fontSize="13"
@@ -355,8 +383,14 @@ export function BeforeAfterChart() {
         <p className="type-body-sm flex items-start gap-2 text-ink-muted">
           <MaterialSymbol name="schedule" className="mt-0.5 size-4 shrink-0" />
           {!hasViirs
-            ? "O VIIRS S-NPP desta região ainda não foi publicado; por enquanto a linha da soma bruta para em 2011."
-            : "A série harmonizada desta região ainda está em cálculo."}
+            ? t(
+                "VIIRS S-NPP for this region has not been published yet; for now the raw sum line stops in 2011.",
+                "O VIIRS S-NPP desta região ainda não foi publicado; por enquanto a linha da soma bruta para em 2011.",
+              )
+            : t(
+                "The harmonized series for this region is still being computed.",
+                "A série harmonizada desta região ainda está em cálculo.",
+              )}
         </p>
       )}
     </figure>

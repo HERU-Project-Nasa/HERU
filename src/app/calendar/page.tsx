@@ -3,9 +3,8 @@ import { Suspense } from "react";
 import { AreaFilters } from "@/area-filters/area-filters";
 
 export const metadata: Metadata = {
-  title: "Calendário | HERU",
-  description:
-    "Escolha o ano, o continente e o país para ver os focos de calor.",
+  title: "Calendar | HERU",
+  description: "Choose the year, continent and country to see the hotspots.",
 };
 
 export default function CalendarFiltersPage() {

@@ -12,9 +12,10 @@ import {
 import { HEAT_BACKGROUNDS } from "@/fire-calendar/calendar-cell-style";
 import {
   formatCount,
+  formatHotspots,
   heatRangeLabel,
   MONTH_ABBREVIATIONS,
-  MONTH_NAMES,
+  monthTitle,
 } from "@/fire-calendar/calendar-labels";
 import {
   buildCalendarYears,
@@ -30,6 +31,8 @@ import {
 } from "@/fire-calendar/calendar-statistics";
 import { periodComparison } from "@/fire-calendar/month-comparison";
 import { SegmentedChoice } from "@/fire-calendar/segmented-choice";
+import { compareLabels, localNumberFormat } from "@/i18n/format";
+import { localized, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { type CountryRow, countryName } from "@/pipeline/pipeline-countries";
 import { type CoverageRow, readCoverage } from "@/pipeline/pipeline-coverage";
@@ -58,18 +61,27 @@ type DateRange = { start: string; end: string };
 const MAX_COUNTRIES = 4;
 const PER_AREA = 1000;
 const ALL_MONTHS = Array(12).fill(true);
-const COUNT_WORDS = [
-  "Nenhum país",
-  "Um país",
-  "Dois países",
-  "Três países",
-  "Quatro países",
-];
-const MEASURES: { value: Measure; label: string }[] = [
-  { value: "total", label: "Total de focos" },
-  { value: "area", label: "Por 1.000 km²" },
-];
-const DENSITY = new Intl.NumberFormat("pt-BR", {
+const COUNT_WORDS = localized(
+  [
+    "No countries",
+    "One country",
+    "Two countries",
+    "Three countries",
+    "Four countries",
+  ],
+  ["Nenhum país", "Um país", "Dois países", "Três países", "Quatro países"],
+);
+const MEASURES: { value: Measure; label: string }[] = localized(
+  [
+    { value: "total", label: "Total hotspots" },
+    { value: "area", label: "Per 1,000 km²" },
+  ],
+  [
+    { value: "total", label: "Total de focos" },
+    { value: "area", label: "Por 1.000 km²" },
+  ],
+);
+const DENSITY = localNumberFormat({
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
@@ -113,6 +125,7 @@ function formatMeasure(value: number, measure: Measure): string {
 }
 
 export function CompareRegionsExplorer() {
+  const t = useTr();
   const searchParams = useSearchParams();
   const outlines = useCountryOutlines();
   const countries = usePipelineFile<CountryRow>("meta/countries.csv").rows;
@@ -196,7 +209,7 @@ export function CompareRegionsExplorer() {
       const analysis = analyzeCalendar(years, years, ALL_MONTHS);
       return {
         code,
-        name: country ? countryName(country) : code,
+        country,
         area: country?.area_km2 ?? null,
         years,
         analysis,
@@ -233,7 +246,10 @@ export function CompareRegionsExplorer() {
   }[] = [
     {
       value: "year",
-      label: year === lastYear ? `${year} até agora` : String(year),
+      label:
+        year === lastYear
+          ? t(`${year} so far`, `${year} até agora`)
+          : String(year),
       range: {
         start: `${year}-01-01`,
         end: year === lastYear ? completeDate : `${year}-12-31`,
@@ -241,7 +257,10 @@ export function CompareRegionsExplorer() {
     },
     {
       value: "season",
-      label: `Temporada crítica ${seasonOfFirst?.start.slice(0, 4) ?? year}`,
+      label: t(
+        `Peak season ${seasonOfFirst?.start.slice(0, 4) ?? year}`,
+        `Temporada crítica ${seasonOfFirst?.start.slice(0, 4) ?? year}`,
+      ),
       range: seasonOfFirst,
     },
     {
@@ -270,6 +289,7 @@ export function CompareRegionsExplorer() {
         : null;
     return {
       ...region,
+      name: region.country ? countryName(region.country) : region.code,
       value: comparison?.value ?? null,
       typical: comparison?.typical ?? null,
       shown: measured(comparison?.value ?? null, region.area, measure),
@@ -283,16 +303,26 @@ export function CompareRegionsExplorer() {
   const leaderByArea = [...withValues].sort(
     (a, b) => b.value! / b.area! - a.value! / a.area!,
   )[0];
+  const densityRatio =
+    withValues.length < 2
+      ? null
+      : DENSITY.format(
+          leaderByArea.value! /
+            leaderByArea.area! /
+            (leaderByTotal.value! / leaderByTotal.area!),
+        );
   const insight =
     withValues.length < 2
       ? null
       : leaderByTotal.code === leaderByArea.code
-        ? `${leaderByTotal.name} lidera nas duas medidas: no total de focos e por área.`
-        : `Por área, ${leaderByArea.name} teve ${DENSITY.format(
-            leaderByArea.value! /
-              leaderByArea.area! /
-              (leaderByTotal.value! / leaderByTotal.area!),
-          )}× mais focos que ${leaderByTotal.name}. Em números absolutos, ${leaderByTotal.name} lidera.`;
+        ? t(
+            `${leaderByTotal.name} leads on both measures: total hotspots and per area.`,
+            `${leaderByTotal.name} lidera nas duas medidas: no total de focos e por área.`,
+          )
+        : t(
+            `Per area, ${leaderByArea.name} had ${densityRatio}× as many hotspots as ${leaderByTotal.name}. In absolute numbers, ${leaderByTotal.name} leads.`,
+            `Por área, ${leaderByArea.name} teve ${densityRatio}× mais focos que ${leaderByTotal.name}. Em números absolutos, ${leaderByTotal.name} lidera.`,
+          );
 
   const monthRows = results.map((result) => {
     const yearCells = result.years.find((item) => item.year === year)?.cells;
@@ -331,9 +361,11 @@ export function CompareRegionsExplorer() {
   const addable = countries
     .filter((country) => !selected.includes(country.iso3))
     .map((country) => ({ value: country.iso3, label: countryName(country) }))
-    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+    .sort((a, b) => compareLabels(a.label, b.label));
   const unitLabel =
-    measure === "total" ? "focos equivalentes VIIRS" : "focos por 1.000 km²";
+    measure === "total"
+      ? t("VIIRS-equivalent hotspots", "focos equivalentes VIIRS")
+      : t("hotspots per 1,000 km²", "focos por 1.000 km²");
 
   return (
     <main className="mx-auto max-w-[1328px] px-4 pt-8 pb-24 sm:px-8 lg:px-16 lg:pt-12">
@@ -342,25 +374,34 @@ export function CompareRegionsExplorer() {
         className="type-button inline-flex items-center gap-1.5 text-ink hover:underline"
       >
         <MaterialSymbol name="arrow_back" className="size-[18px]" />
-        Voltar ao mapa
+        {t("Back to map", "Voltar ao mapa")}
       </Link>
       <header className="mt-6 flex flex-col gap-2">
-        <p className="type-eyebrow text-ink-muted">Comparar regiões</p>
+        <p className="type-eyebrow text-ink-muted">
+          {t("Compare regions", "Comparar regiões")}
+        </p>
         <h1 className="type-heading-lg text-ink">
-          {COUNT_WORDS[selected.length]} na mesma escala
+          {t(
+            `${COUNT_WORDS[selected.length]} on the same scale`,
+            `${COUNT_WORDS[selected.length]} na mesma escala`,
+          )}
         </h1>
         <p className="type-body max-w-[720px] text-ink-muted">
-          Compare até {MAX_COUNTRIES} países no mesmo período. Medir por área
-          deixa países de tamanhos diferentes comparáveis.
+          {t(
+            `Compare up to ${MAX_COUNTRIES} countries over the same period. Measuring per area makes countries of different sizes comparable.`,
+            `Compare até ${MAX_COUNTRIES} países no mesmo período. Medir por área deixa países de tamanhos diferentes comparáveis.`,
+          )}
         </p>
       </header>
 
       <section
-        aria-label="Opções da comparação"
+        aria-label={t("Comparison options", "Opções da comparação")}
         className="mt-8 flex flex-col gap-6 rounded-md border border-line bg-surface p-4 sm:p-6"
       >
         <div className="flex flex-col gap-2">
-          <span className="type-caption text-ink-muted">Países</span>
+          <span className="type-caption text-ink-muted">
+            {t("Countries", "Países")}
+          </span>
           <div className="flex flex-wrap items-center gap-2">
             {selected.map((code) => {
               const name = results.find((result) => result.code === code)?.name;
@@ -372,7 +413,7 @@ export function CompareRegionsExplorer() {
                   {name}
                   <button
                     type="button"
-                    aria-label={`Remover ${name}`}
+                    aria-label={t(`Remove ${name}`, `Remover ${name}`)}
                     onClick={() =>
                       setChosen(selected.filter((other) => other !== code))
                     }
@@ -385,7 +426,9 @@ export function CompareRegionsExplorer() {
             })}
             {selected.length < MAX_COUNTRIES && (
               <label className="relative inline-flex items-center">
-                <span className="sr-only">Adicionar país</span>
+                <span className="sr-only">
+                  {t("Add country", "Adicionar país")}
+                </span>
                 <MaterialSymbol
                   name="add"
                   className="pointer-events-none absolute left-2.5 size-[18px]"
@@ -398,7 +441,7 @@ export function CompareRegionsExplorer() {
                   }
                   className="type-chip h-9 w-52 cursor-pointer appearance-none rounded-full border border-dashed border-line-strong bg-surface pr-4 pl-8 text-ink hover:bg-surface-hover"
                 >
-                  <option value="">Adicionar país</option>
+                  <option value="">{t("Add country", "Adicionar país")}</option>
                   {addable.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -408,16 +451,18 @@ export function CompareRegionsExplorer() {
               </label>
             )}
             <span className="type-body-sm text-ink-muted">
-              até {MAX_COUNTRIES}
+              {t(`up to ${MAX_COUNTRIES}`, `até ${MAX_COUNTRIES}`)}
             </span>
           </div>
         </div>
         <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
           <div className="flex flex-col gap-2">
-            <span className="type-caption text-ink-muted">Período</span>
+            <span className="type-caption text-ink-muted">
+              {t("Period", "Período")}
+            </span>
             <div
               role="radiogroup"
-              aria-label="Período"
+              aria-label={t("Period", "Período")}
               className="flex flex-wrap gap-2"
             >
               {periods.map((option) => (
@@ -436,9 +481,11 @@ export function CompareRegionsExplorer() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <span className="type-caption text-ink-muted">Medida</span>
+            <span className="type-caption text-ink-muted">
+              {t("Measure", "Medida")}
+            </span>
             <SegmentedChoice
-              label="Medida"
+              label={t("Measure", "Medida")}
               options={MEASURES}
               value={measure}
               onChange={setMeasure}
@@ -448,11 +495,14 @@ export function CompareRegionsExplorer() {
       </section>
 
       <section
-        aria-label="Países comparados"
+        aria-label={t("Compared countries", "Países comparados")}
         className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
       >
         <FireMap
-          label={`Mapa com ${results.map((result) => result.name).join(", ")}`}
+          label={t(
+            `Map of ${results.map((result) => result.name).join(", ")}`,
+            `Mapa com ${results.map((result) => result.name).join(", ")}`,
+          )}
           area={null}
           areas={selected}
           bounds={bounds}
@@ -466,16 +516,22 @@ export function CompareRegionsExplorer() {
               aria-hidden="true"
               className="size-3 rounded-xs border border-region-line bg-region-fill"
             />
-            País comparado
+            {t("Compared country", "País comparado")}
           </p>
         </FireMap>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <h2 className="type-heading-md text-ink">
-              {measure === "total" ? "Total de focos" : "Focos por 1.000 km²"}
+              {measure === "total"
+                ? t("Total hotspots", "Total de focos")
+                : t("Hotspots per 1,000 km²", "Focos por 1.000 km²")}
             </h2>
             <p className="type-body-sm text-ink-muted">
-              {period.label} · equivalente VIIRS · só dias completos
+              {period.label} ·{" "}
+              {t(
+                "VIIRS-equivalent · complete days only",
+                "equivalente VIIRS · só dias completos",
+              )}
             </p>
           </div>
           {insight && (
@@ -497,9 +553,12 @@ export function CompareRegionsExplorer() {
                   <span className="type-body-sm text-ink-muted tabular-nums">
                     {result.value === null
                       ? result.loading
-                        ? "Carregando"
-                        : "Sem dados completos"
-                      : `${formatCount(result.value)} focos`}
+                        ? t("Loading", "Carregando")
+                        : t("No complete data", "Sem dados completos")
+                      : t(
+                          formatHotspots(result.value),
+                          `${formatCount(result.value)} focos`,
+                        )}
                     {result.area ? ` · ${formatArea(result.area)}` : ""}
                   </span>
                 </span>
@@ -517,8 +576,10 @@ export function CompareRegionsExplorer() {
             ))}
           </ol>
           <p className="type-body-sm text-ink-muted">
-            O típico de cada país é a mediana dos mesmos dias de{" "}
-            {CALENDAR_FIRST_YEAR} até o último ano completo.
+            {t(
+              `Each country's typical value is the median of the same days from ${CALENDAR_FIRST_YEAR} to the last complete year.`,
+              `O típico de cada país é a mediana dos mesmos dias de ${CALENDAR_FIRST_YEAR} até o último ano completo.`,
+            )}
           </p>
         </div>
       </section>
@@ -529,11 +590,14 @@ export function CompareRegionsExplorer() {
       >
         <div className="flex flex-col gap-1">
           <h2 id="months-title" className="type-heading-md text-ink">
-            Mês a mês em {year}
+            {t(`Month by month in ${year}`, `Mês a mês em ${year}`)}
           </h2>
           <p className="type-body-sm text-ink-muted">
-            {unitLabel[0].toUpperCase() + unitLabel.slice(1)} · mesma escala
-            para todos os países
+            {unitLabel[0].toUpperCase() + unitLabel.slice(1)} ·{" "}
+            {t(
+              "same scale for all countries",
+              "mesma escala para todos os países",
+            )}
           </p>
         </div>
         <div className="relative overflow-x-auto">
@@ -541,7 +605,7 @@ export function CompareRegionsExplorer() {
             <thead>
               <tr>
                 <th scope="col" className="sr-only">
-                  País
+                  {t("Country", "País")}
                 </th>
                 {MONTH_ABBREVIATIONS.map((month) => (
                   <th
@@ -564,13 +628,13 @@ export function CompareRegionsExplorer() {
                     {row.name}
                   </th>
                   {row.months.map(({ cell, value }, month) => {
-                    const label = `${MONTH_NAMES[month]} de ${year}: ${
+                    const label = `${monthTitle({ year, month: month + 1 })}: ${
                       value === null
                         ? cell?.state === "future"
-                          ? "sem dados ainda"
-                          : "sem dado"
+                          ? t("no data yet", "sem dados ainda")
+                          : t("no data", "sem dado")
                         : `${formatMeasure(value, measure)} ${unitLabel}`
-                    }${cell?.partial ? ", parcial" : ""}`;
+                    }${cell?.partial ? t(", partial", ", parcial") : ""}`;
                     return (
                       <td key={month} className="p-0">
                         <span
@@ -595,12 +659,17 @@ export function CompareRegionsExplorer() {
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="grid max-w-xl grid-cols-6 gap-1">
-            {HEAT_BACKGROUNDS.map((className, index) => (
-              <span key={className} className="flex min-w-0 flex-col gap-1">
-                <span className={`block h-2 rounded-xs ${className}`} />
+            {(breaks.length === 0 ? [3] : [0, 1, 2, 3, 4, 5]).map((index) => (
+              <span
+                key={HEAT_BACKGROUNDS[index]}
+                className="flex min-w-0 flex-col gap-1"
+              >
+                <span
+                  className={`block h-2 rounded-xs ${HEAT_BACKGROUNDS[index]}`}
+                />
                 <span className="truncate text-[10px] leading-3 text-ink-muted tabular-nums">
                   {breaks.length === 0
-                    ? "> 0"
+                    ? heatRangeLabel(null, null)
                     : heatRangeLabel(
                         index === 0 ? null : breaks[index - 1],
                         index === HEAT_BACKGROUNDS.length - 1
@@ -612,8 +681,10 @@ export function CompareRegionsExplorer() {
             ))}
           </span>
           <span className="type-body-sm text-ink-muted">
-            Meses mais claros: o mês corrente, ainda parcial. Contorno
-            tracejado: sem dados ainda.
+            {t(
+              "Lighter months: the current month, still partial. Dashed outline: no data yet.",
+              "Meses mais claros: o mês corrente, ainda parcial. Contorno tracejado: sem dados ainda.",
+            )}
           </span>
         </div>
       </section>

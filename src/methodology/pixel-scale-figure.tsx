@@ -2,6 +2,8 @@
 
 import { m, useInView } from "motion/react";
 import { useRef } from "react";
+import { localNumberFormat } from "@/i18n/format";
+import { useTr } from "@/i18n/locale";
 import { AnimatedNumber, EASE_STANDARD } from "@/motion/chart-motion";
 
 const MODIS_SIZE = 160;
@@ -10,13 +12,15 @@ const VIIRS_METERS = 375;
 const VIIRS_SIZE = (VIIRS_METERS / MODIS_METERS) * MODIS_SIZE;
 const PIXELS_PER_MODIS = (MODIS_METERS / VIIRS_METERS) ** 2;
 const TILES_PER_SIDE = Math.ceil(MODIS_SIZE / VIIRS_SIZE);
-const ONE_DECIMAL = new Intl.NumberFormat("pt-BR", {
+const ONE_DECIMAL = localNumberFormat({
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
+const INTEGER = localNumberFormat({ maximumFractionDigits: 0 });
 const formatPixels = (value: number) => ONE_DECIMAL.format(value);
 
 export function PixelScaleFigure() {
+  const t = useTr();
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
   const tiles = Array.from({ length: TILES_PER_SIDE ** 2 }, (_, index) => ({
@@ -60,7 +64,9 @@ export function PixelScaleFigure() {
             ))}
             <CenterDot delay={0.3} inView={inView} />
           </m.span>
-          <span className="type-data text-ink">MODIS · cerca de 1 km</span>
+          <span className="type-data text-ink">
+            {t("MODIS · about 1 km", "MODIS · cerca de 1 km")}
+          </span>
         </div>
         <div className="flex flex-col gap-2">
           <m.span
@@ -85,10 +91,13 @@ export function PixelScaleFigure() {
             ≈ <AnimatedNumber value={PIXELS_PER_MODIS} format={formatPixels} />
           </span>
           <span className="type-body-sm text-ink-muted">
-            pixels VIIRS cabem em um pixel MODIS
+            {t(
+              "VIIRS pixels fit in one MODIS pixel",
+              "pixels VIIRS cabem em um pixel MODIS",
+            )}
           </span>
           <span className="type-body-sm text-ink-muted tabular-nums">
-            (1.000 m ÷ 375 m)²
+            ({INTEGER.format(MODIS_METERS)} m ÷ {VIIRS_METERS} m)²
           </span>
         </m.div>
       </div>
@@ -97,8 +106,10 @@ export function PixelScaleFigure() {
           aria-hidden="true"
           className="mt-1.5 size-2.5 shrink-0 rounded-full bg-heat-4 shadow-[0_0_0_3px_rgba(255,138,61,0.25)]"
         />
-        Quadrados em escala. A coordenada de cada foco é o centro do pixel,
-        marcado em laranja: quanto maior o pixel, menos precisa é a posição.
+        {t(
+          "Squares drawn to scale. Each hotspot's coordinate is the center of its pixel, marked in orange: the larger the pixel, the less precise the position.",
+          "Quadrados em escala. A coordenada de cada foco é o centro do pixel, marcado em laranja: quanto maior o pixel, menos precisa é a posição.",
+        )}
       </figcaption>
     </figure>
   );

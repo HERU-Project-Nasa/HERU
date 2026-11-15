@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { localized, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import {
   MONTH_INITIALS,
@@ -15,10 +16,16 @@ export type YearRange = { first: number; last: number };
 
 export type CalendarView = "3d" | "grid";
 
-const VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
-  { value: "3d", label: "3D" },
-  { value: "grid", label: "Grade" },
-];
+const VIEW_OPTIONS: { value: CalendarView; label: string }[] = localized(
+  [
+    { value: "3d", label: "3D" },
+    { value: "grid", label: "Grid" },
+  ],
+  [
+    { value: "3d", label: "3D" },
+    { value: "grid", label: "Grade" },
+  ],
+);
 
 const SELECT_CLASS_NAME =
   "type-chip h-10 cursor-pointer appearance-none rounded-md border border-line-strong bg-surface-ground/60 text-ink transition-colors duration-200 ease-standard hover:border-ink";
@@ -98,20 +105,21 @@ export function CalendarFilters({
   view?: CalendarView;
   onViewChange?: (view: CalendarView) => void;
 }) {
+  const t = useTr();
   return (
     <section
-      aria-label="Filtros do calendário"
+      aria-label={t("Calendar filters", "Filtros do calendário")}
       className="flex flex-col gap-5 rounded-lg border border-line bg-linear-to-b from-surface-hover/50 to-surface p-4 shadow-[0_12px_32px_rgba(0,0,0,0.35)] sm:p-5"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
         <p className="type-caption flex items-center gap-2 text-ink-muted">
           <MaterialSymbol name="tune" className="size-[18px]" />
-          Ajustes do calendário
+          {t("Calendar settings", "Ajustes do calendário")}
         </p>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           {view && onViewChange && (
             <SegmentedChoice
-              label="Visualização"
+              label={t("View", "Visualização")}
               options={VIEW_OPTIONS}
               value={view}
               onChange={onViewChange}
@@ -123,7 +131,7 @@ export function CalendarFilters({
             className="type-button inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent px-3 text-ink-muted transition-colors duration-200 ease-standard hover:bg-surface-hover hover:text-ink sm:flex-none"
           >
             <MaterialSymbol name="refresh" className="size-[18px]" />
-            Limpar
+            {t("Clear", "Limpar")}
           </button>
           <button
             type="button"
@@ -132,20 +140,20 @@ export function CalendarFilters({
             className="type-button inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-line-strong bg-surface-raised px-4 text-ink transition-colors duration-200 ease-standard hover:border-ink disabled:cursor-not-allowed disabled:text-ink-disabled disabled:hover:border-line-strong sm:flex-none"
           >
             <MaterialSymbol name="download" className="size-[18px]" />
-            Baixar CSV
+            {t("Download CSV", "Baixar CSV")}
           </button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_auto_auto_auto] xl:items-end">
-        <Field label="Região">
+        <Field label={t("Region", "Região")}>
           <span className="relative flex w-full items-center">
             <MaterialSymbol
               name="location_on"
               className="pointer-events-none absolute left-3 size-[18px] text-ink-muted"
             />
             <select
-              aria-label="Região"
+              aria-label={t("Region", "Região")}
               value={area}
               disabled={areaOptions.length === 0}
               onChange={(event) => onAreaChange(event.target.value)}
@@ -163,33 +171,33 @@ export function CalendarFilters({
             />
           </span>
         </Field>
-        <Field label="Fonte">
+        <Field label={t("Source", "Fonte")}>
           <SegmentedChoice
-            label="Fonte"
+            label={t("Source", "Fonte")}
             options={SOURCE_OPTIONS}
             value={source}
             onChange={onSourceChange}
           />
         </Field>
-        <Field label="Passagens">
+        <Field label={t("Overpasses", "Passagens")}>
           <SegmentedChoice
-            label="Passagens"
+            label={t("Overpasses", "Passagens")}
             options={PASSES_OPTIONS}
             value={passes}
             onChange={onPassesChange}
           />
         </Field>
-        <Field label="Anos">
+        <Field label={t("Years", "Anos")}>
           <span className="flex items-center gap-2">
             <YearSelect
-              label="Primeiro ano"
+              label={t("First year", "Primeiro ano")}
               value={yearRange.first}
               years={years.filter((year) => year <= yearRange.last)}
               onChange={(first) => onYearRangeChange({ ...yearRange, first })}
             />
-            <span className="type-body-sm text-ink-muted">a</span>
+            <span className="type-body-sm text-ink-muted">{t("to", "a")}</span>
             <YearSelect
-              label="Último ano"
+              label={t("Last year", "Último ano")}
               value={yearRange.last}
               years={years.filter((year) => year >= yearRange.first)}
               onChange={(last) => onYearRangeChange({ ...yearRange, last })}
@@ -198,10 +206,10 @@ export function CalendarFilters({
         </Field>
       </div>
 
-      <Field label="Meses">
+      <Field label={t("Months", "Meses")}>
         <div
           role="group"
-          aria-label="Meses"
+          aria-label={t("Months", "Meses")}
           className="grid grid-cols-6 gap-1.5 sm:grid-cols-12"
         >
           {MONTH_INITIALS.map((initial, index) => (

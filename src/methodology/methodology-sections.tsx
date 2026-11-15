@@ -2,18 +2,38 @@
 
 import { m } from "motion/react";
 import type { ReactNode } from "react";
+import { localized, useLocale } from "@/i18n/locale";
 import { EASE_STANDARD } from "@/motion/chart-motion";
 
-export const METHODOLOGY_SECTIONS = [
-  { id: "foco", title: "O que é um foco de calor", label: null },
-  { id: "fontes", title: "Fontes de dados", label: null },
-  { id: "filtragem", title: "Filtragem", label: null },
-  { id: "harmonizacao", title: "Harmonização", label: null },
-  { id: "validacao", title: "Validação", label: null },
-  { id: "creditos", title: "Créditos", label: null },
-] as const;
+export type MethodologySectionId =
+  "foco" | "fontes" | "filtragem" | "harmonizacao" | "validacao" | "creditos";
 
-export type MethodologySectionId = (typeof METHODOLOGY_SECTIONS)[number]["id"];
+type MethodologySectionEntry = {
+  id: MethodologySectionId;
+  title: string;
+  label: string | null;
+};
+
+export const METHODOLOGY_SECTIONS = localized<
+  readonly MethodologySectionEntry[]
+>(
+  [
+    { id: "foco", title: "What a hotspot is", label: null },
+    { id: "fontes", title: "Data sources", label: null },
+    { id: "filtragem", title: "Filtering", label: null },
+    { id: "harmonizacao", title: "Harmonization", label: null },
+    { id: "validacao", title: "Validation", label: null },
+    { id: "creditos", title: "Credits", label: null },
+  ],
+  [
+    { id: "foco", title: "O que é um foco de calor", label: null },
+    { id: "fontes", title: "Fontes de dados", label: null },
+    { id: "filtragem", title: "Filtragem", label: null },
+    { id: "harmonizacao", title: "Harmonização", label: null },
+    { id: "validacao", title: "Validação", label: null },
+    { id: "creditos", title: "Créditos", label: null },
+  ],
+);
 
 export function MethodologySection({
   id,
@@ -22,6 +42,7 @@ export function MethodologySection({
   id: MethodologySectionId;
   children: ReactNode;
 }) {
+  useLocale();
   const index = METHODOLOGY_SECTIONS.findIndex((section) => section.id === id);
   return (
     <m.section

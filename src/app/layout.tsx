@@ -3,6 +3,7 @@ import { Barlow, Outfit } from "next/font/google";
 import { GlobeStage } from "@/earth-globe/globe-stage";
 import { SiteFooter } from "@/layout/site-footer";
 import { SiteHeader } from "@/layout/site-header";
+import { LocaleDocument } from "@/i18n/language-switcher";
 import { MotionProvider } from "@/motion/motion-provider";
 import "./globals.css";
 
@@ -19,7 +20,7 @@ const outfit = Outfit({
 });
 
 const DESCRIPTION =
-  "Fontes de calor vistas pelos sensores MODIS e VIIRS, harmonizadas em uma só escala desde 2003.";
+  "Heat sources seen by the MODIS and VIIRS sensors, harmonized onto a single scale since 2003.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://heruproject.io"),
@@ -28,7 +29,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "HERU",
-    locale: "pt_BR",
+    locale: "en_US",
+    alternateLocale: ["pt_BR"],
     title: "HERU",
     description: DESCRIPTION,
   },
@@ -36,9 +38,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`dark ${barlow.variable} ${outfit.variable}`}>
+    <html lang="en" className={`dark ${barlow.variable} ${outfit.variable}`}>
       <body className="flex min-h-dvh flex-col antialiased">
         <MotionProvider>
+          <LocaleDocument />
           <GlobeStage />
           <SiteHeader />
           <div className="flex-1">{children}</div>

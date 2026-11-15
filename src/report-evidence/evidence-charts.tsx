@@ -16,14 +16,15 @@ import {
 } from "@/fire-calendar/calendar-labels";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
 import type { YearValue } from "@/fire-calendar/month-comparison";
+import { localNumberFormat } from "@/i18n/format";
+import { localized, useTr } from "@/i18n/locale";
 import { EASE_STANDARD } from "@/motion/chart-motion";
 
 const SHARE_BAR_HEIGHT = 120;
 const SMALL_SHARE = 2;
-const PERCENT = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
-const SMALL_PERCENT = new Intl.NumberFormat("pt-BR", {
-  maximumFractionDigits: 1,
-});
+const PERCENT = localNumberFormat({ maximumFractionDigits: 0 });
+const SMALL_PERCENT = localNumberFormat({ maximumFractionDigits: 1 });
+const RATIO = localNumberFormat({ maximumFractionDigits: 1 });
 
 const DEFAULT_WIDTH = 576;
 const MIN_WIDTH = 280;
@@ -121,6 +122,7 @@ export function MonthShareBars({
   label: string;
   compare: { label: string; shares: (number | null)[] } | null;
 }) {
+  const t = useTr();
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
   const { reduced, bar, settled } = useChartTiming(12);
@@ -154,7 +156,10 @@ export function MonthShareBars({
             >
               {run === longest && (
                 <span className="type-data whitespace-nowrap text-ink">
-                  {shareLabel(seasonShare)} juntos
+                  {t(
+                    `${shareLabel(seasonShare)} combined`,
+                    `${shareLabel(seasonShare)} juntos`,
+                  )}
                 </span>
               )}
               <span className="mt-auto block h-2 w-full rounded-t-[2px] border border-b-0 border-ink" />
@@ -223,7 +228,10 @@ export function MonthShareBars({
         <LegendItem
           swatch={<span className="h-3 w-2.5 rounded-t-[2px] bg-heat-3" />}
         >
-          Ano típico: parte de cada mês nos focos do ano
+          {t(
+            "Typical year: each month's share of the year's hotspots",
+            "Ano típico: parte de cada mês nos focos do ano",
+          )}
         </LegendItem>
         {compare && (
           <LegendItem
@@ -237,7 +245,7 @@ export function MonthShareBars({
             <span className="h-2 w-4 rounded-t-[2px] border border-b-0 border-ink" />
           }
         >
-          Temporada crítica
+          {t("Peak season", "Temporada crítica")}
         </LegendItem>
       </Legend>
     </figure>
@@ -263,6 +271,7 @@ export function YearBars({
   valueLabel: (value: number) => string;
   labelEveryBar: boolean;
 }) {
+  const t = useTr();
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
   const { reduced, bar, settled } = useChartTiming(points.length);
@@ -388,7 +397,7 @@ export function YearBars({
                 className="fill-ink-muted"
                 {...fadeIn(settled)}
               >
-                típico
+                {t("typical", "típico")}
               </m.text>
             </g>
           )}
@@ -481,18 +490,21 @@ export function YearBars({
               <span className="w-5 border-t border-dashed border-ink-muted" />
             }
           >
-            Típico: mediana dos anos
+            {t("Typical: median of the years", "Típico: mediana dos anos")}
           </LegendItem>
         )}
         {band && (
           <LegendItem
             swatch={<span className="h-3 w-5 rounded-xs bg-ink/22" />}
           >
-            Faixa usual: entre 25% e 75% dos anos
+            {t(
+              "Usual range: between 25% and 75% of the years",
+              "Faixa usual: entre 25% e 75% dos anos",
+            )}
           </LegendItem>
         )}
         <li className="text-ink-disabled max-sm:hidden sm:ml-auto">
-          Passe o mouse nas barras
+          {t("Hover over the bars", "Passe o mouse nas barras")}
         </li>
       </Legend>
     </figure>
@@ -509,11 +521,18 @@ export function bandVerdict(
   return value > band[1] ? "above" : value < band[0] ? "below" : "inside";
 }
 
-export const VERDICT_TEXT: Record<Verdict, string> = {
-  above: "Acima da faixa usual",
-  inside: "Dentro da faixa usual",
-  below: "Abaixo da faixa usual",
-};
+export const VERDICT_TEXT: Record<Verdict, string> = localized(
+  {
+    above: "Above the usual range",
+    inside: "Within the usual range",
+    below: "Below the usual range",
+  },
+  {
+    above: "Acima da faixa usual",
+    inside: "Dentro da faixa usual",
+    below: "Abaixo da faixa usual",
+  },
+);
 
 /**
  * Every year as a dot on one axis, so the reader sees at once where the chosen
@@ -532,6 +551,7 @@ export function RangeGauge({
   typical: number;
   band: [number, number] | null;
 }) {
+  const t = useTr();
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
   const reduced = Boolean(useReducedMotion());
@@ -556,7 +576,10 @@ export function RangeGauge({
       className="m-0 flex flex-col gap-2 rounded-md bg-surface-hover px-5 pt-4 pb-3"
     >
       <figcaption className="type-eyebrow text-ink-muted">
-        Onde {highlightLabel} fica entre {yearsLabel(measured.length)}
+        {t(
+          `Where ${highlightLabel} sits among ${yearsLabel(measured.length)}`,
+          `Onde ${highlightLabel} fica entre ${yearsLabel(measured.length)}`,
+        )}
       </figcaption>
       <div aria-hidden="true" className="relative mx-1.5 h-[68px]">
         <span className="absolute inset-x-0 top-[33px] h-0.5 rounded-full bg-line" />
@@ -596,7 +619,10 @@ export function RangeGauge({
             className="type-caption self-start text-[10px] whitespace-nowrap text-ink-muted"
             style={{ transform: `translateX(-${position(typical) * 100}%)` }}
           >
-            típico {formatCount(typical)}
+            {t(
+              `typical ${formatCount(typical)}`,
+              `típico ${formatCount(typical)}`,
+            )}
           </span>
           <span className="h-6 border-l border-dashed border-ink" />
         </m.span>
@@ -624,13 +650,26 @@ export function RangeGauge({
         </m.span>
       </div>
       <div className="type-caption flex justify-between gap-3 text-[10px] text-ink-muted tabular-nums">
-        <span>Menor: {formatCount(minimum)}</span>
+        <span>
+          {t(
+            `Lowest: ${formatCount(minimum)}`,
+            `Menor: ${formatCount(minimum)}`,
+          )}
+        </span>
         {band && (
           <span className="text-center">
-            Faixa usual: {formatCount(band[0])} a {formatCount(band[1])}
+            {t(
+              `Usual range: ${formatCount(band[0])} to ${formatCount(band[1])}`,
+              `Faixa usual: ${formatCount(band[0])} a ${formatCount(band[1])}`,
+            )}
           </span>
         )}
-        <span>Maior: {formatCount(maximum)}</span>
+        <span>
+          {t(
+            `Highest: ${formatCount(maximum)}`,
+            `Maior: ${formatCount(maximum)}`,
+          )}
+        </span>
       </div>
     </figure>
   );
@@ -642,6 +681,7 @@ export function RatioList({
 }: {
   rows: { key: string; label: string; value: number; ratio: number | null }[];
 }) {
+  const t = useTr();
   const ref = useRef<HTMLUListElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
   const reduced = Boolean(useReducedMotion());
@@ -673,7 +713,7 @@ export function RatioList({
             <span
               className="absolute -inset-y-1 w-px bg-ink"
               style={{ left: `${(1 / largest) * 100}%` }}
-              title="típico"
+              title={t("typical", "típico")}
             />
           </span>
           <span className="type-data text-right text-xs whitespace-nowrap text-ink tabular-nums">
@@ -681,11 +721,7 @@ export function RatioList({
             {row.ratio !== null && (
               <span className="text-ink-muted">
                 {" "}
-                ·{" "}
-                {row.ratio.toLocaleString("pt-BR", {
-                  maximumFractionDigits: 1,
-                })}
-                ×
+                · {RATIO.format(row.ratio)}×
               </span>
             )}
           </span>

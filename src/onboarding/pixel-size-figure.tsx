@@ -2,6 +2,7 @@
 
 import { m } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { useTr } from "@/i18n/locale";
 import {
   detectionTimes,
   type PixelGrid,
@@ -9,23 +10,27 @@ import {
 } from "./pixel-scan-scene";
 
 export function PixelSizeFigure() {
+  const t = useTr();
   return (
     <figure className="rounded-xl border border-line bg-surface p-6 sm:p-10">
       <div
         role="img"
-        aria-label="Esquema animado: o mesmo quadrado de chão com três fontes de calor pequenas é varrido pelo sensor. O MODIS, com um pixel de 1 km, registra um foco. O VIIRS, com pixels de 375 m, registra três."
+        aria-label={t(
+          "Animated diagram: the same square of ground with three small heat sources is scanned by the sensor. MODIS, with a 1 km pixel, records one hotspot. VIIRS, with 375 m pixels, records three.",
+          "Esquema animado: o mesmo quadrado de chão com três fontes de calor pequenas é varrido pelo sensor. O MODIS, com um pixel de 1 km, registra um foco. O VIIRS, com pixels de 375 m, registra três.",
+        )}
         className="flex gap-6 sm:gap-10"
       >
         <SensorPanel
           grid="modis"
           sensor="MODIS"
-          pixelSize="Pixel de 1 km"
+          pixelSize={t("1 km pixel", "Pixel de 1 km")}
           order={0}
         />
         <SensorPanel
           grid="viirs"
           sensor="VIIRS"
-          pixelSize="Pixels de 375 m"
+          pixelSize={t("375 m pixels", "Pixels de 375 m")}
           order={1}
         />
       </div>
@@ -34,7 +39,10 @@ export function PixelSizeFigure() {
           aria-hidden="true"
           className="size-2.5 shrink-0 rounded-full bg-heat-4 shadow-[0_0_0_3px_rgba(255,138,61,0.25)]"
         />
-        Mesmo chão, as mesmas três fontes de calor. Esquema simplificado.
+        {t(
+          "Same ground, same three heat sources. Simplified diagram.",
+          "Mesmo chão, as mesmas três fontes de calor. Esquema simplificado.",
+        )}
       </figcaption>
     </figure>
   );
@@ -51,6 +59,7 @@ function SensorPanel({
   pixelSize: string;
   order: number;
 }) {
+  const t = useTr();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [count, setCount] = useState(detectionTimes(grid).length);
@@ -100,8 +109,11 @@ function SensorPanel({
           transition={{ duration: 0.3, ease: [0.65, 0, 0.35, 1] }}
         >
           {count === 0
-            ? "Procurando focos..."
-            : `${count} ${count === 1 ? "foco" : "focos"} de calor`}
+            ? t("Looking for hotspots...", "Procurando focos...")
+            : t(
+                `${count} ${count === 1 ? "hotspot" : "hotspots"}`,
+                `${count} ${count === 1 ? "foco" : "focos"} de calor`,
+              )}
         </m.span>
       </p>
     </m.div>

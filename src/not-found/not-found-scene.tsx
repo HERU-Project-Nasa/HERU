@@ -4,6 +4,7 @@ import { m } from "motion/react";
 import Link from "next/link";
 import { buttonClassName } from "@/button/button-class-name";
 import { GlobeSlot } from "@/earth-globe/globe-slot";
+import { useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import { StarField } from "@/star-field/star-field";
 
@@ -24,6 +25,7 @@ const STAGGER = {
 };
 
 export function NotFoundScene() {
+  const t = useTr();
   return (
     <>
       <StarField className="fixed inset-0 -z-10" />
@@ -44,7 +46,7 @@ export function NotFoundScene() {
               className="hidden h-px flex-1 bg-line lg:block"
             />
             <p className="type-eyebrow text-ink-muted">
-              Erro 404 · Sinal perdido
+              {t("Error 404 · Signal lost", "Erro 404 · Sinal perdido")}
             </p>
             <span
               aria-hidden="true"
@@ -56,7 +58,7 @@ export function NotFoundScene() {
               variants={RISE}
               className="type-heading-lg lg:type-heading-xl"
             >
-              Esta página saiu da órbita
+              {t("This page has left orbit", "Esta página saiu da órbita")}
             </m.span>
             <m.span
               variants={RISE}
@@ -70,9 +72,10 @@ export function NotFoundScene() {
             variants={RISE}
             className="type-body-lg mt-2 max-w-[520px] text-ink-muted"
           >
-            Procuramos em todas as passagens dos satélites e não encontramos
-            nada neste endereço. Talvez o link esteja errado ou a página tenha
-            mudado de lugar.
+            {t(
+              "We searched every satellite overpass and found nothing at this address. Maybe the link is wrong or the page has moved.",
+              "Procuramos em todas as passagens dos satélites e não encontramos nada neste endereço. Talvez o link esteja errado ou a página tenha mudado de lugar.",
+            )}
           </m.p>
         </m.section>
         <GlobeSlot
@@ -90,13 +93,13 @@ export function NotFoundScene() {
             className={buttonClassName({ variant: "primary", size: "lg" })}
           >
             <MaterialSymbol name="arrow_back" className="size-[18px]" />
-            Voltar ao início
+            {t("Back to home", "Voltar ao início")}
           </Link>
           <Link
             href="/onboarding/1"
             className={buttonClassName({ variant: "secondary", size: "lg" })}
           >
-            Entenda o problema
+            {t("Understand the problem", "Entenda o problema")}
           </Link>
         </m.div>
       </main>

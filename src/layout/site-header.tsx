@@ -9,20 +9,29 @@ import {
   useCalendarSelection,
 } from "@/calendar-selection/calendar-selection";
 import { buttonClassName } from "@/button/button-class-name";
+import { LanguageSwitcher } from "@/i18n/language-switcher";
+import { localized, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
-import { BackgroundMusic } from "@/sound/background-music";
 import { DataStatus } from "./data-status";
 
-const NAVIGATION = [
-  { path: "/calendar", label: "Calendário" },
-  { path: "/anomalies", label: "Anomalias" },
-  { path: "/methodology", label: "Metodologia" },
-];
+const NAVIGATION = localized(
+  [
+    { path: "/calendar", label: "Calendar" },
+    { path: "/anomalies", label: "Anomalies" },
+    { path: "/methodology", label: "Methodology" },
+  ],
+  [
+    { path: "/calendar", label: "Calendário" },
+    { path: "/anomalies", label: "Anomalias" },
+    { path: "/methodology", label: "Metodologia" },
+  ],
+);
 
 const NAVIGATION_LINK_CLASS_NAME =
   "type-nav text-ink decoration-2 underline-offset-8 hover:underline aria-[current=page]:underline";
 
 export function SiteHeader() {
+  const t = useTr();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -55,13 +64,13 @@ export function SiteHeader() {
       <div className="flex h-16 items-center justify-between pr-4 pl-6 lg:grid lg:h-20 lg:grid-cols-3 lg:px-16">
         <Link
           href="/"
-          aria-label="HERU, página inicial"
+          aria-label={t("HERU, home page", "HERU, página inicial")}
           className="inline-flex min-h-11 items-center justify-self-start"
         >
           <HeruLogo variant="header" />
         </Link>
         <nav
-          aria-label="Principal"
+          aria-label={t("Main", "Principal")}
           className="hidden justify-center gap-14 lg:flex"
         >
           {NAVIGATION.map((item) => (
@@ -79,11 +88,15 @@ export function SiteHeader() {
           <div className="mr-1 flex lg:mr-2">
             <DataStatus />
           </div>
-          <BackgroundMusic />
+          <LanguageSwitcher />
           <button
             ref={menuButtonRef}
             type="button"
-            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-label={
+              menuOpen
+                ? t("Close menu", "Fechar menu")
+                : t("Open menu", "Abrir menu")
+            }
             aria-expanded={menuOpen}
             aria-controls="site-menu"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -100,7 +113,7 @@ export function SiteHeader() {
       {menuOpen && (
         <nav
           id="site-menu"
-          aria-label="Principal"
+          aria-label={t("Main", "Principal")}
           className="absolute inset-x-0 top-full flex flex-col border-y border-line bg-surface px-6 py-2 lg:hidden"
         >
           {NAVIGATION.map((item) => (

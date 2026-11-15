@@ -3,9 +3,9 @@ import { Suspense } from "react";
 import { AnomaliesExplorer } from "@/anomalies/anomalies-explorer";
 
 export const metadata: Metadata = {
-  title: "Anomalias | HERU",
+  title: "Anomalies | HERU",
   description:
-    "Os meses que fugiram do padrão desde 2003 e o último mês comparado com o típico.",
+    "The unusual months since 2003, and the last month compared with typical.",
 };
 
 export default function AnomaliesPage() {

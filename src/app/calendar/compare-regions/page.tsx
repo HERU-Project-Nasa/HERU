@@ -3,9 +3,9 @@ import { Suspense } from "react";
 import { CompareRegionsExplorer } from "@/compare-regions/compare-regions-explorer";
 
 export const metadata: Metadata = {
-  title: "Comparar regiões | HERU",
+  title: "Compare regions | HERU",
   description:
-    "Até quatro países no mesmo período, em total de focos ou por área.",
+    "Up to four countries over the same period, in total hotspots or per area.",
 };
 
 export default function CompareRegionsPage() {

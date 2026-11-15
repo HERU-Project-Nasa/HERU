@@ -2,48 +2,98 @@
 
 import { m, useInView } from "motion/react";
 import { useRef } from "react";
+import { localized, tr, useLocale, useTr } from "@/i18n/locale";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import { EASE_STANDARD } from "@/motion/chart-motion";
 
-const NODES: { symbol: SymbolName; title: string; text: string }[] = [
-  {
-    symbol: "satellite_alt",
-    title: "NASA FIRMS",
-    text: "Detecções dos satélites",
-  },
-  {
-    symbol: "refresh",
-    title: "Pipeline HERU",
-    text: "Publica um lote quando algo muda",
-  },
-  { symbol: "public", title: "Site", text: "Baixa só o que mudou" },
-];
-
-const LINKS = ["busca a cada hora", "confere a cada minuto"];
-
-const LIFE = [
-  {
-    when: "Passagem do satélite",
-    title: "Foco detectado",
-    chip: null,
-  },
-  {
-    when: "cerca de 3 h depois",
-    title: "Quase tempo real",
-    chip: {
-      label: "Preliminar",
-      className: "bg-status-stale/12 text-status-stale",
+const NODES = localized<{ symbol: SymbolName; title: string; text: string }[]>(
+  [
+    {
+      symbol: "satellite_alt",
+      title: "NASA FIRMS",
+      text: "Satellite detections",
     },
-  },
-  {
-    when: "2 a 4 meses depois",
-    title: "Produto científico",
-    chip: {
-      label: "Definitivo",
-      className: "bg-status-live/14 text-status-live",
+    {
+      symbol: "refresh",
+      title: "HERU pipeline",
+      text: "Publishes a batch when something changes",
     },
-  },
-];
+    { symbol: "public", title: "Website", text: "Downloads only what changed" },
+  ],
+  [
+    {
+      symbol: "satellite_alt",
+      title: "NASA FIRMS",
+      text: "Detecções dos satélites",
+    },
+    {
+      symbol: "refresh",
+      title: "Pipeline HERU",
+      text: "Publica um lote quando algo muda",
+    },
+    { symbol: "public", title: "Site", text: "Baixa só o que mudou" },
+  ],
+);
+
+const LINKS = localized(
+  ["fetches every hour", "checks every minute"],
+  ["busca a cada hora", "confere a cada minuto"],
+);
+
+type LifeStage = {
+  when: string;
+  title: string;
+  chip: { label: string; className: string } | null;
+};
+
+const LIFE = localized<LifeStage[]>(
+  [
+    {
+      when: "Satellite overpass",
+      title: "Hotspot detected",
+      chip: null,
+    },
+    {
+      when: "about 3 h later",
+      title: "Near real-time (NRT)",
+      chip: {
+        label: "Preliminary",
+        className: "bg-status-stale/12 text-status-stale",
+      },
+    },
+    {
+      when: "2 to 4 months later",
+      title: "Science product",
+      chip: {
+        label: "Final",
+        className: "bg-status-live/14 text-status-live",
+      },
+    },
+  ],
+  [
+    {
+      when: "Passagem do satélite",
+      title: "Foco detectado",
+      chip: null,
+    },
+    {
+      when: "cerca de 3 h depois",
+      title: "Quase tempo real",
+      chip: {
+        label: "Preliminar",
+        className: "bg-status-stale/12 text-status-stale",
+      },
+    },
+    {
+      when: "2 a 4 meses depois",
+      title: "Produto científico",
+      chip: {
+        label: "Definitivo",
+        className: "bg-status-live/14 text-status-live",
+      },
+    },
+  ],
+);
 
 /** Hours in UTC shown on the day strip: from 12 h of one day to 12 h of the next. */
 const STRIP_START = 12;
@@ -56,11 +106,14 @@ function stripPosition(utcHour: number): string {
   return `${((utcHour - STRIP_START) / STRIP_HOURS) * 100}%`;
 }
 
+/** "22:00" in English, "22 h" in Portuguese. */
 function clockLabel(hour: number): string {
-  return `${String(((hour % 24) + 24) % 24).padStart(2, "0")} h`;
+  const hours = String(((hour % 24) + 24) % 24).padStart(2, "0");
+  return tr(`${hours}:00`, `${hours} h`);
 }
 
 export function DataFlowFigure() {
+  const t = useTr();
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.25 });
   const shown = inView ? "shown" : "hidden";
@@ -71,10 +124,12 @@ export function DataFlowFigure() {
       className="flex flex-col gap-6 rounded-md border border-line bg-surface p-4 sm:p-6"
     >
       <div className="flex flex-col gap-3">
-        <span className="type-caption text-ink-muted">Caminho dos dados</span>
+        <span className="type-caption text-ink-muted">
+          {t("Data path", "Caminho dos dados")}
+        </span>
         <ol className="flex flex-col items-stretch gap-0 sm:flex-row sm:items-center">
           {NODES.map((node, index) => (
-            <li key={node.title} className="contents">
+            <li key={node.symbol} className="contents">
               <m.div
                 className="flex flex-1 items-center gap-3 rounded-md border border-line-strong bg-surface-hover px-3 py-2.5"
                 initial={{ opacity: 0, y: 10 }}
@@ -106,7 +161,9 @@ export function DataFlowFigure() {
       </div>
 
       <div className="flex flex-col gap-3 border-t border-line pt-5">
-        <span className="type-caption text-ink-muted">A vida de um dado</span>
+        <span className="type-caption text-ink-muted">
+          {t("Life of a data point", "A vida de um dado")}
+        </span>
         <div className="relative grid gap-4 sm:grid-cols-3 sm:gap-6">
           <span
             aria-hidden="true"
@@ -125,7 +182,7 @@ export function DataFlowFigure() {
           </span>
           {LIFE.map((stage, index) => (
             <m.div
-              key={stage.title}
+              key={index}
               className="relative flex items-start gap-3 sm:flex-col sm:items-center sm:text-center"
               initial="hidden"
               animate={shown}
@@ -246,22 +303,24 @@ function TravelingDot({
 }
 
 function DayBar({ splitAt }: { splitAt: number }) {
+  const t = useTr();
   return (
     <div className="relative flex h-7 overflow-hidden rounded-xs">
       <span
         className="type-caption flex items-center justify-center bg-surface-hover text-[10px] text-ink-muted"
         style={{ width: stripPosition(splitAt) }}
       >
-        dia 14
+        {t("day 14", "dia 14")}
       </span>
       <span className="type-caption flex flex-1 items-center justify-center bg-viirs/18 text-[10px] text-ink">
-        dia 15
+        {t("day 15", "dia 15")}
       </span>
     </div>
   );
 }
 
 function StripTicks({ offset }: { offset: number }) {
+  useLocale();
   return (
     <div aria-hidden="true" className="relative h-4">
       {STRIP_TICKS.map((hour) => (
@@ -278,10 +337,13 @@ function StripTicks({ offset }: { offset: number }) {
 }
 
 function UtcDayStrip({ inView }: { inView: boolean }) {
+  const t = useTr();
   const exampleBrasilia = EXAMPLE_UTC_HOUR + BRASILIA_OFFSET;
   return (
     <div className="flex flex-col gap-3 border-t border-line pt-5">
-      <span className="type-caption text-ink-muted">Os dias seguem o UTC</span>
+      <span className="type-caption text-ink-muted">
+        {t("Days follow UTC", "Os dias seguem o UTC")}
+      </span>
       <div className="flex gap-3">
         <div className="type-body-sm flex w-[72px] shrink-0 flex-col gap-1.5 pt-[22px] text-ink-muted sm:w-[110px]">
           <span className="flex h-7 items-center">Brasília</span>
@@ -323,12 +385,24 @@ function UtcDayStrip({ inView }: { inView: boolean }) {
         animate={{ opacity: inView ? 1 : 0 }}
         transition={{ duration: 0.4, delay: 3.8 }}
       >
-        <span className="font-semibold text-ink">
-          Um foco às {clockLabel(exampleBrasilia)} do dia 14 em Brasília
-        </span>{" "}
-        já é {clockLabel(EXAMPLE_UTC_HOUR)} do dia 15 em UTC, e conta no dia 15.
-        Um dia só fecha depois da última passagem; até lá ele aparece como
-        parcial.
+        {t(
+          <>
+            <span className="font-semibold text-ink">
+              A hotspot at {clockLabel(exampleBrasilia)} on day 14 in Brasília
+            </span>{" "}
+            is already {clockLabel(EXAMPLE_UTC_HOUR)} on day 15 in UTC, so it
+            counts on day 15. A day only closes after the last overpass; until
+            then it shows as partial.
+          </>,
+          <>
+            <span className="font-semibold text-ink">
+              Um foco às {clockLabel(exampleBrasilia)} do dia 14 em Brasília
+            </span>{" "}
+            já é {clockLabel(EXAMPLE_UTC_HOUR)} do dia 15 em UTC, e conta no dia
+            15. Um dia só fecha depois da última passagem; até lá ele aparece
+            como parcial.
+          </>,
+        )}
       </m.p>
     </div>
   );

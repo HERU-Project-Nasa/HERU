@@ -9,6 +9,7 @@ import {
   globeLoadingSnapshot,
   useGlobeLoading,
 } from "@/earth-globe/globe-store";
+import { useTr } from "@/i18n/locale";
 import {
   LOADING_MINIMUM_SECONDS,
   LoadingScreen,
@@ -41,6 +42,7 @@ const ACTIONS = {
 };
 
 export function HomeScene() {
+  const t = useTr();
   const { progress, ready } = useGlobeLoading();
   const [minimumElapsed, setMinimumElapsed] = useState(
     () => globeLoadingSnapshot().ready,
@@ -79,7 +81,10 @@ export function HomeScene() {
               className="hidden h-px flex-1 bg-line lg:block"
             />
             <p className="type-eyebrow text-ink-muted">
-              Harmonizando as fontes de calor
+              {t(
+                "Harmonizing the heat sources",
+                "Harmonizando as fontes de calor",
+              )}
             </p>
             <span
               aria-hidden="true"
@@ -91,13 +96,13 @@ export function HomeScene() {
               variants={RISE}
               className="type-heading-lg lg:type-heading-xl"
             >
-              que MODIS e VIIRS viram na
+              {t("that MODIS and VIIRS saw on", "que MODIS e VIIRS viram na")}
             </m.span>
             <m.span
               variants={RISE}
               className="type-display-hero mt-3 bg-linear-to-b from-ink from-28% to-ink/0 to-92% bg-clip-text pl-[0.08em] text-[96px] tracking-[0.08em] text-transparent lg:mt-4 lg:pl-[0.16em] lg:text-[200px] lg:tracking-[0.16em]"
             >
-              Terra
+              {t("Earth", "Terra")}
             </m.span>
           </h1>
         </m.section>
@@ -116,7 +121,7 @@ export function HomeScene() {
               href="/onboarding/1"
               className={buttonClassName({ variant: "primary", size: "lg" })}
             >
-              Entenda o problema
+              {t("Understand the problem", "Entenda o problema")}
             </Link>
             <Link
               href="/calendar"
@@ -125,12 +130,17 @@ export function HomeScene() {
                 size: "lg",
               })}
             >
-              Escolher uma região
+              {t("Choose a region", "Escolher uma região")}
             </Link>
           </div>
           <p className="type-caption text-center text-ink-muted">
-            MODIS desde 2003 · VIIRS desde 2012
-            <span className="max-sm:hidden"> · uma só escala</span>
+            {t(
+              "MODIS since 2003 · VIIRS since 2012",
+              "MODIS desde 2003 · VIIRS desde 2012",
+            )}
+            <span className="max-sm:hidden">
+              {t(" · a single scale", " · uma só escala")}
+            </span>
           </p>
         </m.div>
       </main>

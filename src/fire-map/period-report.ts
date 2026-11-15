@@ -7,6 +7,7 @@ import type {
 import type { PeriodReport } from "@/fire-calendar/calendar-reports";
 import type { CalendarAnalysis } from "@/fire-calendar/calendar-statistics";
 import { periodComparison } from "@/fire-calendar/month-comparison";
+import { tr } from "@/i18n/locale";
 import type { SeriesDayRow } from "@/pipeline/series-row";
 import {
   dateRangeLabel,
@@ -50,8 +51,13 @@ export function periodReport(
     dates: dateRangeLabel(comparison.start, comparison.end),
     note:
       [
-        partial && `${capitalized(partial)}, fora da comparação.`,
-        period.hours && "Contamos dias UTC inteiros.",
+        partial &&
+          tr(
+            `${capitalized(partial)}, left out of the comparison.`,
+            `${capitalized(partial)}, fora da comparação.`,
+          ),
+        period.hours &&
+          tr("We count whole UTC days.", "Contamos dias UTC inteiros."),
       ]
         .filter(Boolean)
         .join(" ") || null,

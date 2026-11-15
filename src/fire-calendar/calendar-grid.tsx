@@ -1,6 +1,7 @@
 "use client";
 
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { localized, tr, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import {
   ANOMALY_LEVELS,
@@ -23,6 +24,7 @@ import {
   MONTH_INITIALS,
   MONTH_NAMES,
   monthTitle,
+  yearsLabel,
 } from "./calendar-labels";
 import type {
   CalendarCell,
@@ -50,12 +52,21 @@ type TooltipPlace = {
   above: boolean;
 };
 
-const STATE_DESCRIPTIONS: Partial<Record<CalendarCell["state"], string>> = {
-  "no-data": "sem dados",
-  computing: "em cálculo",
-  loading: "carregando",
-  future: "ainda não aconteceu",
-};
+const STATE_DESCRIPTIONS: Partial<Record<CalendarCell["state"], string>> =
+  localized<Partial<Record<CalendarCell["state"], string>>>(
+    {
+      "no-data": "no data",
+      computing: "being computed",
+      loading: "loading",
+      future: "has not happened yet",
+    },
+    {
+      "no-data": "sem dados",
+      computing: "em cálculo",
+      loading: "carregando",
+      future: "ainda não aconteceu",
+    },
+  );
 
 function cellLabel(cell: CalendarCell, outlier: boolean): string {
   const parts = [
@@ -63,9 +74,9 @@ function cellLabel(cell: CalendarCell, outlier: boolean): string {
       ? formatHotspots(cell.value!)
       : STATE_DESCRIPTIONS[cell.state]!,
   ];
-  if (outlier) parts.push("fora do padrão");
-  if (cell.provisional) parts.push("preliminar");
-  if (cell.partial) parts.push("parcial");
+  if (outlier) parts.push(tr("unusual", "fora do padrão"));
+  if (cell.provisional) parts.push(tr("preliminary", "preliminar"));
+  if (cell.partial) parts.push(tr("partial", "parcial"));
   return `${monthTitle(cell)}: ${parts.join(", ")}`;
 }
 
@@ -152,6 +163,7 @@ function TotalMark({
   largest: number;
   record: boolean;
 }) {
+  const t = useTr();
   if (!total || total.total === null) {
     return (
       <span className="type-caption pl-1 text-ink-disabled sm:pl-2">-</span>
@@ -162,7 +174,12 @@ function TotalMark({
     <span
       className="flex min-w-0 items-center gap-1.5 pl-1 sm:pl-2"
       title={
-        settled ? undefined : "Soma dos meses com dado. Ainda faltam meses."
+        settled
+          ? undefined
+          : t(
+              "Sum of the months with data. Some months are still missing.",
+              "Soma dos meses com dado. Ainda faltam meses.",
+            )
       }
     >
       <span
@@ -178,8 +195,14 @@ function TotalMark({
         className={`truncate text-[11px] leading-4 whitespace-nowrap tabular-nums sm:text-xs ${record ? "font-semibold text-ink" : settled ? "text-ink-muted" : "text-ink-disabled"}`}
       >
         {formatCompact(total.total)}
-        {total.partial && <span className="hidden sm:inline"> até agora</span>}
-        {record && <span className="hidden sm:inline"> · recorde</span>}
+        {total.partial && (
+          <span className="hidden sm:inline">{t(" so far", " até agora")}</span>
+        )}
+        {record && (
+          <span className="hidden sm:inline">
+            {t(" · record", " · recorde")}
+          </span>
+        )}
       </span>
     </span>
   );
@@ -210,6 +233,7 @@ export function CalendarGrid({
   selectedKey?: string | null;
   onSelect?: (cell: CalendarCell) => void;
 }) {
+  const t = useTr();
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipPlace | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -308,7 +332,7 @@ export function CalendarGrid({
             >
               {run === labelRun && (
                 <span className="type-caption whitespace-nowrap text-ink">
-                  Temporada crítica
+                  {t("Peak season", "Temporada crítica")}
                 </span>
               )}
               <span className="block h-1.5 w-full rounded-t-xs border border-b-0 border-ink" />
@@ -332,7 +356,10 @@ export function CalendarGrid({
       </div>
       <div
         role="grid"
-        aria-label={`Calendário de fontes de calor, ${areaName}`}
+        aria-label={t(
+          `Heat source calendar, ${areaName}`,
+          `Calendário de fontes de calor, ${areaName}`,
+        )}
         className="flex flex-col gap-0.5 sm:gap-[3px]"
       >
         {years.map((year) => (
@@ -424,22 +451,31 @@ export function CalendarGrid({
           className={`${GRID_COLUMNS} mt-2 items-center border-t border-dashed border-line-strong pt-2`}
         >
           <span role="rowheader" className="type-caption text-ink">
-            <span className="sm:hidden">Med.</span>
-            <span className="hidden sm:inline">Mediana</span>
+            <span className="sm:hidden">{t("Med.", "Med.")}</span>
+            <span className="hidden sm:inline">{t("Median", "Mediana")}</span>
           </span>
           <span />
           {analysis.baselines.map((baseline, index) => (
             <span
-              key={MONTH_NAMES[index]}
+              key={index}
               role="gridcell"
               aria-label={
                 baseline
-                  ? `Mediana de ${MONTH_NAMES[index]}: ${formatHotspots(baseline.median)}`
-                  : `Mediana de ${MONTH_NAMES[index]}: sem referência`
+                  ? t(
+                      `${MONTH_NAMES[index]} median: ${formatHotspots(baseline.median)}`,
+                      `Mediana de ${MONTH_NAMES[index]}: ${formatHotspots(baseline.median)}`,
+                    )
+                  : t(
+                      `${MONTH_NAMES[index]} median: no baseline`,
+                      `Mediana de ${MONTH_NAMES[index]}: sem referência`,
+                    )
               }
               title={
                 baseline
-                  ? `Mediana de ${MONTH_NAMES[index]}: ${formatHotspots(baseline.median)} em ${baseline.years} anos`
+                  ? t(
+                      `${MONTH_NAMES[index]} median: ${formatHotspots(baseline.median)} over ${yearsLabel(baseline.years)}`,
+                      `Mediana de ${MONTH_NAMES[index]}: ${formatHotspots(baseline.median)} em ${baseline.years} anos`,
+                    )
                   : undefined
               }
               className={`block h-4 rounded-xs shadow-[inset_0_0_0_1px_var(--color-surface-ground)] sm:h-5 ${
@@ -463,8 +499,10 @@ export function CalendarGrid({
                   {shortestBaseline}/{analysis.baselineYearCount}
                 </span>
                 <span className="hidden sm:inline">
-                  carregando, {shortestBaseline} de {analysis.baselineYearCount}{" "}
-                  anos
+                  {t(
+                    `loading, ${shortestBaseline} of ${analysis.baselineYearCount} years`,
+                    `carregando, ${shortestBaseline} de ${analysis.baselineYearCount} anos`,
+                  )}
                 </span>
               </>
             ) : (

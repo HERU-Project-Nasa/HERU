@@ -3,6 +3,7 @@
 import { AnimatePresence, m, type Variants } from "motion/react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { buttonClassName } from "@/button/button-class-name";
+import { useTr } from "@/i18n/locale";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import { AnimatedNumber, EASE_STANDARD } from "@/motion/chart-motion";
 
@@ -123,6 +124,7 @@ export function EvidenceDialog({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const t = useTr();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(true);
   const afterClose = useRef(onClose);
@@ -194,7 +196,7 @@ export function EvidenceDialog({
                     </p>
                     <button
                       type="button"
-                      aria-label="Fechar"
+                      aria-label={t("Close", "Fechar")}
                       onClick={() => close()}
                       className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-sm text-ink transition-colors duration-120 ease-standard hover:bg-surface-hover"
                     >
@@ -229,7 +231,7 @@ export function EvidenceDialog({
                       })}
                     >
                       <MaterialSymbol name="download" className="size-[18px]" />
-                      Baixar CSV
+                      {t("Download CSV", "Baixar CSV")}
                     </button>
                     <button
                       type="button"
@@ -239,7 +241,7 @@ export function EvidenceDialog({
                         size: "md",
                       })}
                     >
-                      Ver no calendário
+                      {t("See on calendar", "Ver no calendário")}
                       <MaterialSymbol
                         name="arrow_forward"
                         className="size-[18px]"

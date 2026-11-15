@@ -13,6 +13,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { COUNTRY_BOUNDARIES_URL } from "@/country-outlines/country-outlines";
 import { HEAT_TOKENS } from "@/fire-calendar/calendar-cell-style";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
+import { localized, useTr } from "@/i18n/locale";
 import { MaterialSymbol, type SymbolName } from "@/icons/material-symbols";
 import type { MapCamera, MapLink } from "./map-link";
 import type { MappedPoint } from "./use-map-fires";
@@ -126,10 +127,17 @@ const SATELLITE_TILES =
 
 type MapLook = "sketch" | "realistic";
 
-const MAP_LOOKS: { value: MapLook; label: string; icon: SymbolName }[] = [
-  { value: "sketch", label: "Esboço", icon: "map" },
-  { value: "realistic", label: "Realista", icon: "satellite_alt" },
-];
+const MAP_LOOKS: { value: MapLook; label: string; icon: SymbolName }[] =
+  localized(
+    [
+      { value: "sketch", label: "Sketch", icon: "map" },
+      { value: "realistic", label: "Realistic", icon: "satellite_alt" },
+    ],
+    [
+      { value: "sketch", label: "Esboço", icon: "map" },
+      { value: "realistic", label: "Realista", icon: "satellite_alt" },
+    ],
+  );
 
 function applyMapLook(map: MapLibreMap, look: MapLook) {
   const realistic = look === "realistic";
@@ -154,11 +162,12 @@ function MapLookToggle({
   look: MapLook;
   onChange: (look: MapLook) => void;
 }) {
+  const t = useTr();
   return (
     <div className="absolute right-4 bottom-4 z-10 flex flex-col items-end gap-1.5">
       <div
         role="radiogroup"
-        aria-label="Visual do mapa"
+        aria-label={t("Map style", "Visual do mapa")}
         className="flex items-center gap-0.5 rounded-full border border-line-strong bg-surface/85 p-1 shadow-overlay backdrop-blur-md"
       >
         {MAP_LOOKS.map((option) => {
@@ -180,7 +189,10 @@ function MapLookToggle({
       </div>
       {look === "realistic" && (
         <span className="rounded-sm bg-surface-ground/70 px-1.5 py-0.5 text-[11px] leading-4 text-ink-muted">
-          Imagens: NASA GIBS, Blue Marble
+          {t(
+            "Imagery: NASA GIBS, Blue Marble",
+            "Imagens: NASA GIBS, Blue Marble",
+          )}
         </span>
       )}
     </div>
@@ -235,6 +247,7 @@ export function FireMap({
   link?: MapLink | null;
   children: ReactNode;
 }) {
+  const t = useTr();
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
@@ -644,27 +657,35 @@ export function FireMap({
       {children}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <ControlButton
-          label="Aproximar"
+          label={t("Zoom in", "Aproximar")}
           icon="add"
           onClick={() => map?.zoomIn()}
         />
         <ControlButton
-          label="Afastar"
+          label={t("Zoom out", "Afastar")}
           icon="remove"
           onClick={() => map?.zoomOut()}
         />
         <ControlButton
-          label="Voltar para a região"
+          label={t("Back to the region", "Voltar para a região")}
           icon="my_location"
           onClick={recenter}
         />
         <ControlButton
-          label={globe ? "Ver como mapa plano" : "Ver como globo"}
+          label={
+            globe
+              ? t("View as a flat map", "Ver como mapa plano")
+              : t("View as a globe", "Ver como globo")
+          }
           icon={globe ? "map" : "view_in_ar"}
           onClick={toggleProjection}
         />
         <ControlButton
-          label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+          label={
+            fullscreen
+              ? t("Exit full screen", "Sair da tela cheia")
+              : t("Full screen", "Tela cheia")
+          }
           icon={fullscreen ? "fullscreen_exit" : "fullscreen"}
           onClick={toggleFullscreen}
         />
@@ -673,7 +694,10 @@ export function FireMap({
       {showHint && (
         <p className="type-body-sm pointer-events-none absolute bottom-4 left-1/2 z-20 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-line-strong bg-surface/90 px-4 py-2 whitespace-nowrap text-ink shadow-overlay sm:flex">
           <MaterialSymbol name="info" className="size-4 shrink-0" />
-          Passe o mouse num ponto ou toque nele para saber o que é
+          {t(
+            "Hover over a point or tap it to see what it is",
+            "Passe o mouse num ponto ou toque nele para saber o que é",
+          )}
         </p>
       )}
       {hover && (
@@ -690,7 +714,9 @@ export function FireMap({
         <m.div
           key={hover.pinned ? "pinned" : "hover"}
           role={hover.pinned ? "dialog" : undefined}
-          aria-label={hover.pinned ? "Detalhes do foco" : undefined}
+          aria-label={
+            hover.pinned ? t("Hotspot details", "Detalhes do foco") : undefined
+          }
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.16, ease: [0.2, 0, 0, 1] }}
@@ -701,7 +727,7 @@ export function FireMap({
           {hover.pinned && (
             <button
               type="button"
-              aria-label="Fechar detalhes"
+              aria-label={t("Close details", "Fechar detalhes")}
               autoFocus
               onClick={() => setHover(null)}
               className="absolute top-1.5 right-1.5 flex size-8 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-surface-hover"

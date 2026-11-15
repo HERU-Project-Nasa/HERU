@@ -4,6 +4,7 @@ import { formatCompact, formatHotspots } from "@/fire-calendar/calendar-labels";
 import { CALENDAR_FIRST_YEAR } from "@/fire-calendar/calendar-matrix";
 import { heatLevel } from "@/fire-calendar/calendar-statistics";
 import { SegmentedChoice } from "@/fire-calendar/segmented-choice";
+import { localized, useTr } from "@/i18n/locale";
 import { MaterialSymbol } from "@/icons/material-symbols";
 import {
   type MapPeriod,
@@ -46,8 +47,9 @@ function SeasonCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useTr();
   const { season, total, future, current, complete } = entry;
-  const label = `${season.name} ${season.months[2].slice(0, 4)}, ${season.monthsLabel}${current ? ", em andamento" : ""}${total !== null ? `, ${formatHotspots(total)}` : ""}`;
+  const label = `${season.name} ${season.months[2].slice(0, 4)}, ${season.monthsLabel}${current ? t(", in progress", ", em andamento") : ""}${total !== null ? `, ${formatHotspots(total)}` : ""}`;
   return (
     <button
       type="button"
@@ -57,7 +59,10 @@ function SeasonCard({
       onClick={onSelect}
       title={
         total !== null && !complete
-          ? "Soma dos meses com dado. Ainda faltam meses."
+          ? t(
+              "Sum of the months with data. Some months are still missing.",
+              "Soma dos meses com dado. Ainda faltam meses.",
+            )
           : undefined
       }
       className={`group relative flex min-w-0 cursor-pointer flex-col gap-2.5 rounded-md border p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 ease-standard disabled:cursor-not-allowed disabled:opacity-40 motion-safe:enabled:hover:-translate-y-0.5 ${selected ? "border-ink bg-surface-hover shadow-[0_0_0_1px_var(--color-ink),0_12px_28px_rgba(0,0,0,0.45)]" : "border-line bg-surface hover:border-line-strong hover:bg-surface-hover"}`}
@@ -70,7 +75,7 @@ function SeasonCard({
         </span>
         {current && (
           <span className="rounded-full bg-ink px-1.5 text-[10px] leading-4 font-semibold tracking-[0.06em] text-ink-inverse uppercase">
-            agora
+            {t("now", "agora")}
           </span>
         )}
       </span>
@@ -86,7 +91,9 @@ function SeasonCard({
         <span className="type-data text-ink tabular-nums">
           {total === null ? "-" : formatCompact(total)}
         </span>
-        <span className="text-[11px] leading-4 text-ink-muted">focos</span>
+        <span className="text-[11px] leading-4 text-ink-muted">
+          {t("hotspots", "focos")}
+        </span>
       </span>
       <span
         aria-hidden="true"
@@ -106,6 +113,11 @@ function SeasonCard({
 export type MapCount = "harmonized" | "raw";
 
 function CountInfo() {
+  const t = useTr();
+  const question = t(
+    "Are the map points harmonized?",
+    "Os pontos do mapa são harmonizados?",
+  );
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
@@ -136,7 +148,7 @@ function CountInfo() {
     <div ref={boxRef} className="inline-flex">
       <button
         type="button"
-        aria-label="Os pontos do mapa são harmonizados?"
+        aria-label={question}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen(!open)}
@@ -148,32 +160,45 @@ function CountInfo() {
         <div
           id={panelId}
           role="dialog"
-          aria-label="Os pontos do mapa são harmonizados?"
+          aria-label={question}
           className="absolute top-8 left-0 z-40 flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-3 rounded-md border border-line-strong bg-surface-raised p-4 text-left tracking-normal normal-case shadow-overlay"
         >
-          <p className="type-heading-sm text-ink">
-            Os pontos do mapa são harmonizados?
+          <p className="type-heading-sm text-ink">{question}</p>
+          <p className="type-body-sm text-ink">
+            {t(
+              "No. Each point is a real detection, as the satellite saw it: a pixel hotter than its surroundings.",
+              "Não. Cada ponto é uma detecção real, do jeito que o satélite viu: um pixel mais quente que o entorno.",
+            )}
           </p>
           <p className="type-body-sm text-ink">
-            Não. Cada ponto é uma detecção real, do jeito que o satélite viu: um
-            pixel mais quente que o entorno.
-          </p>
-          <p className="type-body-sm text-ink">
-            O que é harmonizado é a{" "}
-            <strong className="font-semibold">contagem</strong>. O MODIS tem
-            pixel de 1 km e enxerga menos focos que o VIIRS, de 375 m. Para
-            comparar anos diferentes, cada ponto entra na soma com um peso: o
-            fator k do bloco de 5° onde ele caiu.
+            {t(
+              <>
+                What is harmonized is the{" "}
+                <strong className="font-semibold">count</strong>. MODIS has 1 km
+                pixels and sees fewer hotspots than VIIRS, with 375 m pixels. To
+                compare different years, each point enters the sum with a
+                weight: the factor k of the 5° block where it fell.
+              </>,
+              <>
+                O que é harmonizado é a{" "}
+                <strong className="font-semibold">contagem</strong>. O MODIS tem
+                pixel de 1 km e enxerga menos focos que o VIIRS, de 375 m. Para
+                comparar anos diferentes, cada ponto entra na soma com um peso:
+                o fator k do bloco de 5° onde ele caiu.
+              </>,
+            )}
           </p>
           <p className="type-body-sm text-ink-muted">
-            Por isso, na contagem Harmonizada o total pode ser diferente do
-            número de pontos desenhados. Na Bruta, cada ponto vale 1.
+            {t(
+              "That is why, in the Harmonized count, the total can differ from the number of points drawn. In the Raw count, each point counts as 1.",
+              "Por isso, na contagem Harmonizada o total pode ser diferente do número de pontos desenhados. Na Bruta, cada ponto vale 1.",
+            )}
           </p>
           <a
             href="/methodology#harmonizacao"
             className="type-button inline-flex items-center gap-1.5 self-start text-ink hover:underline"
           >
-            Como harmonizamos
+            {t("How we harmonize", "Como harmonizamos")}
             <MaterialSymbol name="arrow_forward" className="size-[18px]" />
           </a>
         </div>
@@ -182,10 +207,16 @@ function CountInfo() {
   );
 }
 
-const COUNT_OPTIONS: { value: MapCount; label: string }[] = [
-  { value: "harmonized", label: "Harmonizada" },
-  { value: "raw", label: "Bruta" },
-];
+const COUNT_OPTIONS: { value: MapCount; label: string }[] = localized(
+  [
+    { value: "harmonized", label: "Harmonized" },
+    { value: "raw", label: "Raw" },
+  ],
+  [
+    { value: "harmonized", label: "Harmonizada" },
+    { value: "raw", label: "Bruta" },
+  ],
+);
 
 export function MapFilters({
   period,
@@ -216,6 +247,7 @@ export function MapFilters({
   countLocked: string | null;
   sensorPicker: ReactNode;
 }) {
+  const t = useTr();
   const largest = Math.max(
     1,
     ...(seasonYears ?? []).flatMap(({ seasons }) =>
@@ -232,21 +264,24 @@ export function MapFilters({
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 id="map-filters-title" className="type-section-title text-ink">
-          Filtros do mapa
+          {t("Map filters", "Filtros do mapa")}
         </h2>
         <span className="type-body-sm text-ink-muted">
-          O mapa atualiza assim que você escolhe
+          {t(
+            "The map updates as soon as you choose",
+            "O mapa atualiza assim que você escolhe",
+          )}
         </span>
       </div>
 
       <div className="flex flex-col gap-4">
         <h3 className="type-caption text-[18px] leading-6 tracking-[0.08em] text-ink-muted">
-          Período
+          {t("Period", "Período")}
         </h3>
         <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
           <div
             role="radiogroup"
-            aria-label="Período"
+            aria-label={t("Period", "Período")}
             className="flex flex-wrap gap-2"
           >
             {PERIOD_PRESETS.map((option) => (
@@ -264,7 +299,9 @@ export function MapFilters({
           </div>
           <div className="flex w-full gap-3 sm:w-auto">
             <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-none">
-              <span className="type-caption text-ink-muted">De</span>
+              <span className="type-caption text-ink-muted">
+                {t("From", "De")}
+              </span>
               <input
                 type="date"
                 value={period.start}
@@ -277,7 +314,9 @@ export function MapFilters({
               />
             </label>
             <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-none">
-              <span className="type-caption text-ink-muted">Até</span>
+              <span className="type-caption text-ink-muted">
+                {t("To", "Até")}
+              </span>
               <input
                 type="date"
                 value={period.end}
@@ -293,16 +332,16 @@ export function MapFilters({
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="type-caption relative flex items-center gap-1 text-ink-muted">
-              Contagem
+              {t("Count", "Contagem")}
               <CountInfo />
             </span>
             {countLocked ? (
               <span className="type-chip inline-flex h-10 items-center rounded-sm border border-line px-4 text-ink">
-                Bruta
+                {t("Raw", "Bruta")}
               </span>
             ) : (
               <SegmentedChoice
-                label="Contagem do mapa"
+                label={t("Map count", "Contagem do mapa")}
                 options={COUNT_OPTIONS}
                 value={count}
                 onChange={onCountChange}
@@ -312,10 +351,16 @@ export function MapFilters({
         </div>
         <p className="type-body-sm max-w-3xl text-ink-muted">
           {countLocked
-            ? `Bruta: ${countLocked}`
+            ? t(`Raw: ${countLocked}`, `Bruta: ${countLocked}`)
             : count === "harmonized"
-              ? "Harmonizada: os números estão em focos equivalentes VIIRS, a régua do calendário. Cada ponto é uma detecção real e vale o fator k do bloco de 5° onde caiu."
-              : "Bruta: os números contam as detecções do sensor desenhado, sem conversão. Antes de 2012 o MODIS conta menos focos que o VIIRS, porque o pixel dele é maior."}
+              ? t(
+                  "Harmonized: the numbers are in VIIRS-equivalent hotspots, the reference scale of the calendar. Each point is a real detection and is worth the factor k of the 5° block where it fell.",
+                  "Harmonizada: os números estão em focos equivalentes VIIRS, a régua do calendário. Cada ponto é uma detecção real e vale o fator k do bloco de 5° onde caiu.",
+                )
+              : t(
+                  "Raw: the numbers count the detections of the sensor drawn, with no conversion. Before 2012, MODIS counts fewer hotspots than VIIRS because its pixel is larger.",
+                  "Bruta: os números contam as detecções do sensor desenhado, sem conversão. Antes de 2012 o MODIS conta menos focos que o VIIRS, porque o pixel dele é maior.",
+                )}
         </p>
       </div>
 
@@ -325,23 +370,25 @@ export function MapFilters({
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h3 className="type-caption text-[18px] leading-6 tracking-[0.08em] text-ink-muted">
-              Estações do ano
+              {t("Seasons", "Estações do ano")}
             </h3>
             <span className="type-body-sm text-ink-muted">
-              Hemisfério {southern ? "sul" : "norte"} · meses inteiros · a barra
-              mostra a quantidade de focos ·{" "}
+              {t(
+                `${southern ? "Southern" : "Northern"} Hemisphere · full months · the bar shows the number of hotspots · `,
+                `Hemisfério ${southern ? "sul" : "norte"} · meses inteiros · a barra mostra a quantidade de focos · `,
+              )}
               <span className="whitespace-nowrap">
                 <span className="mr-1 rounded-full bg-ink px-1.5 text-[10px] leading-4 text-ink-inverse">
-                  agora
+                  {t("now", "agora")}
                 </span>
-                em andamento
+                {t("in progress", "em andamento")}
               </span>
             </span>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-line bg-linear-to-b from-surface-hover/50 to-surface p-3 sm:gap-3 sm:p-4">
             <button
               type="button"
-              aria-label="Anos anteriores"
+              aria-label={t("Earlier years", "Anos anteriores")}
               disabled={firstShown <= CALENDAR_FIRST_YEAR}
               onClick={() => onShiftSeasons(-1)}
               className={ROUND_BUTTON_CLASS_NAME}
@@ -362,7 +409,7 @@ export function MapFilters({
                   </span>
                   <div
                     role="group"
-                    aria-label={`Estações de ${year}`}
+                    aria-label={t(`Seasons of ${year}`, `Estações de ${year}`)}
                     className="grid grid-cols-2 gap-2 sm:grid-cols-4"
                   >
                     {seasons.map((entry) => (
@@ -381,7 +428,7 @@ export function MapFilters({
             </div>
             <button
               type="button"
-              aria-label="Próximos anos"
+              aria-label={t("Later years", "Próximos anos")}
               disabled={lastShown >= Number(lastDataDate.slice(0, 4))}
               onClick={() => onShiftSeasons(1)}
               className={ROUND_BUTTON_CLASS_NAME}

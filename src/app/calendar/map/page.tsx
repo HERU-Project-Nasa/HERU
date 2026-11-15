@@ -3,9 +3,9 @@ import { Suspense } from "react";
 import { CalendarExplorer } from "./calendar-explorer";
 
 export const metadata: Metadata = {
-  title: "Mapa e calendário | HERU",
+  title: "Map and calendar | HERU",
   description:
-    "Focos de calor no mapa e por mês desde 2003, com MODIS e VIIRS na mesma escala.",
+    "Hotspots on the map and by month since 2003, with MODIS and VIIRS on the same scale.",
 };
 
 export default function CalendarMapPage() {

@@ -1,5 +1,7 @@
 import type { FeatureCollection, MultiPolygon, Position } from "geojson";
 import { useEffect, useState } from "react";
+import { localNumberFormat } from "@/i18n/format";
+import { localized } from "@/i18n/locale";
 
 export type CountryOutline = {
   path: string;
@@ -144,11 +146,11 @@ export function useCountryOutlines(): CountryOutlines | null {
   return outlines;
 }
 
-const AREA = new Intl.NumberFormat("pt-BR", {
+const AREA = localNumberFormat({
   notation: "compact",
   maximumFractionDigits: 1,
 });
-const SMALL_AREA = new Intl.NumberFormat("pt-BR", {
+const SMALL_AREA = localNumberFormat({
   maximumFractionDigits: 2,
 });
 
@@ -156,7 +158,13 @@ export function formatArea(areaKm2: number): string {
   return `${(areaKm2 < 10 ? SMALL_AREA : AREA).format(areaKm2)} km²`;
 }
 
-export const AREA_SOURCES: Record<string, string> = {
-  world_bank: "área de terra, Banco Mundial",
-  cgaz: "área das fronteiras (CGAZ), com lagos e rios",
-};
+export const AREA_SOURCES: Record<string, string> = localized(
+  {
+    world_bank: "land area, World Bank",
+    cgaz: "boundary area (CGAZ), including lakes and rivers",
+  },
+  {
+    world_bank: "área de terra, Banco Mundial",
+    cgaz: "área das fronteiras (CGAZ), com lagos e rios",
+  },
+);
